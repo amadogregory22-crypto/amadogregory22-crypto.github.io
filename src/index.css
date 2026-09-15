@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  input, textarea, select {
+    @apply text-slate-900 transition-colors;
+  }
+  .dark input:not([type="color"]):not([type="range"]), 
+  .dark textarea, 
+  .dark select {
+    @apply text-slate-100 bg-slate-800 border-slate-700;
+  }
+  .dark {
+    color-scheme: dark;
+  }
+}
+
+/* Custom scrollbar for ergonomics */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.4);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+

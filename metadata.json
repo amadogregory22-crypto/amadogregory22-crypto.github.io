@@ -1,0 +1,6 @@
+{
+  "name": "Signatures RAGT Semences V3",
+  "description": "Studio de création et générateur de signatures e-mail professionnelles compatibles Microsoft Outlook pour RAGT Semences.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

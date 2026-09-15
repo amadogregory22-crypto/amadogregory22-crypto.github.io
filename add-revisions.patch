@@ -1,0 +1,80 @@
+--- src/context/SignatureContext.tsx
++++ src/context/SignatureContext.tsx
+@@ -28,6 +28,13 @@
+   message: string;
+   type: 'success' | 'error' | 'info';
+ }
++
++export interface SavedRevision {
++  id: string;
++  timestamp: number;
++  name: string;
++  state: SignatureState;
++}
+ 
+ interface SignatureContextType {
+   state: SignatureState;
+@@ -46,6 +53,11 @@
+   historyIndex: number;
+   revertToHistoryIndex: (index: number) => void;
+ 
++  // Revisions
++  savedRevisions: SavedRevision[];
++  saveRevision: (name?: string) => void;
++  restoreRevision: (id: string) => void;
++  deleteRevision: (id: string) => void;
++
+   // View Controls
+   activeTab: ActiveTab;
+   setActiveTab: (tab: ActiveTab) => void;
+@@ -102,6 +114,7 @@
+   const [history, setHistory] = useState<SignatureState[]>([DEFAULT_STATE]);
+   const [historyIndex, setHistoryIndex] = useState(0);
+   const [isNavigatingHistory, setIsNavigatingHistory] = useState(false);
++  const [savedRevisions, setSavedRevisions] = useState<SavedRevision[]>([]);
+ 
+   // App View State
+   const [activeTab, setActiveTab] = useState<ActiveTab>('info');
+@@ -193,6 +206,28 @@
+   }, [history, historyIndex, showToast]);
+ 
+   // ---------------------------------------------------------
++  // REVISIONS
++  // ---------------------------------------------------------
++  const saveRevision = useCallback((name?: string) => {
++    const revision: SavedRevision = {
++      id: Date.now().toString(),
++      timestamp: Date.now(),
++      name: name || `Révision ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
++      state: state
++    };
++    setSavedRevisions(prev => [revision, ...prev]);
++    showToast('Révision sauvegardée', 'success');
++  }, [state, showToast]);
++
++  const restoreRevision = useCallback((id: string) => {
++    const rev = savedRevisions.find(r => r.id === id);
++    if (rev) {
++      setPartialState(rev.state);
++      showToast(`Révision "${rev.name}" restaurée`, 'success');
++    }
++  }, [savedRevisions, setPartialState, showToast]);
++
++  const deleteRevision = useCallback((id: string) => {
++    setSavedRevisions(prev => prev.filter(r => r.id !== id));
++  }, []);
++
++  // ---------------------------------------------------------
+   // SHORTCUTS (Undo/Redo via Ctrl+Z, Ctrl+Y)
+   // ---------------------------------------------------------
+@@ -370,6 +405,9 @@
+         history,
+         historyIndex,
+         revertToHistoryIndex,
++        savedRevisions,
++        saveRevision,
++        restoreRevision,
++        deleteRevision,
+         activeTab,
+         setActiveTab,
+         appMode,

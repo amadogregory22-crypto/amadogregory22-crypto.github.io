@@ -5,19 +5,22 @@ import { ActiveTab } from '../context/SignatureContext';
 
 interface CommandItem {
   id: ActiveTab;
+  subTab?: string;
   name: string;
   icon: React.ReactNode;
 }
 
 const commands: CommandItem[] = [
-  { id: 'layout', name: 'Mise en page', icon: <LayoutTemplate className="w-4 h-4" /> },
-  { id: 'design', name: 'Design & Couleurs', icon: <Palette className="w-4 h-4" /> },
-  { id: 'info', name: 'Informations', icon: <Info className="w-4 h-4" /> },
-  { id: 'logos', name: 'Logos & Bannières', icon: <ImageIcon className="w-4 h-4" /> },
-  { id: 'qr', name: 'QR Code', icon: <QrCode className="w-4 h-4" /> },
-  { id: 'social', name: 'Réseaux Sociaux', icon: <Share2 className="w-4 h-4" /> },
-  { id: 'verify', name: 'Vérification', icon: <CheckCircle className="w-4 h-4" /> },
-  { id: 'templates', name: 'Modèles', icon: <FileText className="w-4 h-4" /> },
+  { id: 'template', subTab: 'layout', name: 'Mise en page & Structure (Gabarits A-I, dimensions, ordre des blocs)', icon: <LayoutTemplate className="w-4 h-4" /> },
+  { id: 'template', subTab: 'templates', name: 'Bibliothèque de Modèles & Sauvegardes (Presets RAGT, JSON)', icon: <FileText className="w-4 h-4" /> },
+  { id: 'contact', subTab: 'info', name: 'Identité & Coordonnées (Nom, Poste, Service, Tél, Email, Adresse)', icon: <Info className="w-4 h-4" /> },
+  { id: 'contact', subTab: 'social', name: 'Réseaux Sociaux & UTM (LinkedIn, Facebook, X, Instagram, Tracking)', icon: <Share2 className="w-4 h-4" /> },
+  { id: 'contact', subTab: 'qr', name: 'QR Code vCard (Scan smartphone, contact direct)', icon: <QrCode className="w-4 h-4" /> },
+  { id: 'media', subTab: 'logos', name: 'Logos & Filiales RAGT (80+ logos, ISO 9001, HVE, upload SVG)', icon: <ImageIcon className="w-4 h-4" /> },
+  { id: 'media', subTab: 'banner', name: 'Bannières de Campagne & Slogan (Événements, boutons CTA)', icon: <Flag className="w-4 h-4" /> },
+  { id: 'style', subTab: 'design', name: 'Style & Charte (Palette RAGT, polices Outlook, contraste WCAG, bordures)', icon: <Palette className="w-4 h-4" /> },
+  { id: 'export', subTab: 'verify', name: 'Diagnostic & Audit Outlook (Liens brisés, poids images, compatibilité)', icon: <CheckCircle className="w-4 h-4" /> },
+  { id: 'export', subTab: 'copy', name: 'Copier & Exporter (Copie 1-clic Outlook, signature.html, tutoriels)', icon: <CheckCircle className="w-4 h-4" /> },
 ];
 
 export const CommandPalette: React.FC = () => {
@@ -63,7 +66,7 @@ export const CommandPalette: React.FC = () => {
     } else if (e.key === 'Enter') {
       e.preventDefault();
       if (filtered[selectedIndex]) {
-        setActiveTab(filtered[selectedIndex].id);
+        setActiveTab(filtered[selectedIndex].id, filtered[selectedIndex].subTab);
         setIsOpen(false);
       }
     }
@@ -99,26 +102,30 @@ export const CommandPalette: React.FC = () => {
           ) : (
             filtered.map((cmd, idx) => (
               <button
-                key={cmd.id}
+                key={cmd.name}
                 type="button"
                 onClick={() => {
-                  setActiveTab(cmd.id);
+                  setActiveTab(cmd.id, cmd.subTab);
                   setIsOpen(false);
                 }}
-                onMouseEnter={() => setSelectedIndex(idx)}
-                className={`flex items-center gap-3 w-full px-3 py-2 rounded-lg text-sm transition-colors ${
-                  idx === selectedIndex ? 'bg-[#0C3866] text-white' : 'text-slate-700 hover:bg-slate-50'
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-xs transition-colors ${
+                  idx === selectedIndex ? 'bg-[#0C3866] text-white font-semibold' : 'text-slate-700 hover:bg-slate-50'
                 }`}
               >
-                <span className={idx === selectedIndex ? 'text-white' : 'text-slate-400'}>{cmd.icon}</span>
-                <span>{cmd.name}</span>
+                <span className={idx === selectedIndex ? 'text-amber-400' : 'text-slate-400'}>
+                  {cmd.icon}
+                </span>
+                <span className="flex-1 truncate">{cmd.name}</span>
+                <span className="text-[10px] opacity-60 font-mono">↵</span>
               </button>
             ))
           )}
         </div>
+        <div className="bg-slate-50 px-4 py-2 border-t border-slate-100 text-[10px] text-slate-400 flex justify-between">
+          <span>Navigate with ↑ and ↓</span>
+          <span>Open with ↵</span>
+        </div>
       </div>
-      {/* Overlay click area to close */}
-      <div className="absolute inset-0 -z-10" onClick={() => setIsOpen(false)} />
     </div>
   );
 };

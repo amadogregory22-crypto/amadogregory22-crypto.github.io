@@ -10,6 +10,12 @@ import { generateEmailHTML, generateAllIconPngs } from '../utils/htmlGenerator';
 import { validateSignature, SignatureDiagnostic } from '../utils/validator';
 
 export type ActiveTab =
+  | 'template' // 1. Gabarit & Modèles
+  | 'contact'  // 2. Identité & Contact
+  | 'media'    // 3. Médias & Visuels
+  | 'style'    // 4. Style & Charte
+  | 'export'   // 5. Contrôle & Diffusion
+  // Rétrocompatibilité :
   | 'layout'
   | 'design'
   | 'info'
@@ -62,7 +68,9 @@ interface SignatureContextType {
 
   // View Controls
   activeTab: ActiveTab;
-  setActiveTab: (tab: ActiveTab) => void;
+  setActiveTab: (tab: ActiveTab, subTab?: string) => void;
+  activeSubTab: string;
+  setActiveSubTab: (subTab: string) => void;
   appMode: AppMode;
   setAppMode: (mode: AppMode) => void;
   previewEnv: PreviewEnv;
@@ -145,7 +153,39 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [savedRevisions, setSavedRevisions] = useState<SavedRevision[]>([]);
 
   // App & View states
-  const [activeTab, setActiveTab] = useState<ActiveTab>('info');
+  const [activeTab, setActiveTabState] = useState<ActiveTab>('contact');
+  const [activeSubTab, setActiveSubTabState] = useState<string>('info');
+
+  const setActiveTab = React.useCallback((tab: ActiveTab, subTab?: string) => {
+    let target = tab;
+    let targetSub = subTab;
+
+    if (tab === 'template' || tab === 'layout' || tab === 'templates') {
+      target = 'template';
+      if (!targetSub) targetSub = tab === 'templates' ? 'templates' : 'layout';
+    } else if (tab === 'contact' || tab === 'info' || tab === 'social' || tab === 'qr') {
+      target = 'contact';
+      if (!targetSub) targetSub = tab === 'social' ? 'social' : tab === 'qr' ? 'qr' : 'info';
+    } else if (tab === 'media' || tab === 'logos' || tab === 'banner') {
+      target = 'media';
+      if (!targetSub) targetSub = tab === 'banner' ? 'banner' : 'logos';
+    } else if (tab === 'style' || tab === 'design') {
+      target = 'style';
+      if (!targetSub) targetSub = 'design';
+    } else if (tab === 'export' || tab === 'verify' || tab === 'copy') {
+      target = 'export';
+      if (!targetSub) targetSub = tab === 'copy' ? 'copy' : 'verify';
+    }
+
+    setActiveTabState(target);
+    if (targetSub) {
+      setActiveSubTabState(targetSub);
+    }
+  }, []);
+
+  const setActiveSubTab = React.useCallback((subTab: string) => {
+    setActiveSubTabState(subTab);
+  }, []);
   const [appMode, setAppMode] = useState<AppMode>('studio');
   const [previewEnv, setPreviewEnv] = useState<PreviewEnv>('light');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
@@ -333,20 +373,23 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         redo();
       }
       
-      // Tab switching (Ctrl+1 to Layout, Ctrl+2 to Copy as example)
+      // Tab switching (Ctrl+1 à Ctrl+5 pour les 5 grands pôles)
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
         if (e.key === '1') {
           e.preventDefault();
-          setActiveTab('layout');
+          setActiveTab('template');
         } else if (e.key === '2') {
           e.preventDefault();
-          setActiveTab('design');
+          setActiveTab('contact');
         } else if (e.key === '3') {
           e.preventDefault();
-          setActiveTab('info');
-        } else if (e.key === '9') {
+          setActiveTab('media');
+        } else if (e.key === '4') {
           e.preventDefault();
-          setActiveTab('copy');
+          setActiveTab('style');
+        } else if (e.key === '5') {
+          e.preventDefault();
+          setActiveTab('export');
         }
       }
     };
@@ -489,6 +532,8 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         deleteRevision,
         activeTab,
         setActiveTab,
+        activeSubTab,
+        setActiveSubTab,
         appMode,
         setAppMode,
         previewEnv,

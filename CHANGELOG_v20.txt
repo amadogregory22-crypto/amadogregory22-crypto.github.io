@@ -1,0 +1,10 @@
+1/14 — Base v19 copiée vers v20.
+2/14 — Schéma d’export v20 ajouté.
+3/14 — Interface v20 modifiée : ZIP PNG, ZIP JPEG, pack complet, progression export.
+4/14 — CSS v20 ajouté : barre de progression et ajustement tableau.
+5/14 — JS v20 ajouté : ZIP PNG/JPEG en masse, pack complet, ZIP binaire, progression.
+6/14 — Manifest et service worker v20 mis à jour.
+7/14 — README v20 rédigé.
+8/14 — Validation rapide : PNG/JPEG masse, pack complet et progression présents.
+9/14 — Version HTML autonome v20 générée.
+10/14 — ZIP complet v20 généré.

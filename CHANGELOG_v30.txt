@@ -1,0 +1,21 @@
+1/34 — Base v29 copiée vers v30.
+2/34 — Données collaboration v30 créées : rôles, permissions, workflow, packs, charte.
+3/34 — Menu Collaboration et vue entreprise v30 ajoutés.
+4/34 — CSS v30 ajouté : workflow, commentaires, versions, permissions, packs.
+5/34 — Fonctions JS collaboration ajoutées : rôles, versions, validation, publication.
+6/34 — JS v30 intégré : rendu, navigation, sauvegarde et exports collaboration.
+7/34 — Manifest et service worker v30 mis à jour.
+8/34 — README v30 rédigé.
+9/34 — Validation rapide : Collaboration, rôles, workflow, versioning, publication présents.
+10/34 — Contrôle rapide JS : pas de tokens Python restants.
+11/34 — Validation syntaxe Node : OK.
+12/34 — Version HTML autonome v30 générée.
+13/34 — CHANGELOG v30 ajouté.
+14/34 — README v30 disponible séparément.
+15/34 — Catalogue collaboration v30 disponible séparément.
+16/34 — Note technique v30 créée.
+17/34 — Roadmap v30 créée.
+18/34 — Résumé machine v30 généré.
+19/34 — ZIP complet v30 généré.
+20/34 — Validation fichiers générés : OK.
+21/34 — Taille ZIP : 107.9 Ko.

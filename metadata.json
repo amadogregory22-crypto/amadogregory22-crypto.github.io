@@ -1,6 +1,6 @@
 {
-  "name": "Signatures RAGT Semences V3",
-  "description": "Studio de création et générateur de signatures e-mail professionnelles compatibles Microsoft Outlook pour RAGT Semences.",
-  "requestFramePermissions": [],
+  "name": "Atelier Signature",
+  "description": "Hub complet de communication d'entreprise, optimisation médias, kits de campagne, connecteurs métiers (GLPI, Contact EveryOne, LabKey) et assistant collaboratif M365.",
+  "requestFramePermissions": ["camera", "microphone"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

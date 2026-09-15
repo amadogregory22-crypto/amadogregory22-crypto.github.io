@@ -1,0 +1,28 @@
+0/36 — Dossier v31 partiel détecté après l’échec précédent : reprise et correction.
+1/36 — Correction syntaxe JS : vérification endpoint sans regex fragile.
+2/36 — Catalogue connecteurs IA/API v31 confirmé.
+3/36 — Validation structure v31 : blocs Connecteurs présents.
+4/36 — Contrôle JS : pas de tokens Python restants.
+5/36 — Validation syntaxe Node : OK.
+6/36 — README v31 rédigé et exporté.
+7/36 — Catalogue connecteurs v31 exporté.
+8/36 — Note technique v31 créée.
+9/36 — Note sécurité v31 créée.
+10/36 — Roadmap v31 créée.
+11/36 — Version HTML autonome v31 générée.
+12/36 — Résumé machine v31 généré.
+13/36 — CHANGELOG v31 préparé.
+14/36 — Documentation v31 consolidée.
+15/36 — Note sécurité consolidée.
+16/36 — Catalogue connecteurs confirmé.
+17/36 — Standalone validé en génération.
+18/36 — Manifest et service worker conservés depuis intégration v31.
+19/36 — Navigation Connecteurs validée.
+20/36 — Bouton Studio IA via API validé.
+21/36 — Fallback local validé.
+22/36 — Import/export configuration validé.
+23/36 — Journal connecteur validé.
+24/36 — Rapport sécurité validé.
+25/36 — ZIP complet v31 généré.
+26/36 — Validation fichiers générés : OK.
+27/36 — Taille ZIP : 116.8 Ko.

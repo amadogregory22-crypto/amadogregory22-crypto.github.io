@@ -1,0 +1,6 @@
+Prénom;Nom;Fonction;Email;Service;Téléphone;Mobile
+Jean;Dupont;Directeur;jean.dupont@ragt.fr;Direction;0102030405;0601020304
+Marie;Martin;Marketing;marie.martin@ragt.fr;Communication;0102030406;
+Luc;Bernard;Tech;luc.bernard@ragt.fr;DSI;0102030407;0601020305
+Sophie;Petit;;sophie.petit;RH;;
+Invalide;Email;Stagiaire;invalide@ragt;Marketing;;

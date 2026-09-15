@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "SignatureDocument",
+  "type": "object",
+  "required": ["id", "project_id", "name", "revision", "width", "height", "fields", "elements"],
+  "properties": {
+    "id": { "type": "string" },
+    "project_id": { "type": "string" },
+    "name": { "type": "string" },
+    "revision": { "type": "integer", "minimum": 1 },
+    "width": { "type": "number" },
+    "height": { "type": "number" },
+    "fields": {
+      "type": "object",
+      "properties": {
+        "full_name": { "type": "string" },
+        "first_name": { "type": "string" },
+        "last_name": { "type": "string" },
+        "job_title": { "type": "string" },
+        "company": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "phone": { "type": "string" },
+        "mobile": { "type": "string" },
+        "address": { "type": "string" },
+        "website": { "type": "string" },
+        "slogan": { "type": "string" }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "type", "semantic_type", "bounds"],
+        "properties": {
+          "id": { "type": "string" },
+          "type": { "type": "string", "enum": ["text", "image", "icon", "qr", "shape", "divider"] },
+          "semantic_type": { "type": "string" },
+          "field_binding": { "type": "string" },
+          "bounds": {
+            "type": "object",
+            "required": ["x", "y", "width", "height"],
+            "properties": {
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "width": { "type": "number" },
+              "height": { "type": "number" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

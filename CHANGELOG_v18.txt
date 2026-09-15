@@ -1,0 +1,10 @@
+1/12 — Base v17 copiée vers v18.
+2/12 — data/icon-packs.json créé pour les packs de pictos.
+3/12 — Interface v18 modifiée : bibliothèque avancée, slots pictos, onglet Blocs.
+4/12 — CSS v18 ajouté : bibliothèque, favoris, tags, slots pictos, gestionnaire de blocs.
+5/12 — JS v18 ajouté : bibliothèque avancée, z-index réel, duplication, import bibliothèque, pictos tous slots.
+6/12 — Manifest et service worker v18 mis à jour.
+7/12 — README v18 rédigé.
+8/12 — Validation rapide : modules v18 présents.
+9/12 — Version HTML autonome v18 générée.
+10/12 — ZIP complet v18 généré.

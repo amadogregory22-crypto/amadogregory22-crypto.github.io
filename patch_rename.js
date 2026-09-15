@@ -1,0 +1,5 @@
+const fs = require('fs');
+let html = fs.readFileSync('index.html', 'utf8');
+html = html.replace('>Guides intelligents</button>', '>Guides magnétiques</button>');
+fs.writeFileSync('index.html', html);
+console.log('Renamed');

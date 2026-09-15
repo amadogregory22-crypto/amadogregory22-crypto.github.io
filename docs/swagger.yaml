@@ -1,0 +1,234 @@
+openapi: 3.0.3
+info:
+  title: RAGT Communication Studio API
+  description: >
+    Spécifications de l'API pour RAGT Communication Studio. 
+    Ce document sert de contrat d'interface complet.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3001/api
+    description: Serveur Local (Mock)
+
+paths:
+  /health:
+    get:
+      summary: Vérifier la santé du service
+      responses:
+        '200':
+          description: Le service est opérationnel
+
+  /config/public:
+    get:
+      summary: Configuration publique de l'instance
+      responses:
+        '200':
+          description: Configuration retournée
+
+  /connectors:
+    get:
+      summary: Lister les connecteurs
+      responses:
+        '200':
+          description: Liste des connecteurs
+        '401':
+          description: Non authentifié
+        '403':
+          description: Permission insuffisante (nécessite connector:read)
+        '500':
+          description: Erreur serveur masquée
+
+  /connectors/{id}/test:
+    post:
+      summary: Tester la connexion d'un connecteur
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Connexion réussie
+        '400':
+          description: La connexion a échoué (les détails peuvent contenir missing_secret)
+        '401':
+          description: Non authentifié
+        '403':
+          description: Permission insuffisante (nécessite connector:test)
+        '404':
+          description: Connecteur introuvable
+
+  /ai/agents/{id}/run:
+    post:
+      summary: Exécuter un agent IA
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Exécution réussie
+        '400':
+          description: Modèle ou configuration invalide (disabled)
+        '401':
+          description: Non authentifié
+        '403':
+          description: Permission insuffisante, IA désactivée, ou fournisseur externe interdit (external_disabled)
+        '404':
+          description: Agent introuvable ou indisponible (unavailable)
+        '500':
+          description: Erreur serveur interne, potentiellement un token manquant (missing_secret)
+
+  /auth/me:
+    get:
+      summary: Informations de l'utilisateur connecté
+      responses:
+        '200':
+          description: Profil utilisateur
+
+  /stats/dashboard:
+    get:
+      summary: Statistiques globales du tableau de bord
+      responses:
+        '200':
+          description: Données du dashboard
+
+  /config/appearance:
+    get:
+      summary: Récupérer la charte graphique globale
+      responses:
+        '200':
+          description: Paramètres d'apparence
+    put:
+      summary: Mettre à jour la charte graphique
+      responses:
+        '200':
+          description: Mise à jour réussie
+
+  /assets:
+    get:
+      summary: Lister les médias de la bibliothèque
+      responses:
+        '200':
+          description: Liste des fichiers
+    post:
+      summary: Uploader un nouveau média
+      responses:
+        '201':
+          description: Fichier uploadé avec succès
+
+  /signatures/templates:
+    get:
+      summary: Lister les modèles de signatures disponibles
+      responses:
+        '200':
+          description: Liste des modèles
+
+  /signatures:
+    get:
+      summary: Liste globale des signatures
+      responses:
+        '200':
+          description: OK
+    post:
+      summary: Créer une nouvelle signature
+      responses:
+        '201':
+          description: Créée
+
+  /signatures/{id}:
+    get:
+      summary: Récupérer une signature par ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+        '404':
+          description: Non trouvé
+    put:
+      summary: Mettre à jour une signature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+    delete:
+      summary: Supprimer une signature
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Supprimé
+
+  /signatures/{id}/quality-report:
+    post:
+      summary: Sauvegarder un rapport qualité
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '201':
+          description: OK
+
+  /audit-logs:
+    get:
+      summary: Historique des actions
+      responses:
+        '200':
+          description: Liste des logs
+
+  /api/assets:
+    get:
+      summary: List assets
+      tags:
+        - Assets
+    post:
+      summary: Upload an asset
+      tags:
+        - Assets
+  /api/assets/{id}:
+    get:
+      summary: Get an asset by ID
+      tags:
+        - Assets
+    put:
+      summary: Update an asset
+      tags:
+        - Assets
+    delete:
+      summary: Archive an asset
+      tags:
+        - Assets
+  /api/assets/{id}/download:
+    get:
+      summary: Download asset file
+      tags:
+        - Assets
+  /api/assets/{id}/validate:
+    post:
+      summary: Validate an asset
+      tags:
+        - Assets
+  /api/assets/{id}/archive:
+    post:
+      summary: Archive an asset
+      tags:
+        - Assets

@@ -1,0 +1,22 @@
+1/26 — Base v25 copiée vers v26.
+2/26 — Données Studio v26 créées : formats et éléments Canva-like.
+3/26 — Menu et vue Studio créatif v26 ajoutés.
+4/26 — CSS v26 ajouté : studio canvas, objets, panneaux, calques, zoom.
+5/26 — Fonctions JS Studio ajoutées : formats, objets, calques, export.
+6/26 — JS v26 intégré : rendu, navigation, sauvegarde, export Studio.
+7/26 — Manifest et service worker v26 mis à jour.
+8/26 — README v26 rédigé.
+9/26 — Validation rapide : Studio, canvas, objets, exports présents.
+10/26 — Contrôle rapide JS : pas de tokens Python restants.
+11/26 — Validation syntaxe Node : OK.
+12/26 — Version HTML autonome v26 générée.
+13/26 — CHANGELOG v26 ajouté.
+14/26 — README v26 disponible séparément.
+15/26 — Catalogue formats Studio v26 disponible séparément.
+16/26 — Catalogue éléments Studio v26 disponible séparément.
+17/26 — Note technique Studio v26 créée.
+18/26 — Roadmap Studio v26 créée.
+19/26 — Résumé machine v26 généré.
+20/26 — ZIP complet v26 généré.
+21/26 — Validation fichiers générés : OK.
+22/26 — Taille ZIP : 81.9 Ko.

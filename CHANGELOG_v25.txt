@@ -1,0 +1,21 @@
+1/24 — Base v24 copiée vers v25.
+2/24 — Schéma export PDF final v25 créé.
+3/24 — Interface v25 ajoutée : PDF final, pack PDF, format et qualité.
+4/24 — CSS v25 ajouté : boutons PDF final / pack PDF.
+5/24 — Fonctions JS PDF final ajoutées : générateur PDF image-based et pack.
+6/24 — JS v25 intégré : boutons PDF final, pack, qualité, rapport.
+7/24 — Manifest et service worker v25 mis à jour.
+8/24 — README v25 rédigé.
+9/24 — Validation rapide : PDF final, pack et rapport présents.
+10/24 — Contrôle rapide JS : pas de tokens Python restants.
+11/24 — Validation syntaxe Node : OK.
+12/24 — Version HTML autonome v25 générée.
+13/24 — CHANGELOG v25 ajouté.
+14/24 — README v25 disponible séparément.
+15/24 — Schéma export PDF v25 disponible séparément.
+16/24 — Note technique v25 créée.
+17/24 — Roadmap PDF v25 créée.
+18/24 — Résumé machine v25 généré.
+19/24 — ZIP complet v25 généré.
+20/24 — Validation fichiers générés : OK.
+21/24 — Taille ZIP : 73.0 Ko.

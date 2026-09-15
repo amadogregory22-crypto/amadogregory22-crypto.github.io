@@ -1,0 +1,10 @@
+const fs = require('fs');
+const fonds = fs.readdirSync('public/assets/uploads/fonds').filter(f => f.endsWith('.jpg') || f.endsWith('.png'));
+const motifs = fs.readdirSync('public/assets/uploads/motifs').filter(f => f.endsWith('.jpg') || f.endsWith('.png'));
+let content = `export const FONDS_IMAGES = [\n`;
+fonds.forEach(f => content += `  '/assets/uploads/fonds/${f}',\n`);
+content += `];\n\n`;
+content += `export const MOTIFS_IMAGES = [\n`;
+motifs.forEach(f => content += `  '/assets/uploads/motifs/${f}',\n`);
+content += `];\n`;
+fs.writeFileSync('src/constants/assets.ts', content);

@@ -1,50 +1,8 @@
-# Dépendances
 node_modules/
-**/node_modules/
-backend/.venv/
-.venv/
-**/__pycache__/
-*.py[cod]
-*$py.class
-.pytest_cache/
-
-# Anciennes versions archivées
-_legacy_*/
-
-# Builds & Distributions
-dist/
-react-dist/
 build/
-dist.js
+dist/
 coverage/
-
-# Fichiers volumineux & Archives
-*.zip
-*.rar
-*.tar.gz
-*.7z
-MonCompagnon.zip
-signature-studio-*.zip
-signature-studio-*.rar
-
-# Artefacts temporaires & Audits
-.tmp/
-exports/
-storage/
-tmp-*
-tmp_*
-audit-*
-scripts-audit-*
-*.log
-*.out
-*.err
-
-# IDE & OS
-.idea/
-.vscode/
 .DS_Store
-Thumbs.db
-
-# Secrets & Environnement
+*.log
 .env*
 !.env.example

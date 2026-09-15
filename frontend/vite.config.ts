@@ -11,7 +11,7 @@ export default defineConfig({
   },
   server: {
     host: '127.0.0.1',
-    port: 9292,
+    port: 9395,
     strictPort: true,
     proxy: {
       '/api': {
@@ -26,7 +26,7 @@ export default defineConfig({
   },
   preview: {
     host: '127.0.0.1',
-    port: 9292,
+    port: 9395,
     strictPort: true,
   },
 });

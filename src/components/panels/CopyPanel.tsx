@@ -36,7 +36,7 @@ export const CopyPanel: React.FC = () => {
 
   const handleDownload = () => {
     const safeName = (state.personal.lastName || 'ragt').toLowerCase().replace(/\s+/g, '-');
-    downloadHtmlFile(rawHtml, `signature-ragt-${safeName}.html`);
+    downloadHtmlFile(rawHtml, `signature-ragt-${safeName}.html`, state);
     showToast('Fichier signature.html téléchargé !', 'success');
   };
 

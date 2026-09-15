@@ -1,4 +1,6 @@
 import { imageUrlToBase64Png } from './svgToPng';
+import { SignatureState } from '../types/signature';
+import { generateStandaloneSignatureAppHtml } from './standaloneHtmlGenerator';
 
 /**
  * Ensures all image sources inside HTML are self-contained Base64 Data URLs,
@@ -133,11 +135,20 @@ export async function copyRawHtml(html: string): Promise<{ success: boolean; mes
 }
 
 /**
- * Generates and downloads signature.html file
+ * Generates and downloads signature.html file.
+ * If state is passed, exports a complete standalone interactive web app (matching signature (21).html).
  */
-export async function downloadHtmlFile(html: string, filename = 'signature.html'): Promise<void> {
-  const finalHtml = await inlineAllImagesInHtml(html);
-  const fullDocument = `<!DOCTYPE html>
+export async function downloadHtmlFile(
+  html: string,
+  filename = 'signature.html',
+  state?: SignatureState
+): Promise<void> {
+  let fullDocument = '';
+  if (state) {
+    fullDocument = generateStandaloneSignatureAppHtml(state);
+  } else {
+    const finalHtml = await inlineAllImagesInHtml(html);
+    fullDocument = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
@@ -149,6 +160,7 @@ export async function downloadHtmlFile(html: string, filename = 'signature.html'
   ${finalHtml}
 </body>
 </html>`;
+  }
 
   const blob = new Blob([fullDocument], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);

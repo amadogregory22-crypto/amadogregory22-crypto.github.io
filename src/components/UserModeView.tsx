@@ -40,8 +40,8 @@ export const UserModeView: React.FC = () => {
   };
 
   const handleDownload = () => {
-    downloadHtmlFile(rawHtml, `signature-ragt-${personal.lastName.toLowerCase()}.html`);
-    showToast('Fichier signature.html téléchargé !', 'success');
+    downloadHtmlFile(rawHtml, `signature-ragt-${personal.lastName.toLowerCase()}.html`, state);
+    showToast('Fichier signature.html interactif téléchargé !', 'success');
   };
 
   return (
@@ -176,7 +176,7 @@ export const UserModeView: React.FC = () => {
           <button
             type="button"
             onClick={handleCopy}
-            className="w-full bg-[#0C3866] hover:bg-[#092b50] text-white font-bold text-sm py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.99]"
+            className="w-full bg-[#0C3866] hover:bg-[#092b50] text-white font-bold text-sm py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all active:scale-[0.99] border-2 border-[#F7BD00]"
           >
             {copied ? <CheckCircle2 className="w-5 h-5 text-emerald-400" /> : <Copy className="w-5 h-5 text-[#F7BD00]" />}
             <span>{copied ? 'Signature copiée dans le presse-papier !' : 'Copier ma signature pour Outlook'}</span>
@@ -187,30 +187,53 @@ export const UserModeView: React.FC = () => {
             onClick={handleDownload}
             className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-colors"
           >
-            <Download className="w-4 h-4 text-slate-500" />
-            <span>Télécharger le fichier signature.html</span>
+            <Download className="w-4 h-4 text-emerald-600" />
+            <span>Télécharger signature.html (Portail autonome)</span>
           </button>
         </div>
       </div>
 
-      {/* Right: Live Preview */}
-      <div className="flex-1 bg-slate-200/70 p-8 flex flex-col items-center justify-center overflow-auto">
-        <div className="w-full max-w-2xl bg-white p-8 rounded-2xl shadow-xl border border-slate-300">
-          <div className="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
-            <div>
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                Aperçu en temps réel
-              </span>
-              <h4 className="text-base font-extrabold text-[#0C3866]">
-                Votre signature e-mail RAGT Semences
-              </h4>
+      {/* Right: Live Outlook Simulation Preview */}
+      <div className="flex-1 bg-slate-200/70 p-6 lg:p-8 flex flex-col items-center justify-start overflow-y-auto space-y-4">
+        <div className="w-full max-w-3xl bg-white rounded-2xl shadow-xl border border-slate-300 overflow-hidden">
+          {/* Outlook Window Mockup Header */}
+          <div className="bg-slate-50 border-b border-slate-200 px-5 py-3 text-xs text-slate-500 font-sans flex items-center justify-between">
+            <div className="flex items-center gap-2 truncate">
+              <span className="font-semibold text-slate-700">De :</span>
+              <span className="text-[#0C3866] font-medium truncate">{personal.email || 'prenom.nom@ragt.fr'}</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-semibold text-slate-700">À :</span>
+              <span>contact@client.com</span>
+              <span className="text-slate-300">•</span>
+              <span className="font-semibold text-slate-700">Objet :</span>
+              <span className="italic">RAGT Semences — Correspondance professionnelle</span>
             </div>
-            <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold border border-emerald-200">
-              Prête à l’emploi
+            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold shrink-0">
+              ✓ Prête pour Outlook
             </span>
           </div>
 
-          <div dangerouslySetInnerHTML={{ __html: rawHtml }} />
+          {/* Email Body Simulation */}
+          <div className="p-6 md:p-8 font-sans text-sm text-slate-800 space-y-3">
+            <p>Bonjour,</p>
+            <p>Veuillez trouver ci-dessous ma signature professionnelle officielle validée.</p>
+            <p className="pb-3">Bien cordialement,</p>
+
+            {/* Rendered HTML Signature Table */}
+            <div className="pt-4 border-t border-dashed border-slate-300 overflow-x-auto">
+              <div dangerouslySetInnerHTML={{ __html: rawHtml }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Quick Helper Alert */}
+        <div className="w-full max-w-3xl bg-blue-50/80 border border-blue-200 rounded-xl p-3.5 text-xs text-slate-700 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-[#0C3866] shrink-0" />
+            <span>
+              <strong>Astuce Outlook :</strong> Cliquez sur <em>« Copier ma signature »</em> puis collez avec <strong>Ctrl + V</strong> dans vos paramètres de signature Outlook.
+            </span>
+          </div>
         </div>
       </div>
     </div>

@@ -262,6 +262,8 @@ export interface CampaignConfig {
   altText: string;
   width: number;
   height: number;
+  maintainRatio?: boolean;
+  fitMode?: 'contain' | 'cover';
   startDate?: string;
   endDate?: string;
 }

@@ -489,23 +489,26 @@ function buildBannerHtml(state: SignatureState, iconCache: Record<string, string
  * Builds promotional or institutional campaign banner (rendered below the signature card)
  */
 function buildCampaignHtml(state: SignatureState, iconCache: Record<string, string> = {}): string {
-  const { campaign, banner, visibility, layout } = state;
-  const isDedicated = Boolean(campaign && campaign.enabled && campaign.imageUrl);
-  const isLegacyBannerCampaign = Boolean(
-    visibility.banner && banner.enabled && (banner.campaignName || banner.position === 'bottom') && banner.imageUrl
-  );
+  const { campaign, visibility, layout } = state;
+  if (!campaign || !campaign.enabled || !campaign.imageUrl || visibility.campaign === false) return '';
+  if (!isCampaignActive(campaign)) return '';
 
-  if (!isDedicated && !isLegacyBannerCampaign) return '';
-
-  const active = isDedicated ? campaign! : banner;
-  if (!isCampaignActive(active)) return '';
-
-  const effectiveUrl = iconCache['campaign_image'] || iconCache['banner_image'] || active.imageUrl;
+  const active = campaign;
+  const effectiveUrl = iconCache['campaign_image'] || active.imageUrl;
   const isMobilePreset = layout.preset === 'layout-c' || layout.preset === 'layout-d' || layout.preset === 'layout-g';
   const totalWidth = isMobilePreset ? Math.min(layout.dimensions.totalWidth, 340) : layout.dimensions.totalWidth;
-  const height = Math.min(90, Math.max(20, active.height || 90));
 
-  const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${height}" alt="${escapeHtml(active.altText || active.title || 'Campagne RAGT')}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; height:${height}px; object-fit:cover; border-radius:4px;" />`;
+  const shouldMaintainRatio = active.maintainRatio !== false;
+  // For standard 16:9 campaign images (800x450), the exact proportional height at width 540 is 304px
+  const isStandard169 = active.imageUrl.includes('04680') || active.imageUrl.includes('bannieres');
+  const proportionalHeight = isStandard169 ? Math.round((totalWidth * 450) / 800) : Math.round(totalWidth * 0.5);
+  const heightAttr = shouldMaintainRatio ? proportionalHeight : (active.height || proportionalHeight);
+
+  const styleHeight = shouldMaintainRatio ? 'height:auto;' : `height:${active.height || heightAttr}px;`;
+  const fitMode = active.fitMode || (shouldMaintainRatio ? 'contain' : 'cover');
+  const objectFitStyle = shouldMaintainRatio ? '' : `object-fit:${fitMode};`;
+
+  const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${heightAttr}" alt="${escapeHtml(active.altText || active.title || 'Campagne RAGT')}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; ${styleHeight} ${objectFitStyle} border-radius:4px;" />`;
 
   const linkContent = active.linkUrl
     ? `<a href="${appendUtmParams(sanitizeUrl(active.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">${imgHtml}</a>`

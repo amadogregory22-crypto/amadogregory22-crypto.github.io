@@ -145,6 +145,37 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           parsed.logos.primary.height = 100;
         }
 
+        // If a campaign banner image was erroneously stored in banner.imageUrl, restore official card photo in banner
+        if (parsed.banner?.imageUrl && (parsed.banner.imageUrl.includes('_BD.jpg') || parsed.banner.imageUrl.includes('04680'))) {
+          if (!parsed.campaign?.imageUrl) {
+            parsed.campaign = {
+              enabled: true,
+              title: parsed.banner.title || 'Innovation variétale',
+              campaignName: parsed.banner.campaignName || 'Génétique & performance',
+              altText: parsed.banner.altText || 'Innovation variétale',
+              imageUrl: parsed.banner.imageUrl,
+              width: parsed.layout?.dimensions?.totalWidth || 540,
+              height: 304,
+              maintainRatio: true,
+              linkUrl: parsed.banner.linkUrl || '',
+              startDate: '',
+              endDate: ''
+            };
+            if (parsed.visibility) parsed.visibility.campaign = true;
+          }
+          parsed.banner = {
+            ...parsed.banner,
+            enabled: true,
+            imageUrl: '/assets/bannieres/photo_carte_ragt.png',
+            altText: 'Photo agronomie RAGT',
+            position: 'center',
+            width: 175,
+            height: 84,
+            campaignName: '',
+            maintainRatio: true
+          };
+        }
+
         return normalizeSignatureConfig(parsed) || DEFAULT_SIGNATURE_STATE;
       }
     } catch (e) {
@@ -311,6 +342,46 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
               width: 95,
               height: 100
             }
+          }
+        };
+      }
+
+      // Auto-guard: if a campaign banner image was erroneously stored in banner.imageUrl, restore official card photo in banner
+      if (next.banner?.imageUrl && (next.banner.imageUrl.includes('_BD.jpg') || next.banner.imageUrl.includes('04680'))) {
+        if (!next.campaign?.imageUrl) {
+          next = {
+            ...next,
+            campaign: {
+              enabled: true,
+              title: next.banner.title || 'Innovation variétale',
+              campaignName: next.banner.campaignName || 'Génétique & performance',
+              altText: next.banner.altText || 'Innovation variétale',
+              imageUrl: next.banner.imageUrl,
+              width: next.layout?.dimensions?.totalWidth || 540,
+              height: 304,
+              maintainRatio: true,
+              linkUrl: next.banner.linkUrl || '',
+              startDate: '',
+              endDate: ''
+            },
+            visibility: {
+              ...next.visibility,
+              campaign: true
+            }
+          };
+        }
+        next = {
+          ...next,
+          banner: {
+            ...next.banner,
+            enabled: true,
+            imageUrl: '/assets/bannieres/photo_carte_ragt.png',
+            altText: 'Photo agronomie RAGT',
+            position: 'center',
+            width: 175,
+            height: 84,
+            campaignName: '',
+            maintainRatio: true
           }
         };
       }
@@ -510,6 +581,40 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
             width: 95,
             height: 100
           }
+        }
+      }));
+    }
+
+    if (state.banner?.imageUrl && (state.banner.imageUrl.includes('_BD.jpg') || state.banner.imageUrl.includes('04680'))) {
+      updateState((prev) => ({
+        ...prev,
+        banner: {
+          ...prev.banner,
+          enabled: true,
+          imageUrl: '/assets/bannieres/photo_carte_ragt.png',
+          altText: 'Photo agronomie RAGT',
+          position: 'center',
+          width: 175,
+          height: 84,
+          campaignName: '',
+          maintainRatio: true
+        },
+        campaign: prev.campaign?.imageUrl ? prev.campaign : {
+          enabled: true,
+          title: prev.banner.title || 'Innovation variétale',
+          campaignName: prev.banner.campaignName || 'Génétique & performance',
+          altText: prev.banner.altText || 'Innovation variétale',
+          imageUrl: prev.banner.imageUrl,
+          width: prev.layout?.dimensions?.totalWidth || 540,
+          height: 304,
+          maintainRatio: true,
+          linkUrl: prev.banner.linkUrl || '',
+          startDate: '',
+          endDate: ''
+        },
+        visibility: {
+          ...prev.visibility,
+          campaign: true
         }
       }));
     }

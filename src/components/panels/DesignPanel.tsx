@@ -139,7 +139,8 @@ export const DesignPanel: React.FC = () => {
         colors: {
           ...prev.design.colors,
           [key]: value,
-          ...(key === 'firstName' ? { lastName: value } : {})
+          ...(key === 'firstName' ? { lastName: value } : {}),
+          ...(key === 'phone' && (!prev.design.colors.mobile || prev.design.colors.mobile === prev.design.colors.phone) ? { mobile: value } : {})
         }
       },
       layout: key === 'separator'
@@ -291,7 +292,8 @@ export const DesignPanel: React.FC = () => {
               { label: 'Nom & Prénom', key: 'firstName' },
               { label: 'Poste / Fonction', key: 'jobTitle' },
               { label: 'Entreprise (RAGT)', key: 'company' },
-              { label: 'Téléphones (Fixe / Mob)', key: 'phone' },
+              { label: 'Téléphone fixe', key: 'phone' },
+              { label: 'Téléphone portable', key: 'mobile' },
               { label: 'Adresse e-mail', key: 'email' },
               { label: 'Site web', key: 'website' },
               { label: 'Adresse postale', key: 'address' },

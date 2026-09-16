@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { DEFAULT_SIGNATURE_STATE, SIGNATURE_PRESETS } from '../src/constants/presets';
 import { getCampaignStatus } from '../src/utils/campaignStatus';
-import { generateEmailHTML } from '../src/utils/htmlGenerator';
+import { generateEmailHTML, getSocialIconDataUrl } from '../src/utils/htmlGenerator';
 import { getQrRawContent } from '../src/utils/qrGenerator';
 import { normalizeSignatureConfig } from '../src/utils/signatureConfig';
 import { createSavedRevision, findSavedRevision, normalizeSavedRevisions, prependSavedRevision } from '../src/utils/revisionStore';
@@ -298,4 +298,40 @@ for (const id of ['job-missing', 'logo-ratio', 'qr-size', 'qr-contrast', 'social
   assert.ok(designReviewIds.has(id), `design review must flag ${id}`);
 }
 
-console.log(`Verified ${layouts.length} layouts, the complete RAGT card journey, Studio-to-portal rendering, configuration normalization, styles, revisions, and campaign statuses.`);
+// Verification of social icon colors across all networks
+const testNetworks = ['youtube', 'facebook', 'instagram', 'linkedin', 'website', 'x', 'tiktok'] as const;
+for (const net of testNetworks) {
+  const url = getSocialIconDataUrl(net, '#F7BD00', 'minimal');
+  const decoded = decodeURIComponent(url);
+  assert.ok(decoded.includes('%23F7BD00') || decoded.includes('#F7BD00'), `${net} minimal icon must include the requested color`);
+  assert.ok(!decoded.includes('fill="#000000"') && !decoded.includes('fill="#000"'), `${net} minimal icon must not retain black fill`);
+}
+
+// Verification of mobile phone color configuration
+const customMobileState = {
+  ...DEFAULT_SIGNATURE_STATE,
+  personal: {
+    ...DEFAULT_SIGNATURE_STATE.personal,
+    phone: '05 65 73 41 00',
+    mobile: '06 12 34 56 78'
+  },
+  visibility: {
+    ...DEFAULT_SIGNATURE_STATE.visibility,
+    phone: true,
+    mobile: true
+  },
+  design: {
+    ...DEFAULT_SIGNATURE_STATE.design,
+    colors: {
+      ...DEFAULT_SIGNATURE_STATE.design.colors,
+      phone: '#056573',
+      mobile: '#F7BD00'
+    }
+  }
+};
+const customMobileHtml = generateEmailHTML(customMobileState);
+assert.match(customMobileHtml, /color:#056573[^>]*>05 65 73 41 00/, 'phone number must use design.colors.phone');
+assert.match(customMobileHtml, /color:#F7BD00[^>]*>06 12 34 56 78/, 'mobile phone number must use design.colors.mobile');
+
+console.log(`Verified ${layouts.length} layouts, the complete RAGT card journey, Studio-to-portal rendering, configuration normalization, styles, revisions, campaign statuses, social icon colors, and mobile phone colors.`);
+

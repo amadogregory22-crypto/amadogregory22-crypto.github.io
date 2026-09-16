@@ -72,31 +72,31 @@ export function getSocialIconDataUrl(
     const badgeBg = isWhite ? '#ffffff' : color;
     const glyphColor = isWhite ? contrastDark : '#ffffff';
     const coloredSvg = svg
-      .replace(/fill="currentColor"/g, `fill="${glyphColor}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${glyphColor}"`);
+      .replace(/fill="(currentColor|#000|#000000|black)"/gi, `fill="${glyphColor}"`)
+      .replace(/stroke="(currentColor|#000|#000000|black)"/gi, `stroke="${glyphColor}"`);
     const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
-    wrapper = `<rect x="1" y="1" width="22" height="22" rx="${rx}" fill="${badgeBg}"/><g transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
+    wrapper = `<rect x="1" y="1" width="22" height="22" rx="${rx}" fill="${badgeBg}"/><g fill="${glyphColor}" transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
   } else if (style === 'outline') {
     const coloredSvg = svg
-      .replace(/fill="currentColor"/g, `fill="${color}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${color}"`);
+      .replace(/fill="(currentColor|#000|#000000|black)"/gi, `fill="${color}"`)
+      .replace(/stroke="(currentColor|#000|#000000|black)"/gi, `stroke="${color}"`);
     const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
-    wrapper = `<circle cx="12" cy="12" r="10.5" fill="none" stroke="${color}" stroke-width="1.8"/><g transform="translate(4.5,4.5) scale(0.625)">${pathContent}</g>`;
-  } else if (style === 'minimal' || style === 'mono') {
+    wrapper = `<circle cx="12" cy="12" r="10.5" fill="none" stroke="${color}" stroke-width="1.8"/><g fill="${color}" transform="translate(4.5,4.5) scale(0.625)">${pathContent}</g>`;
+  } else if (style === 'minimal' || style === 'mono' || style === 'filled') {
     const coloredSvg = svg
-      .replace(/fill="currentColor"/g, `fill="${color}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${color}"`);
+      .replace(/fill="(currentColor|#000|#000000|black)"/gi, `fill="${color}"`)
+      .replace(/stroke="(currentColor|#000|#000000|black)"/gi, `stroke="${color}"`);
     const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
-    wrapper = `<g transform="translate(2,2) scale(0.83)">${pathContent}</g>`;
+    wrapper = `<g fill="${color}" transform="translate(2,2) scale(0.83)">${pathContent}</g>`;
   } else {
-    // 'circle' or 'filled' (default)
+    // 'circle' (default)
     const badgeBg = isWhite ? '#ffffff' : color;
     const glyphColor = isWhite ? contrastDark : '#ffffff';
     const coloredSvg = svg
-      .replace(/fill="currentColor"/g, `fill="${glyphColor}"`)
-      .replace(/stroke="currentColor"/g, `stroke="${glyphColor}"`);
+      .replace(/fill="(currentColor|#000|#000000|black)"/gi, `fill="${glyphColor}"`)
+      .replace(/stroke="(currentColor|#000|#000000|black)"/gi, `stroke="${glyphColor}"`);
     const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
-    wrapper = `<circle cx="12" cy="12" r="11.5" fill="${badgeBg}"/><g transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
+    wrapper = `<circle cx="12" cy="12" r="11.5" fill="${badgeBg}"/><g fill="${glyphColor}" transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
   }
 
   const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">${wrapper}</svg>`;
@@ -281,7 +281,7 @@ function buildCoordinatesHtml(state: SignatureState, iconCache: Record<string, s
   // Mobile
   if (visibility.mobile && personal.mobile) {
     const telLink = `tel:${sanitizeTel(personal.mobile)}`;
-    addCoordRow('mobile', labels.mobile, makeLink(telLink, personal.mobile, design.colors.mobile, false, false));
+    addCoordRow('mobile', labels.mobile, makeLink(telLink, personal.mobile, design.colors.mobile || design.colors.phone || design.colors.text, false, false));
   }
 
   // Standard or Direct extra

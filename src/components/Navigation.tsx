@@ -37,7 +37,7 @@ export const Navigation: React.FC = () => {
     },
     {
       id: 'contact',
-      label: 'Renseigner mes coordonnées',
+      label: 'Coordonnées',
       sublabel: 'Contact, réseaux et QR',
       icon: UserCheck
     },
@@ -49,7 +49,7 @@ export const Navigation: React.FC = () => {
     },
     {
       id: 'style',
-      label: 'Mettre en forme',
+      label: 'Mise en forme',
       sublabel: 'Couleurs, polices et bordures',
       icon: Palette
     },
@@ -62,7 +62,7 @@ export const Navigation: React.FC = () => {
     },
     {
       id: 'versions',
-      label: 'Versions & sauvegardes',
+      label: 'Versions & Sauvegardes',
       sublabel: 'Presets, révisions et historique',
       icon: ArchiveRestore
     }

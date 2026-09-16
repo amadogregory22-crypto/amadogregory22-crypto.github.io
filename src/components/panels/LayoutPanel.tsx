@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { BlockOrderKey, LayoutPreset } from '../../types/signature';
-import { ISO_9001_LOGO_SVG, HVE_LOGO_SVG } from '../../constants/logos';
 import { DesktopLayoutMiniature, MobileLayoutMiniature } from '../layout/LayoutMiniatures';
 import {
   Columns,
@@ -18,23 +17,18 @@ import {
   Move,
   Monitor,
   Smartphone,
-  Award,
-  ShieldCheck,
-  Leaf,
-  Check,
-  ExternalLink
+  Check
 } from 'lucide-react';
 
 type ReorderableBlockKey = Exclude<BlockOrderKey, 'job' | 'company'>;
 
 export const LayoutPanel: React.FC = () => {
-  const { state, updateState, showToast, setActiveTab } = useSignature();
-  const { layout, visibility, logos } = state;
+  const { state, updateState, showToast } = useSignature();
+  const { layout, visibility } = state;
   const p = layout.dimensions;
   const sep = layout.separator;
   
   const [activeSubTab, setActiveSubTab] = useState<'structure' | 'dimensions' | 'alignments'>('structure');
-  const [wireframeMode, setWireframeMode] = useState(false);
 
   const handlePresetSelect = (preset: LayoutPreset) => {
     updateState((prev) => ({
@@ -45,95 +39,6 @@ export const LayoutPanel: React.FC = () => {
       }
     }));
   };
-
-  const handleToggleBadge = (enabled: boolean) => {
-    updateState((prev) => {
-      const currentUrl = prev.logos.secondary?.url;
-      const fallbackSecondary = !currentUrl ? {
-        id: 'iso-9001',
-        label: 'AFAQ ISO 9001 Qualité Certifiée',
-        url: ISO_9001_LOGO_SVG,
-        alt: 'AFAQ ISO 9001 Qualité Certifiée RAGT',
-        width: 96,
-        height: 48,
-        keepRatio: true,
-        linkUrl: 'https://www.ragt-semences.fr',
-        align: 'left' as const,
-        visible: true
-      } : prev.logos.secondary;
-
-      return {
-        ...prev,
-        visibility: {
-          ...prev.visibility,
-          secondaryLogo: enabled
-        },
-        logos: {
-          ...prev.logos,
-          secondary: {
-            ...fallbackSecondary,
-            visible: enabled
-          }
-        }
-      };
-    });
-    showToast(enabled ? 'Badge officiel activé sur la signature' : 'Badge masqué de la signature', 'info');
-  };
-
-  const handleSelectBadgeType = (type: 'certified' | 'sustainable') => {
-    if (type === 'certified') {
-      updateState((prev) => ({
-        ...prev,
-        visibility: {
-          ...prev.visibility,
-          secondaryLogo: true
-        },
-        logos: {
-          ...prev.logos,
-          secondary: {
-            id: 'iso-9001',
-            label: 'AFAQ ISO 9001 Qualité Certifiée',
-            url: ISO_9001_LOGO_SVG,
-            alt: 'AFAQ ISO 9001 Qualité Certifiée RAGT',
-            width: 96,
-            height: 48,
-            keepRatio: true,
-            linkUrl: 'https://www.ragt-semences.fr',
-            align: 'left',
-            visible: true
-          }
-        }
-      }));
-      showToast('Badge « Certifié Qualité (ISO 9001) » appliqué', 'success');
-    } else {
-      updateState((prev) => ({
-        ...prev,
-        visibility: {
-          ...prev.visibility,
-          secondaryLogo: true
-        },
-        logos: {
-          ...prev.logos,
-          secondary: {
-            id: 'hve-sustainable',
-            label: 'Certification HVE - Agriculture Durable',
-            url: HVE_LOGO_SVG,
-            alt: 'Haute Valeur Environnementale (HVE) RAGT',
-            width: 96,
-            height: 48,
-            keepRatio: true,
-            linkUrl: 'https://www.ragt-semences.fr',
-            align: 'left',
-            visible: true
-          }
-        }
-      }));
-      showToast('Badge « Développement Durable (HVE) » appliqué', 'success');
-    }
-  };
-
-  const isCurrentCertified = logos.secondary?.url === ISO_9001_LOGO_SVG || (logos.secondary?.alt && logos.secondary.alt.includes('ISO'));
-  const isCurrentSustainable = logos.secondary?.url === HVE_LOGO_SVG || (logos.secondary?.alt && (logos.secondary.alt.includes('HVE') || logos.secondary.alt.includes('Durable')));
 
   const handleDimensionChange = (key: keyof typeof p, value: number) => {
     updateState((prev) => ({
@@ -217,55 +122,6 @@ export const LayoutPanel: React.FC = () => {
       {/* 8.1 Presets Modèle A à I */}
       {activeSubTab === 'structure' && (
       <div className="space-y-4">
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
-          <div><span className="block text-xs font-bold text-slate-800 dark:text-slate-100">Comparer les wireframes</span><span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">Masque la charte pour évaluer uniquement l’équilibre des zones.</span></div>
-          <button type="button" aria-pressed={wireframeMode} onClick={() => setWireframeMode((value) => !value)} className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-colors ${wireframeMode ? 'border-[#0C3866] bg-white text-[#0C3866] dark:border-amber-400 dark:bg-slate-900 dark:text-amber-400' : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>{wireframeMode ? 'Wireframe actif' : 'Voir en noir & blanc'}</button>
-        </div>
-        {/* Quick Toggle: Corporate Badges 'Certified' / 'Sustainable' */}
-        <div className="bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-950/60 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
-                <Award className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 block">
-                  Badges RAGT Corporate
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                  {visibility.secondaryLogo ? 'Badge actif sur la signature' : 'Badge masqué'}
-                </span>
-              </div>
-            </div>
-
-            {/* Toggle Switch */}
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={!!visibility.secondaryLogo}
-                onChange={(e) => handleToggleBadge(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-10 h-5 bg-slate-200 dark:bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2.5px] after:left-[2.5px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#0C3866]"></div>
-            </label>
-          </div>
-
-          {visibility.secondaryLogo && (
-            <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-600 dark:text-slate-300 truncate pr-2">
-                Badge : <strong className="text-[#0C3866] dark:text-amber-400">{isCurrentSustainable ? 'Développement Durable (HVE)' : 'Certifié Qualité (ISO 9001)'}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => setActiveTab('media', 'badges')}
-                className="text-[11px] text-[#0C3866] dark:text-amber-400 font-semibold hover:underline shrink-0"
-              >
-                Gérer dans Visuels &rarr;
-              </button>
-            </div>
-          )}
-        </div>
-
         {/* Desktop Layouts */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">
@@ -300,7 +156,7 @@ export const LayoutPanel: React.FC = () => {
                   }`}
                 >
                   {/* Miniature diagram illustrating spatial positioning */}
-                  <div className={wireframeMode ? 'grayscale saturate-0 contrast-125' : ''}><DesktopLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} /></div>
+                  <DesktopLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} />
 
                   <div className="mt-2.5 flex items-start justify-between gap-1.5 w-full">
                     <div className="min-w-0 flex-1">
@@ -377,7 +233,7 @@ export const LayoutPanel: React.FC = () => {
                 >
                   {/* Phone Silhouette Miniature - Strictly proportional, non-deformed */}
                   <div className="py-1">
-                    <div className={wireframeMode ? 'grayscale saturate-0 contrast-125' : ''}><MobileLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} /></div>
+                    <MobileLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} />
                   </div>
 
                   {/* Details */}

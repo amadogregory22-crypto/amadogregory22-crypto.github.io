@@ -205,21 +205,26 @@ export interface QRCodeConfig {
   visible: boolean;
 }
 
+export type SocialIconStyle = 'circle' | 'square' | 'minimal' | 'outline' | 'filled' | 'rounded' | 'mono';
+
 export interface SocialNetwork {
   id: 'linkedin' | 'facebook' | 'instagram' | 'youtube' | 'x' | 'tiktok' | 'website' | 'web' | 'custom';
   name: string;
   url: string;
   active: boolean;
-  iconStyle: 'circle' | 'square' | 'rounded' | 'mono';
+  iconStyle: SocialIconStyle;
   color: string;
   customIcon?: string;
 }
 
 export interface SocialConfig {
   style: 'icons-only' | 'icons-text' | 'text-only';
+  iconStyle?: SocialIconStyle;
   iconSize: number;
   spacing: number;
   align: 'left' | 'center' | 'right';
+  color?: string;
+  useBrandColors?: boolean;
   items: SocialNetwork[];
 }
 

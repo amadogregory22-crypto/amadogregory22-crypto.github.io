@@ -58,25 +58,48 @@ export function appendUtmParams(url: string, utm?: SignatureState['utm']): strin
 export function getSocialIconDataUrl(
   networkId: string,
   color: string,
-  style: 'circle' | 'square' | 'rounded' | 'mono' = 'circle',
+  style: 'circle' | 'square' | 'rounded' | 'mono' | 'minimal' | 'outline' | 'filled' = 'circle',
   bgColor: string = '#FDC420'
 ): string {
   const svg = SOCIAL_ICONS_SVG[networkId] || SOCIAL_ICONS_SVG.custom;
-  
-  if (style === 'circle') {
-    // White circular badge with cut-out icon in yellow/navy
-    const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === '%23ffffff' || color.toLowerCase() === 'white';
-    const discBg = isWhite ? '#ffffff' : color;
-    const glyphColor = isWhite ? (bgColor || '#FDC420') : '#ffffff';
-    const coloredSvg = svg.replace(/fill="currentColor"/g, `fill="${glyphColor}"`);
+  const isWhite = color.toLowerCase() === '#ffffff' || color.toLowerCase() === '%23ffffff' || color.toLowerCase() === 'white';
+  const contrastDark = (bgColor && bgColor.toLowerCase() !== '#ffffff' && bgColor.toLowerCase() !== 'white') ? bgColor : '#0C3866';
+
+  let wrapper = '';
+
+  if (style === 'square' || style === 'rounded') {
+    const rx = style === 'rounded' ? 6 : 4;
+    const badgeBg = isWhite ? '#ffffff' : color;
+    const glyphColor = isWhite ? contrastDark : '#ffffff';
+    const coloredSvg = svg
+      .replace(/fill="currentColor"/g, `fill="${glyphColor}"`)
+      .replace(/stroke="currentColor"/g, `stroke="${glyphColor}"`);
     const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
-    const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11.5" fill="${discBg}"/><g transform="translate(4,4) scale(0.66)">${pathContent}</g></svg>`;
-    return `data:image/svg+xml;utf8,${encodeURIComponent(fullSvg)}`;
+    wrapper = `<rect x="1" y="1" width="22" height="22" rx="${rx}" fill="${badgeBg}"/><g transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
+  } else if (style === 'outline') {
+    const coloredSvg = svg
+      .replace(/fill="currentColor"/g, `fill="${color}"`)
+      .replace(/stroke="currentColor"/g, `stroke="${color}"`);
+    const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
+    wrapper = `<circle cx="12" cy="12" r="10.5" fill="none" stroke="${color}" stroke-width="1.8"/><g transform="translate(4.5,4.5) scale(0.625)">${pathContent}</g>`;
+  } else if (style === 'minimal' || style === 'mono') {
+    const coloredSvg = svg
+      .replace(/fill="currentColor"/g, `fill="${color}"`)
+      .replace(/stroke="currentColor"/g, `stroke="${color}"`);
+    const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
+    wrapper = `<g transform="translate(2,2) scale(0.83)">${pathContent}</g>`;
+  } else {
+    // 'circle' or 'filled' (default)
+    const badgeBg = isWhite ? '#ffffff' : color;
+    const glyphColor = isWhite ? contrastDark : '#ffffff';
+    const coloredSvg = svg
+      .replace(/fill="currentColor"/g, `fill="${glyphColor}"`)
+      .replace(/stroke="currentColor"/g, `stroke="${glyphColor}"`);
+    const pathContent = coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '');
+    wrapper = `<circle cx="12" cy="12" r="11.5" fill="${badgeBg}"/><g transform="translate(4,4) scale(0.66)">${pathContent}</g>`;
   }
-  
-  // Minimal / default
-  const coloredSvg = svg.replace(/fill="currentColor"/g, `fill="${color}"`);
-  const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24">${coloredSvg.replace(/<svg[^>]*>|<\/svg>/g, '')}</svg>`;
+
+  const fullSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">${wrapper}</svg>`;
   return `data:image/svg+xml;utf8,${encodeURIComponent(fullSvg)}`;
 }
 
@@ -124,7 +147,12 @@ export function getContactIconDataUrl(
       wrapper = `<circle cx="12" cy="12" r="12" fill="${encColor}"/><g transform="translate(4,4) scale(0.66)" stroke="%23ffffff">${path}</g>`;
     }
   } else if (style === 'square') {
-    wrapper = `<rect x="0" y="0" width="24" height="24" rx="4" fill="${encColor}"/><g transform="translate(4,4) scale(0.66)" stroke="%23ffffff">${path}</g>`;
+    if (isWhite) {
+      const glyphStroke = encodeURIComponent(bgColor || '#FDC420');
+      wrapper = `<rect x="0" y="0" width="24" height="24" rx="4" fill="%23ffffff"/><g transform="translate(4,4) scale(0.66)" stroke="${glyphStroke}">${path}</g>`;
+    } else {
+      wrapper = `<rect x="0" y="0" width="24" height="24" rx="4" fill="${encColor}"/><g transform="translate(4,4) scale(0.66)" stroke="%23ffffff">${path}</g>`;
+    }
   } else if (style === 'filled') {
     wrapper = `<g fill="${encColor}" stroke="none">${path}</g>`;
   } else {
@@ -311,7 +339,9 @@ function buildSocialsHtml(state: SignatureState, iconCache: Record<string, strin
 
   const links = activeItems.map((item) => {
     const targetUrl = appendUtmParams(sanitizeUrl(item.url), state.utm);
-    const iconDataUrl = iconCache[`social_${item.id}`] || getSocialIconDataUrl(item.id, item.color || '#0C3866', item.iconStyle || 'circle', state.design.background.color || '#FDC420');
+    const effectiveStyle = item.iconStyle || social.iconStyle || 'circle';
+    const effectiveColor = social.useBrandColors ? (item.color || '#0C3866') : (social.color || item.color || design.colors.icons || '#0C3866');
+    const iconDataUrl = iconCache[`social_${item.id}`] || getSocialIconDataUrl(item.id, effectiveColor, effectiveStyle, state.design.background.color || '#FDC420');
     const displayLabel = social.style === 'icons-text' ? ` <span style="font-size:11px; font-family:${design.typography.baseFont}; color:${design.colors.muted}; vertical-align:middle; padding-left:3px;">${escapeHtml(item.name)}</span>` : '';
 
     if (layoutMode === 'vertical') {
@@ -543,8 +573,9 @@ export async function generateAllIconPngs(state: SignatureState): Promise<Record
 
   const activeSocials = social.items.filter(i => i.active && i.url);
   for (const s of activeSocials) {
-    const color = s.color || '#0C3866';
-    const svgUrl = getSocialIconDataUrl(s.id, color, s.iconStyle || 'circle', design.background.color || '#FDC420');
+    const effectiveStyle = s.iconStyle || social.iconStyle || 'circle';
+    const effectiveColor = social.useBrandColors ? (s.color || '#0C3866') : (social.color || s.color || design.colors.icons || '#0C3866');
+    const svgUrl = getSocialIconDataUrl(s.id, effectiveColor, effectiveStyle, design.background.color || '#FDC420');
     try {
       cache[`social_${s.id}`] = await svgDataUrlToPng(svgUrl, social.iconSize * 2, social.iconSize * 2);
     } catch (e) {

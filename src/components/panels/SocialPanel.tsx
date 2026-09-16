@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSignature } from '../../context/SignatureContext';
-import { SocialNetwork, SocialConfig } from '../../types/signature';
+import { SocialNetwork, SocialConfig, SocialIconStyle } from '../../types/signature';
 import { getSocialIconDataUrl } from '../../utils/htmlGenerator';
 import { UTMConfig } from '../../types/signature';
 import {
@@ -10,7 +10,8 @@ import {
   Link as LinkIcon,
   Sliders,
   ExternalLink,
-  Activity
+  Activity,
+  Sparkles
 } from 'lucide-react';
 
 export const SocialPanel: React.FC = () => {
@@ -85,6 +86,42 @@ export const SocialPanel: React.FC = () => {
           </button>
         </div>
 
+        {/* Forme des pictogrammes */}
+        <div>
+          <label className="text-slate-600 font-semibold block mb-1">Forme des pictogrammes :</label>
+          <div className="grid grid-cols-5 gap-1.5">
+            {[
+              { id: 'circle', label: 'Rond' },
+              { id: 'square', label: 'Carré' },
+              { id: 'outline', label: 'Contour' },
+              { id: 'minimal', label: 'Minimal' },
+              { id: 'filled', label: 'Plein' }
+            ].map((st) => (
+              <button
+                key={st.id}
+                type="button"
+                onClick={() => {
+                  updateState((prev) => ({
+                    ...prev,
+                    social: {
+                      ...prev.social,
+                      iconStyle: st.id as any,
+                      items: prev.social.items.map((item) => ({ ...item, iconStyle: st.id as any }))
+                    }
+                  }));
+                }}
+                className={`py-1.5 px-1 rounded-lg border text-center text-xs font-semibold ${
+                  (social.iconStyle || 'circle') === st.id
+                    ? 'bg-[#0C3866] text-white font-bold'
+                    : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                {st.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* 18.2 Style des labels */}
         <div>
           <label className="text-slate-600 font-semibold block mb-1">Format d'affichage :</label>
@@ -144,8 +181,8 @@ export const SocialPanel: React.FC = () => {
             </div>
             <input
               type="range"
-              min="14"
-              max="24"
+              min="12"
+              max="28"
               step="1"
               value={social.iconSize}
               onChange={(e) => updateSocialConfig({ iconSize: Number(e.target.value) })}
@@ -161,13 +198,127 @@ export const SocialPanel: React.FC = () => {
             <input
               type="range"
               min="4"
-              max="16"
+              max="24"
               step="1"
               value={social.spacing}
               onChange={(e) => updateSocialConfig({ spacing: Number(e.target.value) })}
               className="w-full accent-[#0C3866]"
             />
           </div>
+        </div>
+
+        {/* Couleurs des pictogrammes */}
+        <div className="pt-2 border-t border-slate-100">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-slate-600 font-semibold">Mode couleur :</label>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => {
+                  updateState((prev) => ({
+                    ...prev,
+                    social: {
+                      ...prev.social,
+                      useBrandColors: false,
+                      items: prev.social.items.map((item) => ({ ...item, color: prev.social.color || '#0C3866' }))
+                    }
+                  }));
+                }}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold border ${
+                  !social.useBrandColors
+                    ? 'bg-[#0C3866] text-white border-[#0C3866]'
+                    : 'bg-slate-50 text-slate-600 border-slate-200'
+                }`}
+              >
+                Unifiée
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const BRAND_COLORS: Record<string, string> = {
+                    linkedin: '#0077B5',
+                    facebook: '#1877F2',
+                    instagram: '#E4405F',
+                    youtube: '#CD201F',
+                    x: '#000000',
+                    tiktok: '#010101',
+                    website: '#0C3866',
+                    web: '#0C3866',
+                    custom: '#0C3866'
+                  };
+                  updateState((prev) => ({
+                    ...prev,
+                    social: {
+                      ...prev.social,
+                      useBrandColors: true,
+                      items: prev.social.items.map((item) => ({
+                        ...item,
+                        color: BRAND_COLORS[item.id] || item.color || '#0C3866'
+                      }))
+                    }
+                  }));
+                }}
+                className={`px-2 py-0.5 rounded text-[11px] font-semibold border flex items-center gap-1 ${
+                  social.useBrandColors
+                    ? 'bg-[#0C3866] text-white border-[#0C3866]'
+                    : 'bg-slate-50 text-slate-600 border-slate-200'
+                }`}
+              >
+                <Sparkles className="w-3 h-3 text-[#F7BD00]" />
+                Marques
+              </button>
+            </div>
+          </div>
+
+          {!social.useBrandColors && (
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-2">
+                <input
+                  type="color"
+                  value={social.color || '#0C3866'}
+                  onChange={(e) => {
+                    const c = e.target.value;
+                    updateState((prev) => ({
+                      ...prev,
+                      social: {
+                        ...prev.social,
+                        color: c,
+                        items: prev.social.items.map((item) => ({ ...item, color: c }))
+                      }
+                    }));
+                  }}
+                  className="w-7 h-7 rounded border cursor-pointer"
+                />
+                <div className="flex flex-wrap gap-1">
+                  {[
+                    { label: 'Bleu RAGT', value: '#0C3866' },
+                    { label: 'Or RAGT', value: '#F7BD00' },
+                    { label: 'Blanc', value: '#FFFFFF' },
+                    { label: 'Ardoise', value: '#334155' }
+                  ].map((qc) => (
+                    <button
+                      key={qc.value}
+                      type="button"
+                      onClick={() => {
+                        updateState((prev) => ({
+                          ...prev,
+                          social: {
+                            ...prev.social,
+                            color: qc.value,
+                            items: prev.social.items.map((item) => ({ ...item, color: qc.value }))
+                          }
+                        }));
+                      }}
+                      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded border border-slate-200 bg-slate-50 hover:bg-slate-100"
+                    >
+                      <span className="w-2.5 h-2.5 rounded-full border border-black/10" style={{ backgroundColor: qc.value }} />
+                      <span>{qc.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -177,7 +328,9 @@ export const SocialPanel: React.FC = () => {
           <label className="text-xs font-semibold text-slate-700 block mb-2">Aperçu en direct :</label>
           <div className="flex flex-wrap items-center bg-white p-3 rounded-lg border border-slate-100 shadow-sm" style={{ gap: `${social.spacing}px` }}>
             {activeSocials.map(item => {
-              const iconDataUrl = getSocialIconDataUrl(item.id, design.colors.icons || item.color || '#0C3866');
+              const itemColor = social.useBrandColors ? (item.color || '#0C3866') : (social.color || item.color || '#0C3866');
+              const itemStyle = item.iconStyle || social.iconStyle || 'circle';
+              const iconDataUrl = getSocialIconDataUrl(item.id, itemColor, itemStyle, '#FDC420');
               return (
                 <div key={item.id} className="flex items-center gap-1">
                   <img src={iconDataUrl} alt={item.name} style={{ width: social.iconSize, height: social.iconSize }} />

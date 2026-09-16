@@ -268,6 +268,9 @@ export const DEFAULT_SIGNATURE_STATE: SignatureState = {
   },
   social: {
     style: 'icons-only',
+    iconStyle: 'circle',
+    color: '#FFFFFF',
+    useBrandColors: false,
     iconSize: 16,
     spacing: 8,
     align: 'left',

@@ -55,7 +55,7 @@ export const MediaMasterPanel: React.FC = () => {
         <div
           role="tablist"
           aria-label="Rubriques des visuels"
-          className="mt-3 grid grid-cols-4 gap-1 rounded-lg bg-slate-100 p-1 dark:bg-slate-800"
+          className="mt-3 grid grid-cols-2 gap-1.5 rounded-lg bg-slate-100 p-1.5 dark:bg-slate-800"
         >
           {tabs.map(({ id, label, icon: Icon }) => (
             <button
@@ -64,7 +64,7 @@ export const MediaMasterPanel: React.FC = () => {
               aria-selected={activeTab === id}
               type="button"
               onClick={() => handleTabChange(id)}
-              className={`flex min-h-9 items-center justify-center gap-1 rounded-md px-1 text-center text-[10px] font-semibold transition-colors ${
+              className={`flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-center text-xs font-semibold transition-colors ${
                 activeTab === id
                   ? 'bg-white text-[#0C3866] shadow-sm dark:bg-slate-700 dark:text-amber-300 font-bold'
                   : 'text-slate-600 hover:bg-white/70 dark:text-slate-300 dark:hover:bg-slate-700/70'

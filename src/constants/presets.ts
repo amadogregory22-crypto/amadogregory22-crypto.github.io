@@ -620,6 +620,137 @@ export const SIGNATURE_PRESETS: SignaturePresetDefinition[] = [
     })
   },
   {
+    id: 'carte-visite-ragt',
+    name: 'Carte de visite RAGT',
+    category: 'Institutionnel',
+    description: 'Carte claire et compacte : logo, coordonnées, QR vCard et réseaux RAGT dans un format de prise de contact.',
+    apply: (base) => ({
+      ...base,
+      presetName: 'Carte de visite RAGT',
+      layout: {
+        ...base.layout,
+        preset: 'layout-e',
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 520,
+          logoColumnWidth: 110,
+          qrSize: 84,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: 'vertical', color: '#F7BD00', thickness: 3 },
+        alignV: 'middle'
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: '#0C3866',
+          text: '#0C3866',
+          firstName: '#0C3866',
+          lastName: '#0C3866',
+          jobTitle: '#285D63',
+          phone: '#0C3866',
+          mobile: '#0C3866',
+          email: '#0C3866',
+          address: '#0C3866',
+          icons: '#0C3866',
+          background: '#FFFFFF'
+        },
+        background: { ...base.design.background, type: 'color', color: '#FFFFFF', imageUrl: '', pattern: 'none', opacity: 1 },
+        border: { ...base.design.border, type: 'all', color: '#E2E8F0', thickness: 1, style: 'solid', radius: 10 }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          id: 'ragt-business-card-logo',
+          label: 'Logo officiel RAGT Semences',
+          url: '/assets/logos/logo_ragt.png',
+          alt: 'Logo RAGT Semences',
+          width: 88,
+          height: 88,
+          visible: true
+        }
+      },
+      iconSettings: { ...base.iconSettings, style: 'circle', size: 14, color: '#0C3866', spacing: 6 },
+      qr: { ...base.qr, type: 'vcard', position: 'right', size: 84, fgColor: '#0C3866', bgColor: '#FFFFFF', visible: true },
+      social: { ...base.social, style: 'icons-only', iconSize: 15, spacing: 6, align: 'left' },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        company: true,
+        phone: true,
+        mobile: true,
+        email: true,
+        address: true,
+        website: false,
+        qr: true,
+        socials: true,
+        banner: false,
+        slogan: false
+      }
+    })
+  },
+  {
+    id: 'premium-ragt',
+    name: 'Premium RAGT',
+    category: 'Premium',
+    description: 'Carte de contact haut de gamme : composition trois colonnes, QR vCard, filet doré et cadre bleu RAGT.',
+    apply: (base) => ({
+      ...base,
+      presetName: 'Premium RAGT',
+      layout: {
+        ...base.layout,
+        preset: 'layout-e',
+        dimensions: { ...base.layout.dimensions, totalWidth: 540, logoColumnWidth: 120, qrSize: 86, innerSpacing: 16 },
+        separator: { ...base.layout.separator, type: 'vertical', color: '#F7BD00', thickness: 3, style: 'solid', margin: 12 },
+        alignV: 'middle'
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: '#0C3866',
+          secondary: '#F7BD00',
+          text: '#2D3748',
+          firstName: '#0C3866',
+          lastName: '#0C3866',
+          jobTitle: '#285D63',
+          phone: '#2D3748',
+          mobile: '#2D3748',
+          email: '#0C3866',
+          website: '#0C3866',
+          address: '#718096',
+          icons: '#0C3866',
+          background: '#FFFFFF'
+        },
+        background: { ...base.design.background, type: 'color', color: '#FFFFFF', imageUrl: '', pattern: 'none', opacity: 1 },
+        border: { ...base.design.border, type: 'all', color: '#0C3866', thickness: 2, style: 'solid', radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontSize: 17, fontWeight: 'bold', color: '#0C3866' },
+          jobTitle: { ...base.design.typography.jobTitle, fontSize: 12, fontWeight: '500', fontStyle: 'normal', color: '#285D63' },
+          coordinates: { ...base.design.typography.coordinates, fontSize: 11, color: '#2D3748' }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: { ...base.logos.primary, width: 105, height: 33, keepRatio: true, visible: true },
+        secondary: { ...base.logos.secondary, visible: true }
+      },
+      iconSettings: { ...base.iconSettings, style: 'minimal', size: 13, color: '#0C3866', spacing: 6 },
+      qr: { ...base.qr, type: 'vcard', position: 'right', size: 86, fgColor: '#0C3866', bgColor: '#FFFFFF', errorCorrectionLevel: 'M', visible: true },
+      social: { ...base.social, style: 'icons-only', iconSize: 15, spacing: 6, align: 'left' },
+      slogan: { ...base.slogan, enabled: true, text: 'Des semences pour demain', fontSize: 11, color: '#0C3866', align: 'left' },
+      visibility: { ...base.visibility, logo: true, secondaryLogo: true, company: true, phone: true, mobile: true, email: true, address: true, website: true, qr: true, socials: true, banner: false, slogan: true }
+    })
+  },
+  {
     id: 'commercial',
     name: 'Commercial & Terroir',
     category: 'Métier',

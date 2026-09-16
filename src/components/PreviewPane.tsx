@@ -102,7 +102,7 @@ export const PreviewPane: React.FC = () => {
       onDrop={handleDrop}
     >
       {/* Top Preview Control Bar */}
-      <div className="h-12 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-2xs z-10 shrink-0">
+      <div className="h-auto min-h-12 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-2 py-1.5 sm:px-4 flex items-center justify-between gap-1 shadow-2xs z-10 shrink-0">
         {/* Environment Modes */}
         <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs">
           <button
@@ -116,7 +116,7 @@ export const PreviewPane: React.FC = () => {
             title="Aperçu sur fond clair standard"
           >
             <Sun className="w-3.5 h-3.5 text-amber-500" />
-            <span>Clair</span>
+            <span className="hidden sm:inline">Clair</span>
           </button>
 
           <button
@@ -130,7 +130,7 @@ export const PreviewPane: React.FC = () => {
             title="Aperçu dans un client de messagerie en mode sombre"
           >
             <Moon className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Sombre</span>
+            <span className="hidden sm:inline">Sombre</span>
           </button>
 
           <button
@@ -144,7 +144,7 @@ export const PreviewPane: React.FC = () => {
             title="Simulation réaliste de fenêtre de messagerie Outlook"
           >
             <Mail className="w-3.5 h-3.5 text-[#0C3866]" />
-            <span>Outlook</span>
+            <span className="hidden sm:inline">Outlook</span>
           </button>
 
           <button
@@ -158,7 +158,7 @@ export const PreviewPane: React.FC = () => {
             title="Simulation sur smartphone (largeur 375px)"
           >
             <Smartphone className="w-3.5 h-3.5 text-slate-700" />
-            <span>Mobile</span>
+            <span className="hidden sm:inline">Mobile</span>
           </button>
         </div>
 
@@ -370,7 +370,7 @@ export const PreviewPane: React.FC = () => {
               <EyeOff className="w-3 h-3" /> Simulation sans images active
             </span>
           )}
-          <span>Outlook Word Engine Compatible</span>
+          <span>Structure HTML contrôlée automatiquement</span>
         </div>
       </div>
     </div>

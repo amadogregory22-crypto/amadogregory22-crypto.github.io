@@ -12,9 +12,9 @@ export const StyleMasterPanel: React.FC = () => {
             <Palette className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">4. Style & Charte Graphique</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Mise en forme</h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Palette officielle RAGT, contraste WCAG, typographies certifiées & bordures
+              Couleurs, lisibilité, typographies et bordures de la signature.
             </p>
           </div>
         </div>

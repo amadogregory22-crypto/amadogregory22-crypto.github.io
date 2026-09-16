@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { SignatureState } from '../../types/signature';
+import { createSignatureExport, normalizeSignatureConfig } from '../../utils/signatureConfig';
+import { analyzeCardImage, DetectedCardField } from '../../utils/cardOcr';
+import { composePreconfiguredCard } from '../../utils/composePreconfiguredCard';
 import { COMMUNICATION_SIGNATURES, CommunicationSignatureGraphic } from '../../constants/logos';
 import {
   BookmarkPlus,
@@ -23,6 +26,7 @@ import {
   Palette,
   Copy,
   ExternalLink
+  ,ScanText
 } from 'lucide-react';
 
 interface SavedPreset {
@@ -36,62 +40,44 @@ interface SavedPreset {
 const PRESETS_STORAGE_KEY = 'ragt_signature_presets';
 const LEGACY_STORAGE_KEY = 'ragt_saved_templates';
 
-export const TemplatesPanel: React.FC = () => {
-  const { state, updateState, showToast, history, revertToHistoryIndex } = useSignature();
+export const TemplatesPanel: React.FC<{ initialTab?: 'presets' | 'com_signatures' | 'history'; storageOnly?: boolean; cardsOnly?: boolean }> = ({ initialTab = 'presets', storageOnly = false, cardsOnly = false }) => {
+  const {
+    state,
+    updateState,
+    showToast,
+    history,
+    revertToHistoryIndex,
+    savedRevisions,
+    restoreRevision,
+    deleteRevision
+  } = useSignature();
   const [presets, setPresets] = useState<SavedPreset[]>([]);
   const [presetName, setPresetName] = useState('');
   const [presetCategory, setPresetCategory] = useState('Général');
-  const [activeTab, setActiveTab] = useState<'presets' | 'com_signatures' | 'history'>('presets');
-  const [selectedCardPhoto, setSelectedCardPhoto] = useState<string>('/assets/bannieres/photo_carte_ragt.png');
+  const [activeTab, setActiveTab] = useState<'presets' | 'com_signatures' | 'history'>(initialTab);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const cardPhotoInputRef = useRef<HTMLInputElement>(null);
+  const cardImageInputRef = useRef<HTMLInputElement>(null);
+  const [ocrStatus, setOcrStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
+  const [ocrProgress, setOcrProgress] = useState(0);
+  const [detectedFields, setDetectedFields] = useState<DetectedCardField[]>([]);
+  const [applyingCardId, setApplyingCardId] = useState<string | null>(null);
 
-  const CARD_PHOTOS = [
-    {
-      id: 'carte-ragt-agronomes',
-      name: 'Photo originale de la Carte',
-      desc: 'Agronomes RAGT devant le tracteur vert',
-      url: '/assets/bannieres/photo_carte_ragt.png',
-      badge: 'Officiel'
-    },
-    {
-      id: 'carte-ragt-bags',
-      name: 'Sacs de Semences RAGT',
-      desc: 'Emballages officiels certifiés',
-      url: '/assets/bannieres/bags_signature.png',
-      badge: 'Institutionnel'
-    },
-    {
-      id: 'carte-ragt-field',
-      name: 'Champs & Cultures RAGT',
-      desc: 'Parcelles et recherche variétale',
-      url: '/assets/bannieres/image_signature.png',
-      badge: 'Génétique'
-    }
-  ];
+  useEffect(() => {
+    setActiveTab(initialTab);
+  }, [initialTab]);
 
-  const handleUploadCardPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const url = event.target?.result as string;
-      if (url) {
-        setSelectedCardPhoto(url);
-        showToast('Votre photo a été chargée pour l’emplacement de la carte !', 'success');
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleApplyComSignature = (sig: CommunicationSignatureGraphic) => {
-    const photoToUse = selectedCardPhoto || '/assets/bannieres/photo_carte_ragt.png';
-    updateState((prev) => ({
+  const handleApplyComSignature = async (sig: CommunicationSignatureGraphic) => {
+    setApplyingCardId(sig.id);
+    try {
+      const cardImage = await composePreconfiguredCard(state, sig.url);
+      updateState((prev) => ({
       ...prev,
       presetName: `${sig.name} (avec ma signature)`,
+      renderMode: 'flattened-card',
+      cardTemplateUrl: sig.url,
       layout: {
         ...prev.layout,
-        preset: 'layout-i', // Structure carte corporate 3 colonnes : Logo | Photo + Coordonnées | Réseaux
+        preset: 'layout-d',
         alignH: 'left',
         alignV: 'middle',
         dimensions: {
@@ -114,7 +100,7 @@ export const TemplatesPanel: React.FC = () => {
         background: {
           ...prev.design.background,
           type: 'color',
-          color: '#FDC420', // Fond jaune officiel corporate RAGT
+          color: '#FFFFFF',
           borderRadius: 8,
           padding: 14
         },
@@ -145,35 +131,68 @@ export const TemplatesPanel: React.FC = () => {
       banner: {
         ...prev.banner,
         enabled: true,
-        imageUrl: photoToUse,
-        altText: 'Photo carte RAGT',
-        position: 'center', // Positionné au-dessus des coordonnées
-        width: 175,
-        height: 84,
+        title: sig.name,
+        imageUrl: cardImage,
+        altText: `Carte personnalisée ${sig.name}`,
+        linkUrl: '',
+        campaignName: '',
+        startDate: '',
+        endDate: '',
+        position: 'top',
+        width: 540,
+        height: 270,
         marginTop: 0,
         marginBottom: 10
       },
-      social: {
-        ...prev.social,
-        style: 'icons-only',
-        iconSize: 20,
-        align: 'center',
-        items: prev.social.items.map((item) => ({ ...item, iconStyle: 'circle', color: '#ffffff' }))
-      },
       visibility: {
         ...prev.visibility,
-        logo: true,
+        logo: false,
         banner: true,
-        socials: true,
-        phone: true,
-        mobile: true,
-        email: true,
-        address: true,
-        website: true,
-        jobTitle: true
+        socials: false,
+        qr: false,
+        phone: false,
+        mobile: false,
+        email: false,
+        address: false,
+        website: false,
+        jobTitle: false,
+        firstName: false,
+        lastName: false,
+        company: false,
+        slogan: false
       }
-    }));
-    showToast(`Carte appliquée : coordonnées d'exemple remplacées par votre signature !`, 'success');
+      }));
+      showToast(`Carte « ${sig.name} » personnalisée et chargée.`, 'success');
+    } catch {
+      showToast(`Impossible de générer la carte « ${sig.name} ».`, 'error');
+    } finally {
+      setApplyingCardId(null);
+    }
+  };
+
+  const handleAnalyzeCardImage = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ''));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+    setOcrStatus('loading');
+    setOcrProgress(0);
+    try {
+      const fields = await analyzeCardImage(imageUrl, setOcrProgress);
+      setDetectedFields(fields);
+      setOcrStatus('done');
+      showToast(`${fields.length} zone(s) de texte détectée(s) dans la carte`, 'success');
+    } catch {
+      setDetectedFields([]);
+      setOcrStatus('error');
+      showToast('Analyse OCR impossible pour cette image.', 'error');
+    } finally {
+      event.target.value = '';
+    }
   };
 
   const handleCopyComHtml = async (sig: CommunicationSignatureGraphic) => {
@@ -244,7 +263,12 @@ export const TemplatesPanel: React.FC = () => {
   };
 
   const handleLoadPreset = (preset: SavedPreset) => {
-    updateState(() => JSON.parse(JSON.stringify(preset.state)));
+    const normalized = normalizeSignatureConfig(preset.state);
+    if (!normalized) {
+      showToast('Ce modèle est incomplet et ne peut pas être chargé.', 'error');
+      return;
+    }
+    updateState(() => normalized);
     showToast(`Preset « ${preset.name} » chargé avec succès !`, 'success');
   };
 
@@ -272,7 +296,7 @@ export const TemplatesPanel: React.FC = () => {
   };
 
   const handleExportPresetJson = (preset: SavedPreset) => {
-    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(preset.state, null, 2));
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(createSignatureExport(preset.state), null, 2));
     const downloadAnchor = document.createElement('a');
     downloadAnchor.setAttribute('href', dataStr);
     downloadAnchor.setAttribute('download', `preset-ragt-${preset.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}.json`);
@@ -288,8 +312,8 @@ export const TemplatesPanel: React.FC = () => {
     const reader = new FileReader();
     reader.onload = (event) => {
       try {
-        const imported = JSON.parse(event.target?.result as string);
-        if (imported.layout && imported.personal) {
+        const imported = normalizeSignatureConfig(JSON.parse(event.target?.result as string));
+        if (imported) {
           const newPreset: SavedPreset = {
             id: Date.now().toString(),
             name: file.name.replace(/\.json$/i, ''),
@@ -312,6 +336,7 @@ export const TemplatesPanel: React.FC = () => {
 
   return (
     <div className="p-4 space-y-4 text-slate-800 dark:text-slate-200">
+      {!cardsOnly && <>
       {/* Header */}
       <div>
         <h3 className="text-sm font-bold text-[#0C3866] dark:text-amber-400 uppercase tracking-wide flex items-center gap-1.5">
@@ -324,8 +349,8 @@ export const TemplatesPanel: React.FC = () => {
       </div>
 
       {/* Segmented Control */}
-      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold mb-4">
-        <button
+      <div className={`flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold mb-4 ${storageOnly ? 'gap-1' : ''}`}>
+          <button
           type="button"
           onClick={() => setActiveTab('presets')}
           className={`flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-md transition-colors ${
@@ -336,8 +361,8 @@ export const TemplatesPanel: React.FC = () => {
         >
           <FolderHeart className="w-3.5 h-3.5" />
           Mes Presets ({presets.length})
-        </button>
-        <button
+          </button>
+        {!storageOnly && <button
           type="button"
           onClick={() => setActiveTab('com_signatures')}
           className={`flex-1 py-1.5 flex items-center justify-center gap-1.5 rounded-md transition-colors ${
@@ -348,7 +373,7 @@ export const TemplatesPanel: React.FC = () => {
         >
           <Palette className="w-3.5 h-3.5" />
           Signatures Com ({COMMUNICATION_SIGNATURES.length})
-        </button>
+        </button>}
         <button
           type="button"
           onClick={() => setActiveTab('history')}
@@ -359,11 +384,12 @@ export const TemplatesPanel: React.FC = () => {
           }`}
         >
           <History className="w-3.5 h-3.5" />
-          Historique ({history.length})
+          Versions ({savedRevisions.length + history.length})
         </button>
       </div>
+      </>}
 
-      {activeTab === 'presets' && (
+      {!cardsOnly && activeTab === 'presets' && (
         <div className="space-y-5">
           {/* Save Current as Preset Card */}
           <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs space-y-3">
@@ -542,104 +568,21 @@ export const TemplatesPanel: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'com_signatures' && (
+      {(cardsOnly || activeTab === 'com_signatures') && (
         <div className="space-y-4">
-          {/* Header Banner */}
-          <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl p-3.5 space-y-2 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold text-amber-950 dark:text-amber-300 flex items-center gap-1.5">
-                <Palette className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                Cartes Institutionnelles RAGT (Service Communication)
-              </h4>
-              <span className="px-2 py-0.5 text-[9px] font-bold bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded-full border border-emerald-300 dark:border-emerald-700">
-                Coordonnées d'exemple vidées
-              </span>
+          <section className="rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-start justify-between gap-3">
+              <div><h3 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-[#0C3866] dark:text-amber-400"><ScanText className="h-4 w-4 text-[#F7BD00]" /> Analyser une image de carte</h3><p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Importez une carte : l’OCR repère les textes d’exemple pour préparer leur remplacement par les données de l’application.</p></div>
+              <input ref={cardImageInputRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAnalyzeCardImage} className="hidden" />
+              <button type="button" onClick={() => cardImageInputRef.current?.click()} disabled={ocrStatus === 'loading'} className="shrink-0 rounded-lg bg-[#0C3866] px-2.5 py-1.5 text-[11px] font-bold text-white disabled:opacity-60"><Upload className="mr-1 inline h-3.5 w-3.5" />{ocrStatus === 'loading' ? `Analyse ${ocrProgress} %` : 'Importer'}</button>
             </div>
-            <p className="text-[11px] text-amber-900/90 dark:text-amber-300/90 leading-relaxed">
-              Les coordonnées d'exemple factices ont été <strong>entièrement effacées</strong> de chaque carte. Vous pouvez choisir <strong>l'image de la carte ou une autre image de votre choix</strong> pour l'emplacement photo supérieur, et vos coordonnées réelles s'intègrent automatiquement dans la signature.
-            </p>
-          </div>
-
-          {/* SÉLECTEUR D'IMAGE POUR L'EMPLACEMENT DE LA CARTE ("À cet endroit") */}
-          <div className="bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700/60 rounded-xl p-3.5 space-y-3 shadow-2xs">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs font-bold text-[#0C3866] dark:text-amber-300 block">
-                  Image à positionner à cet endroit (En haut des coordonnées) :
-                </span>
-                <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                  Choisissez la photo de la carte ou importez votre propre visuel
-                </span>
-              </div>
-              <input
-                ref={cardPhotoInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleUploadCardPhoto}
-                className="hidden"
-              />
-              <button
-                type="button"
-                onClick={() => cardPhotoInputRef.current?.click()}
-                className="px-2.5 py-1 text-[10px] font-bold bg-[#0C3866]/10 hover:bg-[#0C3866]/20 text-[#0C3866] dark:bg-amber-400/20 dark:hover:bg-amber-400/30 dark:text-amber-300 rounded-lg transition-colors flex items-center gap-1 shrink-0"
-              >
-                <Upload className="w-3 h-3" />
-                <span>Autre image...</span>
-              </button>
-            </div>
-
-            {/* Grid of photo choices */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-              {CARD_PHOTOS.map((photo) => {
-                const isSelected = selectedCardPhoto === photo.url;
-                return (
-                  <button
-                    key={photo.id}
-                    type="button"
-                    onClick={() => {
-                      setSelectedCardPhoto(photo.url);
-                      // If the banner is currently active in layout-i, update it dynamically
-                      if (state.layout.preset === 'layout-i') {
-                        updateState((prev) => ({
-                          ...prev,
-                          banner: {
-                            ...prev.banner,
-                            enabled: true,
-                            imageUrl: photo.url
-                          }
-                        }));
-                      }
-                      showToast(`Image « ${photo.name} » sélectionnée pour la carte`, 'info');
-                    }}
-                    className={`p-2 rounded-lg border text-left transition-all flex flex-col justify-between ${
-                      isSelected
-                        ? 'border-[#0C3866] dark:border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 ring-1 ring-[#0C3866] dark:ring-amber-400'
-                        : 'border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-800 hover:border-slate-300'
-                    }`}
-                  >
-                    <div className="w-full h-14 rounded bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 overflow-hidden mb-1.5 flex items-center justify-center">
-                      <img src={photo.url} alt={photo.name} className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate pr-1">
-                        {photo.name}
-                      </span>
-                      {isSelected ? (
-                        <Check className="w-3.5 h-3.5 text-[#0C3866] dark:text-amber-400 shrink-0" />
-                      ) : (
-                        <span className="text-[9px] text-slate-400 font-mono">{photo.badge}</span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* 3 VARIANTES DE CARTES RAGT */}
+            {ocrStatus === 'done' && <div className="mt-3 rounded-lg border border-emerald-200 bg-white p-2.5 text-[11px] dark:border-emerald-800 dark:bg-slate-800"><p className="mb-1 font-semibold text-emerald-800 dark:text-emerald-300">Champs détectés : ils seront remplacés par vos coordonnées lors de la mise en carte.</p><div className="flex flex-wrap gap-1.5">{detectedFields.slice(0, 10).map((field, index) => <span key={`${field.text}-${index}`} className="rounded bg-slate-100 px-1.5 py-0.5 text-slate-700 dark:bg-slate-700 dark:text-slate-200">{field.kind} : {field.text}</span>)}</div></div>}
+            {ocrStatus === 'error' && <p className="mt-2 text-[11px] text-rose-700 dark:text-rose-300">Utilisez une image nette, lisible et orientée horizontalement.</p>}
+          </section>
+          {/* Cartes préconfigurées du service Communication */}
           <div className="space-y-4">
             {COMMUNICATION_SIGNATURES.map((sig) => {
-              const isCurrentlyActive = state.layout.preset === 'layout-i' && state.presetName?.includes(sig.name);
+              const isCurrentlyActive = state.presetName?.includes(sig.name) ?? false;
               return (
                 <div
                   key={sig.id}
@@ -688,10 +631,11 @@ export const TemplatesPanel: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleApplyComSignature(sig)}
-                      className="flex-1 min-w-[200px] py-2 px-3 bg-[#0C3866] hover:bg-[#092b50] dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
+                      disabled={applyingCardId !== null}
+                      className="flex-1 min-w-[200px] py-2 px-3 bg-[#0C3866] hover:bg-[#092b50] disabled:cursor-wait disabled:opacity-60 dark:bg-amber-500 dark:hover:bg-amber-600 text-white dark:text-slate-950 rounded-lg text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs"
                     >
                       <DownloadCloud className="w-3.5 h-3.5" />
-                      <span>Remplacer par ma signature</span>
+                      <span>{applyingCardId === sig.id ? 'Création de la carte…' : 'Remplacer par ma signature'}</span>
                     </button>
                     <button
                       type="button"
@@ -718,8 +662,42 @@ export const TemplatesPanel: React.FC = () => {
         </div>
       )}
 
-      {activeTab === 'history' && (
+      {!cardsOnly && activeTab === 'history' && (
         <div className="space-y-3">
+          <section className="rounded-xl border border-[#0C3866]/20 bg-[#0C3866]/[0.03] p-3 dark:border-amber-400/20 dark:bg-amber-400/[0.04]">
+            <h4 className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-slate-700 dark:text-slate-200">
+              <BookmarkCheck className="h-4 w-4 text-[#0C3866] dark:text-amber-400" />
+              Versions sauvegardées ({savedRevisions.length})
+            </h4>
+            <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              Conservées sur cet appareil, même après fermeture. Utilisez « Sauvegarder » dans l’en-tête pour créer une version.
+            </p>
+            {savedRevisions.length === 0 ? (
+              <p className="mt-3 rounded-lg bg-white/70 p-3 text-center text-[11px] text-slate-500 dark:bg-slate-800/60 dark:text-slate-400">
+                Aucune version sauvegardée pour le moment.
+              </p>
+            ) : (
+              <div className="mt-3 space-y-2">
+                {savedRevisions.map((revision) => (
+                  <div key={revision.id} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-bold text-slate-800 dark:text-slate-100">{revision.name}</p>
+                      <p className="mt-0.5 truncate text-[10px] text-slate-500 dark:text-slate-400">
+                        {new Date(revision.timestamp).toLocaleString('fr-FR')} · {revision.state.presetName || revision.state.layout.preset}
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => restoreRevision(revision.id)} className="rounded-lg border border-[#0C3866]/25 px-2 py-1.5 text-[10px] font-bold text-[#0C3866] hover:bg-[#0C3866] hover:text-white dark:border-amber-400/30 dark:text-amber-300 dark:hover:bg-amber-400 dark:hover:text-slate-950" aria-label={`Restaurer ${revision.name}`}>
+                      Restaurer
+                    </button>
+                    <button type="button" onClick={() => deleteRevision(revision.id)} className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30" aria-label={`Supprimer ${revision.name}`} title="Supprimer cette version">
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
+
           <h4 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
             <Clock className="w-4 h-4 text-slate-400" />
             Historique de la session ({history.length})

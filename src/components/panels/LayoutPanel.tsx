@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
-import { LayoutPreset, BlockOrderKey } from '../../types/signature';
+import { BlockOrderKey, LayoutPreset } from '../../types/signature';
 import { ISO_9001_LOGO_SVG, HVE_LOGO_SVG } from '../../constants/logos';
 import { DesktopLayoutMiniature, MobileLayoutMiniature } from '../layout/LayoutMiniatures';
 import {
@@ -9,8 +9,6 @@ import {
   AlignLeft,
   AlignCenter,
   AlignRight,
-  ArrowUp,
-  ArrowDown,
   Eye,
   EyeOff,
   Sliders,
@@ -18,7 +16,6 @@ import {
   LayoutTemplate,
   Maximize,
   Move,
-  ListOrdered,
   Monitor,
   Smartphone,
   Award,
@@ -28,13 +25,16 @@ import {
   ExternalLink
 } from 'lucide-react';
 
+type ReorderableBlockKey = Exclude<BlockOrderKey, 'job' | 'company'>;
+
 export const LayoutPanel: React.FC = () => {
   const { state, updateState, showToast } = useSignature();
   const { layout, visibility, logos } = state;
   const p = layout.dimensions;
   const sep = layout.separator;
   
-  const [activeSubTab, setActiveSubTab] = useState<'structure' | 'badges' | 'dimensions' | 'alignments' | 'order'>('structure');
+  const [activeSubTab, setActiveSubTab] = useState<'structure' | 'badges' | 'dimensions' | 'alignments'>('structure');
+  const [wireframeMode, setWireframeMode] = useState(false);
 
   const handlePresetSelect = (preset: LayoutPreset) => {
     updateState((prev) => ({
@@ -144,7 +144,10 @@ export const LayoutPanel: React.FC = () => {
           ...prev.layout.dimensions,
           [key]: value
         }
-      }
+      },
+      banner: key === 'totalWidth' && Boolean(prev.banner.campaignName) && prev.banner.position === 'bottom' && prev.banner.maintainRatio === false
+        ? { ...prev.banner, width: value }
+        : prev.banner
     }));
   };
 
@@ -161,34 +164,21 @@ export const LayoutPanel: React.FC = () => {
     }));
   };
 
-  const moveBlock = (index: number, direction: 'up' | 'down') => {
-    const targetIdx = direction === 'up' ? index - 1 : index + 1;
-    if (targetIdx < 0 || targetIdx >= layout.blockOrder.length) return;
-
-    const newOrder = [...layout.blockOrder];
-    const temp = newOrder[index];
-    newOrder[index] = newOrder[targetIdx];
-    newOrder[targetIdx] = temp;
-
-    updateState((prev) => ({
-      ...prev,
-      layout: {
-        ...prev.layout,
-        blockOrder: newOrder
-      }
-    }));
-  };
-
-  const blockLabels: Record<BlockOrderKey, string> = {
-    logo: 'Logo institutionnel',
-    identity: 'Nom & Prénom',
-    job: 'Poste & Service',
-    company: 'Entreprise & Filiale',
-    coordinates: 'Coordonnées (Tél, Mail, Adr)',
-    social: 'Réseaux sociaux',
-    qr: 'QR Code vCard',
-    slogan: 'Slogan RAGT',
-    banner: 'Bannière campagne'
+  const orderedBlockKeys: ReorderableBlockKey[] = Array.from(new Set(
+    layout.blockOrder
+      .map((key) => (key === 'job' || key === 'company' ? 'identity' : key))
+      .filter((key): key is ReorderableBlockKey => ['logo', 'identity', 'coordinates', 'social', 'qr', 'slogan', 'banner'].includes(key))
+  ));
+  for (const key of ['logo', 'identity', 'coordinates', 'social', 'qr', 'slogan', 'banner'] as ReorderableBlockKey[]) {
+    if (!orderedBlockKeys.includes(key)) orderedBlockKeys.push(key);
+  }
+  const moveBlock = (key: ReorderableBlockKey, direction: -1 | 1) => {
+    const currentIndex = orderedBlockKeys.indexOf(key);
+    const destination = currentIndex + direction;
+    if (currentIndex < 0 || destination < 0 || destination >= orderedBlockKeys.length) return;
+    const next = [...orderedBlockKeys];
+    [next[currentIndex], next[destination]] = [next[destination], next[currentIndex]];
+    updateState((prev) => ({ ...prev, layout: { ...prev.layout, blockOrder: next } }));
   };
 
   return (
@@ -210,8 +200,7 @@ export const LayoutPanel: React.FC = () => {
           { id: 'structure', label: 'Modèles', icon: <LayoutTemplate className="w-3.5 h-3.5" /> },
           { id: 'badges', label: 'Badges RAGT', icon: <Award className="w-3.5 h-3.5" /> },
           { id: 'dimensions', label: 'Dimensions', icon: <Maximize className="w-3.5 h-3.5" /> },
-          { id: 'alignments', label: 'Position', icon: <Move className="w-3.5 h-3.5" /> },
-          { id: 'order', label: 'Ordre', icon: <ListOrdered className="w-3.5 h-3.5" /> }
+          { id: 'alignments', label: 'Position', icon: <Move className="w-3.5 h-3.5" /> }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -229,6 +218,10 @@ export const LayoutPanel: React.FC = () => {
       {/* 8.1 Presets Modèle A à I */}
       {activeSubTab === 'structure' && (
       <div className="space-y-4">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/70">
+          <div><span className="block text-xs font-bold text-slate-800 dark:text-slate-100">Comparer les wireframes</span><span className="mt-0.5 block text-[10px] text-slate-500 dark:text-slate-400">Masque la charte pour évaluer uniquement l’équilibre des zones.</span></div>
+          <button type="button" aria-pressed={wireframeMode} onClick={() => setWireframeMode((value) => !value)} className={`rounded-lg border px-2.5 py-1.5 text-[11px] font-bold transition-colors ${wireframeMode ? 'border-[#0C3866] bg-white text-[#0C3866] dark:border-amber-400 dark:bg-slate-900 dark:text-amber-400' : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300'}`}>{wireframeMode ? 'Wireframe actif' : 'Voir en noir & blanc'}</button>
+        </div>
         {/* Quick Toggle: Corporate Badges 'Certified' / 'Sustainable' */}
         <div className="bg-white dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 shadow-2xs">
           <div className="flex items-center justify-between">
@@ -308,7 +301,7 @@ export const LayoutPanel: React.FC = () => {
                   }`}
                 >
                   {/* Miniature diagram illustrating spatial positioning */}
-                  <DesktopLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} />
+                  <div className={wireframeMode ? 'grayscale saturate-0 contrast-125' : ''}><DesktopLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} /></div>
 
                   <div className="mt-2.5 flex items-start justify-between gap-1.5 w-full">
                     <div className="min-w-0 flex-1">
@@ -385,7 +378,7 @@ export const LayoutPanel: React.FC = () => {
                 >
                   {/* Phone Silhouette Miniature - Strictly proportional, non-deformed */}
                   <div className="py-1">
-                    <MobileLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} />
+                    <div className={wireframeMode ? 'grayscale saturate-0 contrast-125' : ''}><MobileLayoutMiniature preset={item.id as LayoutPreset} active={isSelected} /></div>
                   </div>
 
                   {/* Details */}
@@ -846,49 +839,25 @@ export const LayoutPanel: React.FC = () => {
           </div>
         )}
       </div>
+
+      <div className="space-y-3 bg-white dark:bg-slate-800 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+        <div><label className="text-xs font-semibold text-slate-700 dark:text-slate-200 block">Ordre des blocs</label><p className="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">Réorganise les blocs de contenu dans chaque modèle. Le modèle D permet aussi de déplacer le logo dans la composition libre.</p></div>
+        <div className="space-y-1.5">
+          {orderedBlockKeys.map((key, index) => {
+            const label: Record<BlockOrderKey, string> = { logo: 'Logo', identity: 'Identité', job: 'Fonction', company: 'Entreprise', coordinates: 'Coordonnées', social: 'Réseaux', qr: 'QR Code', slogan: 'Slogan', banner: 'Image / campagne' };
+            const isMovableHere = layout.preset === 'layout-d'
+              || (key !== 'logo'
+                && (key !== 'qr' || state.qr.position === 'bottom')
+                && (key !== 'banner' || state.banner.position === 'center')
+                && (key !== 'social' || layout.preset !== 'layout-i'));
+            const disabledLabel = !isMovableHere ? 'Position gérée par le modèle' : undefined;
+            return <div key={key} className="flex items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-xs dark:border-slate-700 dark:bg-slate-900"><span className="font-medium">{label[key]}{!isMovableHere && <span className="ml-1 text-[10px] font-normal text-slate-400">({disabledLabel})</span>}</span><span className="flex gap-1"><button type="button" aria-label={`Monter ${label[key]}`} title={disabledLabel} disabled={!isMovableHere || index === 0} onClick={() => moveBlock(key, -1)} className="rounded border border-slate-200 px-1.5 py-0.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">↑</button><button type="button" aria-label={`Descendre ${label[key]}`} title={disabledLabel} disabled={!isMovableHere || index === orderedBlockKeys.length - 1} onClick={() => moveBlock(key, 1)} className="rounded border border-slate-200 px-1.5 py-0.5 text-[10px] disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700">↓</button></span></div>;
+          })}
+        </div>
+      </div>
       </div>
       )}
 
-      {activeSubTab === 'order' && (
-      <div className="space-y-2">
-        {/* 8.5 Ordre des blocs (Boutons monter / descendre) */}
-        <label className="text-xs font-semibold text-slate-700 block">
-          Ordre des éléments dans la signature :
-        </label>
-        <div className="bg-white rounded-lg border border-slate-200 divide-y divide-slate-100 overflow-hidden">
-          {layout.blockOrder.map((key, index) => (
-            <div
-              key={key}
-              className="flex items-center justify-between px-3 py-2 text-xs hover:bg-slate-50 transition-colors"
-            >
-              <span className="font-medium text-slate-700">
-                {index + 1}. {blockLabels[key] || key}
-              </span>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  disabled={index === 0}
-                  onClick={() => moveBlock(index, 'up')}
-                  className="p-1 rounded text-slate-500 hover:text-slate-900 disabled:opacity-30"
-                  title="Monter"
-                >
-                  <ArrowUp className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  disabled={index === layout.blockOrder.length - 1}
-                  onClick={() => moveBlock(index, 'down')}
-                  className="p-1 rounded text-slate-500 hover:text-slate-900 disabled:opacity-30"
-                  title="Descendre"
-                >
-                  <ArrowDown className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-      )}
     </div>
   );
 };

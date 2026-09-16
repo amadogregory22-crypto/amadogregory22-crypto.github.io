@@ -36,14 +36,14 @@ export const Header: React.FC = () => {
     setIsDarkMode,
     rawHtml,
     showToast,
-    saveRevision,
-    savedRevisions,
-    restoreRevision
+    saveRevision
   } = useSignature();
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showHelp, setShowHelp] = useState(false);
-  const [showRevisions, setShowRevisions] = useState(false);
+  const [showRevisionDialog, setShowRevisionDialog] = useState(false);
+  const [revisionName, setRevisionName] = useState('');
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -59,9 +59,9 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-4 flex items-center justify-between shadow-xs select-none z-30 shrink-0 transition-colors">
+    <header className="min-h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2 shadow-xs select-none z-30 shrink-0 transition-colors sm:px-4">
       {/* Brand & Identity */}
-      <div className="flex items-center gap-3">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-3">
         <div className="flex items-center gap-2">
           {/* RAGT Stylized Mark */}
           <div className="flex items-center justify-center shrink-0">
@@ -101,10 +101,19 @@ export const Header: React.FC = () => {
             Signature Collaborateur
           </button>
         </div>
+        <button
+          type="button"
+          onClick={() => setAppMode(appMode === 'studio' ? 'user' : 'studio')}
+          className="lg:hidden flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-slate-600 transition-colors hover:bg-slate-100 hover:text-[#0C3866] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-amber-400"
+          title={appMode === 'studio' ? 'Passer en mode collaborateur' : 'Passer au Studio Communication'}
+          aria-label={appMode === 'studio' ? 'Passer en mode collaborateur' : 'Passer au Studio Communication'}
+        >
+          {appMode === 'studio' ? <Users className="h-4 w-4" /> : <Sliders className="h-4 w-4" />}
+        </button>
       </div>
 
       {/* Center: Presets Picker */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1.5 sm:gap-2">
         {appMode === 'studio' && (
           <div className="hidden xl:flex items-center gap-2 ml-1">
             <span className="text-xs text-slate-500 dark:text-slate-400 font-medium flex items-center gap-1">
@@ -147,7 +156,7 @@ export const Header: React.FC = () => {
           onClick={() => setIsDarkMode(!isDarkMode)}
           title={isDarkMode ? "Passer en mode clair (Studio RAGT)" : "Passer en mode sombre ergonomique (Studio RAGT)"}
           aria-label={isDarkMode ? "Activer le mode clair" : "Activer le mode sombre"}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 px-2 py-1.5 rounded-lg border text-xs font-semibold transition-all sm:px-2.5 ${
             isDarkMode
               ? 'bg-slate-800 text-amber-300 border-slate-700 hover:bg-slate-700 hover:border-slate-600 shadow-xs'
               : 'bg-slate-100 text-slate-700 border-slate-200 hover:bg-slate-200/80 hover:text-slate-900 shadow-2xs'
@@ -156,12 +165,12 @@ export const Header: React.FC = () => {
           {isDarkMode ? (
             <>
               <Sun className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[11px]">Mode Clair</span>
+              <span className="hidden text-[11px] sm:inline">Mode Clair</span>
             </>
           ) : (
             <>
               <Moon className="w-3.5 h-3.5 text-indigo-600" />
-              <span className="text-[11px]">Mode Sombre</span>
+              <span className="hidden text-[11px] sm:inline">Mode Sombre</span>
             </>
           )}
         </button>
@@ -171,16 +180,16 @@ export const Header: React.FC = () => {
           type="button"
           onClick={() => setShowHelp(true)}
           title="Guide RAGT (IA)"
-          className="p-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0C3866] dark:hover:text-amber-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+          className="hidden p-1.5 text-slate-500 dark:text-slate-400 hover:text-[#0C3866] dark:hover:text-amber-400 border border-transparent hover:border-slate-200 dark:hover:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors sm:block"
         >
           <HelpCircle className="w-4 h-4" />
         </button>
         
         {/* Separator */}
-        <div className="w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1"></div>
+        <div className="hidden w-px h-5 bg-slate-200 dark:bg-slate-700 mx-1 sm:block"></div>
 
         {/* Undo / Redo */}
-        <div className="flex items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700">
+        <div className="hidden items-center bg-slate-100 dark:bg-slate-800 rounded-lg p-0.5 border border-slate-200 dark:border-slate-700 sm:flex">
           <button
             type="button"
             onClick={undo}
@@ -201,76 +210,23 @@ export const Header: React.FC = () => {
           </button>
         </div>
 
-        {/* Revisions (Version History) */}
-        <div className="relative">
+        {/* Save a persistent version. Restore and deletion live with templates. */}
+        <div className="hidden md:block">
           <div className="flex items-center bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden">
             <button
               type="button"
-              onClick={() => {
-                const name = prompt('Nom de la révision (Optionnel) :');
-                if (name !== null) {
-                  saveRevision(name || undefined);
-                }
-              }}
+              onClick={() => setShowRevisionDialog(true)}
               title="Sauvegarder une révision de la configuration (Snapshot)"
               className="flex items-center gap-1.5 text-xs font-medium text-slate-700 dark:text-slate-200 hover:text-[#0C3866] dark:hover:text-amber-400 hover:bg-slate-50 dark:hover:bg-slate-700 px-3 py-1.5 transition-colors border-r border-slate-200 dark:border-slate-700"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-              <span className="hidden lg:inline">Save Revision</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowRevisions(!showRevisions)}
-              className={`p-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors ${showRevisions ? 'bg-slate-100 dark:bg-slate-700' : ''}`}
-              title="Afficher les révisions sauvegardées"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+              <span className="hidden lg:inline">Sauvegarder</span>
             </button>
           </div>
-
-          {/* Revisions Dropdown */}
-          {showRevisions && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowRevisions(false)} />
-              <div className="absolute top-full right-0 mt-2 w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl rounded-xl z-50 overflow-hidden text-xs">
-                <div className="p-2 border-b border-slate-100 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
-                  <h4 className="font-bold text-slate-700 dark:text-slate-200">Historique des Révisions</h4>
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">Restaurer une session précédente</p>
-                </div>
-                <div className="max-h-60 overflow-y-auto">
-                  {savedRevisions.length === 0 ? (
-                    <div className="p-4 text-center text-slate-500 dark:text-slate-400">Aucune révision sauvegardée.</div>
-                  ) : (
-                    savedRevisions.map(rev => (
-                      <button
-                        key={rev.id}
-                        type="button"
-                        onClick={() => {
-                          restoreRevision(rev.id);
-                          setShowRevisions(false);
-                        }}
-                        className="w-full text-left p-3 hover:bg-[#0C3866]/5 dark:hover:bg-slate-700/50 border-b border-slate-50 dark:border-slate-700/50 last:border-0 transition-colors group"
-                      >
-                        <div className="flex justify-between items-start mb-1">
-                          <span className="font-semibold text-slate-800 dark:text-slate-200 group-hover:text-[#0C3866] dark:group-hover:text-amber-400 truncate pr-2">{rev.name}</span>
-                          <span className="text-[9px] text-slate-400 shrink-0">
-                            {new Date(rev.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                          </span>
-                        </div>
-                        <span className="text-[10px] text-slate-500 dark:text-slate-400 truncate block">
-                          Modèle: {rev.state.presetName}
-                        </span>
-                      </button>
-                    ))
-                  )}
-                </div>
-              </div>
-            </>
-          )}
         </div>
 
         {/* Separator */}
-        <div className="w-px h-5 bg-slate-200 mx-1"></div>
+        <div className="hidden w-px h-5 bg-slate-200 mx-1 sm:block"></div>
 
         {/* Config JSON Import / Export */}
         <div className="hidden sm:flex items-center gap-1">
@@ -303,7 +259,7 @@ export const Header: React.FC = () => {
 
           <button
             type="button"
-            onClick={resetState}
+            onClick={() => setShowResetDialog(true)}
             title="Réinitialiser la signature aux réglages par défaut"
             className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 rounded-lg transition-colors"
           >
@@ -324,6 +280,40 @@ export const Header: React.FC = () => {
       </div>
 
       {showHelp && <HelpOverlay onClose={() => setShowHelp(false)} />}
+      {showRevisionDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-labelledby="revision-title">
+          <form
+            className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-slate-800"
+            onSubmit={(event) => {
+              event.preventDefault();
+              saveRevision(revisionName.trim() || undefined);
+              setRevisionName('');
+              setShowRevisionDialog(false);
+            }}
+          >
+            <h2 id="revision-title" className="text-base font-bold text-slate-900 dark:text-white">Sauvegarder une révision</h2>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-300">Elle sera conservée sur cet appareil et pourra être restaurée après rechargement.</p>
+            <label className="mt-4 block text-xs font-semibold text-slate-700 dark:text-slate-200" htmlFor="revision-name">Nom de la révision</label>
+            <input id="revision-name" autoFocus value={revisionName} onChange={(event) => setRevisionName(event.target.value)} placeholder="Ex. Avant campagne automne" className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => { setRevisionName(''); setShowRevisionDialog(false); }} className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Annuler</button>
+              <button type="submit" className="rounded-lg bg-[#0C3866] px-3 py-2 text-xs font-bold text-white hover:bg-[#092b50]">Sauvegarder</button>
+            </div>
+          </form>
+        </div>
+      )}
+      {showResetDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 p-4" role="dialog" aria-modal="true" aria-labelledby="reset-title">
+          <div className="w-full max-w-sm rounded-xl bg-white p-5 shadow-2xl dark:bg-slate-800">
+            <h2 id="reset-title" className="text-base font-bold text-slate-900 dark:text-white">Réinitialiser la signature ?</h2>
+            <p className="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-300">Les réglages actuels seront remplacés par le modèle officiel. Une révision « Avant réinitialisation » sera créée pour pouvoir revenir en arrière.</p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setShowResetDialog(false)} className="rounded-lg px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700">Annuler</button>
+              <button type="button" onClick={() => { resetState(); setShowResetDialog(false); }} className="rounded-lg bg-rose-600 px-3 py-2 text-xs font-bold text-white hover:bg-rose-700">Réinitialiser</button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 };

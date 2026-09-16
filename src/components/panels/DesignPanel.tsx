@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { FontChoice, TypographyItem } from '../../types/signature';
 import { RAGT_PALETTE } from '../../constants/presets';
@@ -29,6 +29,16 @@ export const DesignPanel: React.FC = () => {
   const { state, updateState, showToast } = useSignature();
   const { design } = state;
   const [activeSubTab, setActiveSubTab] = useState<'colors' | 'typography' | 'background' | 'borders'>('colors');
+
+  useEffect(() => {
+    const focusRequestedControl = (event: Event) => {
+      if ((event as CustomEvent<{ target?: string }>).detail?.target !== 'corporate-typography-dropdown') return;
+      setActiveSubTab('typography');
+      window.setTimeout(() => document.getElementById('corporate-typography-dropdown')?.focus(), 0);
+    };
+    window.addEventListener('ragt:focus-control', focusRequestedControl);
+    return () => window.removeEventListener('ragt:focus-control', focusRequestedControl);
+  }, []);
 
   const corporateTypographyOptions: CorporateTypographyOption[] = [
     {
@@ -115,7 +125,8 @@ export const DesignPanel: React.FC = () => {
           coordinates: { ...prev.design.typography.coordinates, fontFamily: fontValue },
           slogan: { ...prev.design.typography.slogan, fontFamily: fontValue }
         }
-      }
+      },
+      slogan: { ...prev.slogan, fontFamily: fontValue }
     }));
     showToast(`Typographie corporate « ${selectedOption ? selectedOption.label.split('(')[0].trim() : fontValue} » appliquée`, 'info');
   };
@@ -127,9 +138,19 @@ export const DesignPanel: React.FC = () => {
         ...prev.design,
         colors: {
           ...prev.design.colors,
-          [key]: value
+          [key]: value,
+          ...(key === 'firstName' ? { lastName: value } : {})
         }
-      }
+      },
+      layout: key === 'separator'
+        ? { ...prev.layout, separator: { ...prev.layout.separator, color: value } }
+        : prev.layout,
+      qr: key === 'qrFg'
+        ? { ...prev.qr, fgColor: value }
+        : prev.qr,
+      slogan: key === 'slogan'
+        ? { ...prev.slogan, color: value }
+        : prev.slogan
     }));
   };
 
@@ -145,7 +166,17 @@ export const DesignPanel: React.FC = () => {
             ...patch
           }
         }
-      }
+      },
+      slogan: key === 'slogan'
+        ? {
+            ...prev.slogan,
+            ...(patch.fontFamily !== undefined ? { fontFamily: patch.fontFamily } : {}),
+            ...(patch.fontSize !== undefined ? { fontSize: patch.fontSize } : {}),
+            ...(patch.fontWeight !== undefined ? { fontWeight: patch.fontWeight } : {}),
+            ...(patch.fontStyle !== undefined ? { fontStyle: patch.fontStyle } : {}),
+            ...(patch.color !== undefined ? { color: patch.color } : {})
+          }
+        : prev.slogan
     }));
   };
 

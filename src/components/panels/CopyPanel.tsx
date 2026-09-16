@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
-import { copyRichSignature, copyRawHtml, downloadHtmlFile } from '../../utils/clipboard';
-import { SIGNATURE_PRESETS, APP_VERSION } from '../../constants/presets';
+import { copyRichSignature, copyRawHtml, downloadCollaboratorPortalFile, downloadSignatureHtmlFile } from '../../utils/clipboard';
+import { SIGNATURE_PRESETS } from '../../constants/presets';
+import { createSignatureExport } from '../../utils/signatureConfig';
 import {
   CopyCheck,
   Copy,
@@ -22,34 +23,40 @@ export const CopyPanel: React.FC = () => {
 
   const handleCopyRich = async () => {
     const res = await copyRichSignature(rawHtml);
-    setCopiedType('rich');
+    if (res.success) setCopiedType('rich');
     showToast(res.message, res.success ? 'success' : 'error');
-    setTimeout(() => setCopiedType(null), 3000);
+    if (res.success) setTimeout(() => setCopiedType(null), 3000);
   };
 
   const handleCopyCode = async () => {
     const res = await copyRawHtml(rawHtml);
-    setCopiedType('raw');
+    if (res.success) setCopiedType('raw');
     showToast(res.message, res.success ? 'success' : 'error');
-    setTimeout(() => setCopiedType(null), 3000);
+    if (res.success) setTimeout(() => setCopiedType(null), 3000);
   };
 
-  const handleDownload = () => {
+  const handleDownloadSignature = async () => {
     const safeName = (state.personal.lastName || 'ragt').toLowerCase().replace(/\s+/g, '-');
-    downloadHtmlFile(rawHtml, `signature-ragt-${safeName}.html`, state);
-    showToast('Fichier signature.html téléchargé !', 'success');
+    await downloadSignatureHtmlFile(rawHtml, `signature-ragt-${safeName}.html`);
+    showToast('Signature HTML autonome téléchargée.', 'success');
+  };
+
+  const handleDownloadPortal = async () => {
+    const safeName = (state.personal.lastName || 'ragt').toLowerCase().replace(/\s+/g, '-');
+    const result = await downloadCollaboratorPortalFile(rawHtml, state, `portail-ragt-${safeName}.html`);
+    showToast(
+      result.unresolvedImages > 0
+        ? `Portail téléchargé, mais ${result.unresolvedImages} image(s) n’ont pas pu être embarquées.`
+        : `Portail téléchargé avec ${result.embeddedImages} image(s) embarquée(s).`,
+      result.unresolvedImages > 0 ? 'warning' : 'success'
+    );
   };
 
   const handleExportPreset = (presetId: string) => {
     const presetDef = SIGNATURE_PRESETS.find(p => p.id === presetId);
     if (!presetDef) return;
     const modifiedState = presetDef.apply(state);
-    const exportData = {
-      app: 'Signature Studio RAGT',
-      version: APP_VERSION,
-      exportedAt: new Date().toISOString(),
-      config: modifiedState
-    };
+    const exportData = createSignatureExport(modifiedState);
     const jsonStr = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -129,7 +136,7 @@ export const CopyPanel: React.FC = () => {
         {/* 32.3 Télécharger signature.html */}
         <button
           type="button"
-          onClick={handleDownload}
+          onClick={handleDownloadSignature}
           className="w-full bg-white hover:bg-slate-50 text-slate-800 p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between text-left transition-all"
         >
           <div className="flex items-center gap-3">
@@ -137,10 +144,26 @@ export const CopyPanel: React.FC = () => {
               <Download className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-xs font-bold block">Télécharger signature.html</span>
+              <span className="text-xs font-bold block">Télécharger la signature HTML</span>
               <span className="text-[11px] text-slate-500 font-normal">
                 Fichier autonome complet encodé en UTF-8
               </span>
+            </div>
+          </div>
+          <span className="text-[11px] font-mono text-slate-400">.html</span>
+        </button>
+        <button
+          type="button"
+          onClick={handleDownloadPortal}
+          className="w-full bg-white hover:bg-slate-50 text-slate-800 p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between text-left transition-all"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-[#0C3866] shrink-0">
+              <Download className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-bold block">Télécharger le portail collaborateur</span>
+              <span className="text-[11px] text-slate-500 font-normal">Formulaire hors connexion avec les images embarquées</span>
             </div>
           </div>
           <span className="text-[11px] font-mono text-slate-400">.html</span>
@@ -176,10 +199,10 @@ export const CopyPanel: React.FC = () => {
             </button>
             <button
               type="button"
-              onClick={() => handleExportPreset('compact')}
+              onClick={() => handleExportPreset('mobile-friendly')}
               className="bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 px-2 py-1.5 rounded-lg text-left transition-colors flex items-center justify-between"
             >
-              <span>Modèle Compact</span>
+              <span>Modèle Mobile</span>
               <Download className="w-3 h-3 text-slate-400" />
             </button>
             <button

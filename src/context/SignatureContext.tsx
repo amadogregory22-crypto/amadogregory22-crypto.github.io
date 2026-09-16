@@ -4,13 +4,25 @@ import {
   PreviewEnv
 } from '../types/signature';
 import { DEFAULT_SIGNATURE_STATE, SIGNATURE_PRESETS, APP_VERSION } from '../constants/presets';
-import { isCommunicationSignatureUrl } from '../constants/logos';
+import { COMMUNICATION_SIGNATURES, isCommunicationSignatureUrl } from '../constants/logos';
 import { generateQrDataUrl } from '../utils/qrGenerator';
+import { composePreconfiguredCard } from '../utils/composePreconfiguredCard';
 import { generateEmailHTML, generateAllIconPngs } from '../utils/htmlGenerator';
 import { validateSignature, SignatureDiagnostic } from '../utils/validator';
+import { createSignatureExport, normalizeSignatureConfig } from '../utils/signatureConfig';
+import {
+  createSavedRevision,
+  findSavedRevision,
+  normalizeSavedRevisions,
+  prependSavedRevision,
+  SavedRevision
+} from '../utils/revisionStore';
 
 export type ActiveTab =
+  | 'home'     // Accueil & brief
+  | 'structure' // Disposition de la signature
   | 'template' // 1. Gabarit & Modèles
+  | 'versions' // Versions & sauvegardes
   | 'contact'  // 2. Identité & Contact
   | 'media'    // 3. Médias & Visuels
   | 'style'    // 4. Style & Charte
@@ -35,12 +47,7 @@ interface ToastMessage {
   message: string;
 }
 
-export interface SavedRevision {
-  id: string;
-  timestamp: number;
-  name: string;
-  state: SignatureState;
-}
+export type { SavedRevision } from '../utils/revisionStore';
 
 interface SignatureContextType {
   state: SignatureState;
@@ -108,6 +115,7 @@ interface SignatureContextType {
 const SignatureContext = createContext<SignatureContextType | undefined>(undefined);
 
 const STORAGE_KEY = 'ragt_signature_v3_data';
+const REVISIONS_STORAGE_KEY = 'ragt_signature_v3_revisions';
 
 export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   // Initialize state from localStorage or default
@@ -134,11 +142,7 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           parsed.logos.primary.height = 100;
         }
 
-        return {
-          ...DEFAULT_SIGNATURE_STATE,
-          ...parsed,
-          appVersion: APP_VERSION
-        };
+        return normalizeSignatureConfig(parsed) || DEFAULT_SIGNATURE_STATE;
       }
     } catch (e) {
       console.warn('Impossible de charger la sauvegarde locale', e);
@@ -150,19 +154,36 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [history, setHistory] = useState<SignatureState[]>([state]);
   const [historyIndex, setHistoryIndex] = useState<number>(0);
   const isUndoRedoAction = useRef(false);
-  const [savedRevisions, setSavedRevisions] = useState<SavedRevision[]>([]);
+  const [savedRevisions, setSavedRevisions] = useState<SavedRevision[]>(() => {
+    try {
+      const saved = localStorage.getItem(REVISIONS_STORAGE_KEY);
+      const parsed: unknown = saved ? JSON.parse(saved) : [];
+      return normalizeSavedRevisions(parsed);
+    } catch {
+      return [];
+    }
+  });
 
   // App & View states
-  const [activeTab, setActiveTabState] = useState<ActiveTab>('contact');
-  const [activeSubTab, setActiveSubTabState] = useState<string>('info');
+  const [activeTab, setActiveTabState] = useState<ActiveTab>('home');
+  const [activeSubTab, setActiveSubTabState] = useState<string>('brief');
 
   const setActiveTab = React.useCallback((tab: ActiveTab, subTab?: string) => {
     let target = tab;
     let targetSub = subTab;
 
-    if (tab === 'template' || tab === 'layout' || tab === 'templates') {
-      target = 'template';
-      if (!targetSub) targetSub = tab === 'templates' ? 'templates' : 'layout';
+    if (tab === 'home') {
+      target = 'home';
+      if (!targetSub) targetSub = 'brief';
+    } else if (tab === 'structure' || tab === 'layout') {
+      target = 'structure';
+      if (!targetSub) targetSub = 'layout';
+    } else if (tab === 'versions') {
+      target = 'versions';
+      if (!targetSub) targetSub = 'storage';
+    } else if (tab === 'template' || tab === 'templates') {
+      target = 'structure';
+      if (!targetSub) targetSub = 'layout';
     } else if (tab === 'contact' || tab === 'info' || tab === 'social' || tab === 'qr') {
       target = 'contact';
       if (!targetSub) targetSub = tab === 'social' ? 'social' : tab === 'qr' ? 'qr' : 'info';
@@ -245,6 +266,17 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }, 4000);
   }, []);
 
+  const persistRevisions = useCallback((revisions: SavedRevision[]) => {
+    try {
+      localStorage.setItem(REVISIONS_STORAGE_KEY, JSON.stringify(revisions));
+      return true;
+    } catch (error) {
+      console.error('Impossible d’enregistrer les révisions', error);
+      showToast('Les révisions ne peuvent pas être enregistrées sur cet appareil.', 'error');
+      return false;
+    }
+  }, [showToast]);
+
   // Sync state changes with localStorage and history
   const updateState = useCallback((updater: (prev: SignatureState) => SignatureState) => {
     setState((prev) => {
@@ -290,6 +322,50 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     });
   }, [historyIndex]);
 
+  // A preconfigured card is a composed image. Regenerate it after a contact or QR change
+  // so the canvas always reflects the fields edited in the application.
+  const cardComposeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (state.renderMode !== 'flattened-card') return;
+
+    const templateUrl = state.cardTemplateUrl
+      || COMMUNICATION_SIGNATURES.find((card) => state.presetName?.includes(card.name))?.url;
+    if (!templateUrl) return;
+
+    if (cardComposeTimerRef.current) clearTimeout(cardComposeTimerRef.current);
+    let cancelled = false;
+    cardComposeTimerRef.current = setTimeout(() => {
+      composePreconfiguredCard(state, templateUrl)
+        .then((imageUrl) => {
+          if (cancelled) return;
+          setState((previous) => {
+            if (previous.renderMode !== 'flattened-card') return previous;
+            const next = {
+              ...previous,
+              cardTemplateUrl: templateUrl,
+              banner: {
+                ...previous.banner,
+                imageUrl,
+                altText: `Carte personnalisée ${previous.presetName.replace(/ \(avec ma signature\)$/, '')}`
+              }
+            };
+            try {
+              localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+            } catch (error) {
+              console.error('Impossible de mettre à jour la carte préconfigurée', error);
+            }
+            return next;
+          });
+        })
+        .catch((error) => console.error('Impossible de recalculer la carte préconfigurée', error));
+    }, 250);
+
+    return () => {
+      cancelled = true;
+      if (cardComposeTimerRef.current) clearTimeout(cardComposeTimerRef.current);
+    };
+  }, [state.personal, state.qr, state.renderMode, state.cardTemplateUrl, state.presetName]);
+
   const setPartialState = useCallback((partial: Partial<SignatureState> | Record<string, unknown>) => {
     updateState((prev) => ({
       ...prev,
@@ -332,18 +408,21 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [history, showToast]);
 
   const saveRevision = useCallback((name?: string) => {
-    const revision: SavedRevision = {
-      id: Date.now().toString(),
-      timestamp: Date.now(),
-      name: name || `Révision ${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
-      state: state
-    };
-    setSavedRevisions(prev => [revision, ...prev]);
-    showToast('Révision sauvegardée', 'success');
-  }, [state, showToast]);
+    const timestamp = Date.now();
+    const revision = createSavedRevision(
+      state,
+      name || `Révision ${new Date(timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`,
+      timestamp
+    );
+    setSavedRevisions(prev => {
+      const next = prependSavedRevision(prev, revision);
+      if (persistRevisions(next)) showToast('Révision sauvegardée sur cet appareil', 'success');
+      return next;
+    });
+  }, [state, persistRevisions, showToast]);
 
   const restoreRevision = useCallback((id: string) => {
-    const rev = savedRevisions.find(r => r.id === id);
+    const rev = findSavedRevision(savedRevisions, id);
     if (rev) {
       isUndoRedoAction.current = true;
       setState(rev.state);
@@ -358,8 +437,12 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   }, [savedRevisions, historyIndex, showToast]);
 
   const deleteRevision = useCallback((id: string) => {
-    setSavedRevisions(prev => prev.filter(r => r.id !== id));
-  }, []);
+    setSavedRevisions(prev => {
+      const next = prev.filter(r => r.id !== id);
+      persistRevisions(next);
+      return next;
+    });
+  }, [persistRevisions]);
 
   // Keyboard shortcuts (Ctrl+Z, Ctrl+Y, Ctrl+1..9)
   useEffect(() => {
@@ -377,7 +460,7 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey) {
         if (e.key === '1') {
           e.preventDefault();
-          setActiveTab('template');
+          setActiveTab('structure');
         } else if (e.key === '2') {
           e.preventDefault();
           setActiveTab('contact');
@@ -418,6 +501,18 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, []);
 
+  // Repair drafts created by the first version of the card-model importer.
+  // A visual model may add an image but must never hide editable features.
+  useEffect(() => {
+    if (!state.presetName.startsWith('Modèle importé —')) return;
+    updateState((prev) => ({
+      ...prev,
+      presetName: prev.presetName.replace('Modèle importé —', 'Carte importée —'),
+      qr: { ...prev.qr, visible: true },
+      visibility: { ...prev.visibility, logo: true, banner: true, socials: true, qr: true }
+    }));
+  }, []);
+
   // Generate QR Code and Icons dynamically
   useEffect(() => {
     let isCancelled = false;
@@ -450,31 +545,35 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // Reset to default RAGT corporate template
   const resetState = useCallback(() => {
-    // Note: window.confirm is blocked in the iframe sandbox environment.
-    // In a real application, you might use a custom modal dialog here.
+    const timestamp = Date.now();
+    const recoveryRevision = createSavedRevision(state, 'Avant réinitialisation', timestamp, `before-reset-${timestamp}`);
+    setSavedRevisions(prev => {
+      const next = prependSavedRevision(prev, recoveryRevision);
+      persistRevisions(next);
+      return next;
+    });
     setState(DEFAULT_SIGNATURE_STATE);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_SIGNATURE_STATE));
-    setHistory([DEFAULT_SIGNATURE_STATE]);
-    setHistoryIndex(0);
-    showToast('Signature réinitialisée aux paramètres officiels RAGT', 'info');
-  }, [showToast]);
+    setHistory([state, DEFAULT_SIGNATURE_STATE]);
+    setHistoryIndex(1);
+    showToast('Signature réinitialisée. La version précédente est disponible dans les révisions.', 'info');
+  }, [persistRevisions, showToast, state]);
 
   // Preset switching
   const applyPreset = useCallback((presetId: string) => {
     const preset = SIGNATURE_PRESETS.find((p) => p.id === presetId);
     if (!preset) return;
-    updateState((prev) => preset.apply(prev));
+    updateState((prev) => ({
+      ...preset.apply(prev),
+      renderMode: 'standard',
+      cardTemplateUrl: undefined
+    }));
     showToast(`Modèle « ${preset.name} » appliqué`, 'success');
   }, [updateState, showToast]);
 
   // Export config as JSON file
   const exportConfigJson = useCallback(() => {
-    const exportData = {
-      app: 'Signature Studio RAGT',
-      version: APP_VERSION,
-      exportedAt: new Date().toISOString(),
-      config: state
-    };
+    const exportData = createSignatureExport(state);
     const jsonStr = JSON.stringify(exportData, null, 2);
     const blob = new Blob([jsonStr], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -491,15 +590,11 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const text = await file.text();
       const parsed = JSON.parse(text);
-      const importedConfig = parsed.config || parsed;
-      if (!importedConfig.layout || !importedConfig.personal) {
+      const importedConfig = normalizeSignatureConfig(parsed);
+      if (!importedConfig) {
         throw new Error('Fichier JSON incompatible ou corrompu');
       }
-      updateState((prev) => ({
-        ...prev,
-        ...importedConfig,
-        appVersion: APP_VERSION
-      }));
+      updateState(() => importedConfig);
       showToast('Configuration importée et appliquée avec succès !', 'success');
       return true;
     } catch (err) {

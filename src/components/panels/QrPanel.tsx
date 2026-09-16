@@ -89,6 +89,7 @@ export const QrPanel: React.FC = () => {
             </span>
           </div>
           <button
+            id="signature-qr-toggle"
             type="button"
             onClick={() => updateState((prev) => ({
               ...prev,

@@ -2,6 +2,8 @@ import React from 'react';
 import { useSignature, ActiveTab } from '../context/SignatureContext';
 import {
   LayoutTemplate,
+  ArchiveRestore,
+  House,
   Palette,
   UserCheck,
   Image as ImageIcon,
@@ -9,93 +11,80 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-interface SubNavItem {
-  id: string;
-  label: string;
-}
-
 interface NavItem {
   id: ActiveTab;
   label: string;
   sublabel: string;
   icon: React.ElementType;
   badgeCount?: number;
-  subItems?: SubNavItem[];
 }
 
 export const Navigation: React.FC = () => {
-  const { activeTab, activeSubTab, setActiveTab, diagnostic } = useSignature();
+  const { activeTab, setActiveTab, diagnostic } = useSignature();
 
   const navItems: NavItem[] = [
     {
-      id: 'template',
-      label: '1. Gabarit & Modèles',
-      sublabel: 'Structures A-I & bibliothèque',
-      icon: LayoutTemplate,
-      subItems: [
-        { id: 'layout', label: 'Mise en page & Gabarits' },
-        { id: 'templates', label: 'Modèles & Sauvegardes' }
-      ]
+      id: 'home',
+      label: 'Accueil',
+      sublabel: 'Brief de votre signature',
+      icon: House
+    },
+    {
+      id: 'structure',
+      label: 'Structure',
+      sublabel: 'Disposition et dimensions',
+      icon: LayoutTemplate
     },
     {
       id: 'contact',
-      label: '2. Identité & Contact',
-      sublabel: 'Coordonnées, réseaux & QR',
-      icon: UserCheck,
-      subItems: [
-        { id: 'info', label: 'Coordonnées' },
-        { id: 'social', label: 'Réseaux Sociaux' },
-        { id: 'qr', label: 'QR Code vCard' }
-      ]
+      label: 'Renseigner mes coordonnées',
+      sublabel: 'Contact, réseaux et QR',
+      icon: UserCheck
     },
     {
       id: 'media',
-      label: '3. Médias & Visuels',
-      sublabel: 'Logos RAGT, filiales & bannières',
-      icon: ImageIcon,
-      subItems: [
-        { id: 'logos', label: 'Logos & Filiales (80+)' },
-        { id: 'banner', label: 'Bannières & Campagnes' }
-      ]
+      label: 'Visuels',
+      sublabel: 'Logos, filiales et images carte',
+      icon: ImageIcon
     },
     {
       id: 'style',
-      label: '4. Style & Charte',
-      sublabel: 'Palette RAGT, polices & bordures',
-      icon: Palette,
-      subItems: [
-        { id: 'design', label: 'Design & Charte' }
-      ]
+      label: 'Mettre en forme',
+      sublabel: 'Couleurs, polices et bordures',
+      icon: Palette
     },
     {
       id: 'export',
-      label: '5. Contrôle & Diffusion',
-      sublabel: 'Audit Outlook & copie 1-clic',
+      label: 'Vérifier & Installer',
+      sublabel: 'Contrôles, copie et exports',
       icon: CheckCheck,
-      badgeCount: diagnostic.summary.errorsCount,
-      subItems: [
-        { id: 'verify', label: 'Diagnostic & Audit' },
-        { id: 'copy', label: 'Copier & Exporter' }
-      ]
+      badgeCount: diagnostic.summary.errorsCount
+    },
+    {
+      id: 'versions',
+      label: 'Versions & sauvegardes',
+      sublabel: 'Presets, révisions et historique',
+      icon: ArchiveRestore
     }
   ];
 
   return (
-    <nav className="w-64 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto select-none transition-colors">
-      <div className="p-3">
+    <nav className="w-72 bg-slate-50 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 h-full overflow-y-auto select-none transition-colors">
+      <div className="p-4">
         <span className="text-[11px] font-bold text-slate-400 dark:text-slate-500 tracking-wider uppercase px-2 mb-1 block">
           Menu du Studio
         </span>
-        <div className="space-y-1.5">
+        <div className="space-y-2">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             return (
-              <div key={item.id} className="space-y-0.5">
+              <div key={item.id}>
                 <button
                   type="button"
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-left transition-all ${
+                  onClick={() => setActiveTab(item.id, item.id === 'home' ? 'brief' : item.id === 'structure' ? 'layout' : item.id === 'versions' ? 'storage' : undefined)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`w-full flex items-center justify-between px-3 py-3 rounded-lg text-left transition-all ${
                     isActive
                       ? 'bg-white dark:bg-slate-800 text-[#0C3866] dark:text-amber-400 font-bold shadow-xs border border-slate-200/90 dark:border-slate-700'
                       : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/80 dark:hover:bg-slate-800/60 font-medium'
@@ -127,31 +116,6 @@ export const Navigation: React.FC = () => {
                   )}
                 </button>
 
-                {/* Sous-onglets dépliés sous le pôle actif */}
-                {isActive && item.subItems && item.subItems.length > 1 && (
-                  <div className="ml-5 pl-4 border-l-2 border-[#0C3866]/20 dark:border-amber-400/20 py-1 space-y-0.5">
-                    {item.subItems.map((sub) => {
-                      const isSubActive = activeSubTab === sub.id;
-                      return (
-                        <button
-                          key={sub.id}
-                          type="button"
-                          onClick={() => setActiveTab(item.id, sub.id)}
-                          className={`w-full text-left text-xs py-1 px-2 rounded-md transition-colors flex items-center justify-between ${
-                            isSubActive
-                              ? 'text-[#0C3866] dark:text-amber-400 font-bold bg-[#0C3866]/5 dark:bg-slate-700/50'
-                              : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-200'
-                          }`}
-                        >
-                          <span>{sub.label}</span>
-                          {isSubActive && (
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#0C3866] dark:bg-amber-400 shrink-0" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
               </div>
             );
           })}
@@ -162,8 +126,10 @@ export const Navigation: React.FC = () => {
       <div className="mt-auto p-3 border-t border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
         <div className="bg-white dark:bg-slate-800 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 shadow-2xs">
           <div className="flex items-center justify-between text-[11px] font-semibold text-slate-700 dark:text-slate-200">
-            <span>Compatibilité Outlook</span>
-            <span className="text-emerald-700 dark:text-emerald-400 font-bold">100% Validé</span>
+            <span>Contrôles Outlook</span>
+            <span className={diagnostic.scorePercent === 100 ? 'text-emerald-700 dark:text-emerald-400 font-bold' : 'text-amber-700 dark:text-amber-400 font-bold'}>
+              {diagnostic.scorePercent}% automatique
+            </span>
           </div>
           <div className="w-full bg-slate-100 dark:bg-slate-700 h-1.5 rounded-full mt-1.5 overflow-hidden">
             <div
@@ -172,7 +138,7 @@ export const Navigation: React.FC = () => {
             />
           </div>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-tight">
-            Structure HTML tableaux stricts testée pour Word Engine, OWA et mobile.
+            Contrôles automatiques de structure. La recette Outlook reste à consigner.
           </p>
         </div>
       </div>

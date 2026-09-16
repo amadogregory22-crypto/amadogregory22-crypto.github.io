@@ -79,8 +79,15 @@ export async function copyRichSignature(html: string): Promise<{ success: boolea
       if (sel) {
         sel.removeAllRanges();
         sel.addRange(range);
-        document.execCommand('copy');
+        const copied = document.execCommand('copy');
         sel.removeAllRanges();
+        if (!copied) {
+          document.body.removeChild(tempDiv);
+          return { success: false, message: 'La copie a été refusée par ce navigateur. Utilisez l’option « Copier le HTML ».' };
+        }
+      } else {
+        document.body.removeChild(tempDiv);
+        return { success: false, message: 'La sélection de la signature a échoué. Utilisez l’option « Copier le HTML ».' };
       }
       document.body.removeChild(tempDiv);
 
@@ -118,8 +125,11 @@ export async function copyRawHtml(html: string): Promise<{ success: boolean; mes
     textarea.style.left = '-9999px';
     document.body.appendChild(textarea);
     textarea.select();
-    document.execCommand('copy');
+    const copied = document.execCommand('copy');
     document.body.removeChild(textarea);
+    if (!copied) {
+      return { success: false, message: 'La copie du code HTML a été refusée par ce navigateur.' };
+    }
 
     return {
       success: true,
@@ -135,32 +145,25 @@ export async function copyRawHtml(html: string): Promise<{ success: boolean; mes
 }
 
 /**
- * Generates and downloads signature.html file.
- * If state is passed, exports a complete standalone interactive web app (matching signature (21).html).
+ * Downloads the exact signature HTML currently shown in the Studio.
  */
-export async function downloadHtmlFile(
+export async function downloadSignatureHtmlFile(
   html: string,
-  filename = 'signature.html',
-  state?: SignatureState
+  filename = 'signature.html'
 ): Promise<void> {
-  let fullDocument = '';
-  if (state) {
-    fullDocument = generateStandaloneSignatureAppHtml(state);
-  } else {
-    const finalHtml = await inlineAllImagesInHtml(html);
-    fullDocument = `<!DOCTYPE html>
+  const finalHtml = await inlineAllImagesInHtml(html);
+  const fullDocument = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Signature RAGT Semences</title>
-  <!-- Compatible Microsoft Outlook 2013-2024 / New Outlook / Web -->
+  <!-- Signature HTML : vérifier le collage dans le client de messagerie cible -->
 </head>
 <body style="margin:0; padding:20px; font-family:Arial, sans-serif; background-color:#FAFAFA;">
   ${finalHtml}
 </body>
 </html>`;
-  }
 
   const blob = new Blob([fullDocument], { type: 'text/html;charset=utf-8' });
   const url = URL.createObjectURL(blob);
@@ -171,4 +174,62 @@ export async function downloadHtmlFile(
   link.click();
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
+}
+
+export interface PortalExportResult {
+  embeddedImages: number;
+  unresolvedImages: number;
+}
+
+async function embedPortalImage(url: string): Promise<{ value: string; embedded: boolean }> {
+  if (!url || url.startsWith('data:image/')) return { value: url, embedded: Boolean(url) };
+  try {
+    const value = await imageUrlToBase64Png(url);
+    return { value, embedded: value.startsWith('data:image/') };
+  } catch {
+    return { value: url, embedded: false };
+  }
+}
+
+function getImageSources(html: string): string[] {
+  return [...html.matchAll(/<img\s+[^>]*?src=["']([^"']+)["'][^>]*>/gi)].map((match) => match[1]);
+}
+
+/** Downloads the editable collaborator portal with all available image assets embedded. */
+export async function downloadCollaboratorPortalFile(
+  html: string,
+  state: SignatureState,
+  filename = 'portail-signature-ragt.html'
+): Promise<PortalExportResult> {
+  const [primary, secondary, banner] = await Promise.all([
+    embedPortalImage(state.logos.primary.url),
+    embedPortalImage(state.logos.secondary.url),
+    embedPortalImage(state.banner.imageUrl)
+  ]);
+  const embeddedHtml = await inlineAllImagesInHtml(html);
+  const clonedState: SignatureState = {
+    ...state,
+    logos: {
+      ...state.logos,
+      primary: { ...state.logos.primary, url: primary.value },
+      secondary: { ...state.logos.secondary, url: secondary.value }
+    },
+    banner: { ...state.banner, imageUrl: banner.value }
+  };
+  const fullDocument = generateStandaloneSignatureAppHtml(clonedState, embeddedHtml);
+  const blob = new Blob([fullDocument], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+
+  const imageSources = [...new Set(getImageSources(embeddedHtml))];
+  return {
+    embeddedImages: imageSources.filter((source) => source.startsWith('data:image/')).length,
+    unresolvedImages: imageSources.filter((source) => !source.startsWith('data:image/')).length
+  };
 }

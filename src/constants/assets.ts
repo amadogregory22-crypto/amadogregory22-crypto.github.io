@@ -127,6 +127,32 @@ export const CLASSIFIED_PNG_ASSETS: ClassifiedPngAsset[] = [
     height: 77,
     description: 'Photo officielle de la carte de communication (Agronomes devant le tracteur vert). Positionnée à l’emplacement supérieur de la carte ou remplaçable par une autre photo.',
     badge: 'Photo de Carte'
+  },
+  {
+    id: 'png-carte-ragt-produits-reseaux',
+    originalFileName: 'carte-ragt-produits-reseaux.png',
+    name: 'Carte RAGT — Produits & réseaux',
+    menuTarget: 'banner',
+    menuLabel: 'Bannière & Carte RAGT',
+    subCategory: 'Cartes institutionnelles',
+    url: '/assets/bannieres/carte-ragt-produits-reseaux.png',
+    width: 1024,
+    height: 512,
+    description: 'Visuel RAGT fourni : gamme de semences, logo et réseaux sociaux. Utilisable comme illustration de carte ou bannière.',
+    badge: 'Carte RAGT'
+  },
+  {
+    id: 'png-carte-ragt-fond-jaune',
+    originalFileName: 'carte-ragt-fond-jaune.png',
+    name: 'Carte RAGT — Fond jaune institutionnel',
+    menuTarget: 'banner',
+    menuLabel: 'Bannière & Carte RAGT',
+    subCategory: 'Cartes institutionnelles',
+    url: '/assets/bannieres/carte-ragt-fond-jaune.png',
+    width: 1024,
+    height: 512,
+    description: 'Fond de carte RAGT fourni, avec logo et repères graphiques. Utilisable comme illustration de carte ou bannière.',
+    badge: 'Fond de carte'
   }
 ];
 
@@ -134,6 +160,8 @@ export const FONDS_IMAGES = [
   '/assets/bannieres/photo_carte_ragt.png',
   '/assets/bannieres/bags_signature.png',
   '/assets/bannieres/image_signature.png',
+  '/assets/bannieres/carte-ragt-produits-reseaux.png',
+  '/assets/bannieres/carte-ragt-fond-jaune.png',
   '/assets/uploads/fonds/046805_BD.jpg',
   '/assets/uploads/fonds/046806_BD.jpg',
   '/assets/uploads/fonds/046807_BD.jpg',

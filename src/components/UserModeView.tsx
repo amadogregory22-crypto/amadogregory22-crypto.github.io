@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useSignature } from '../context/SignatureContext';
-import { copyRichSignature, copyRawHtml, downloadHtmlFile } from '../utils/clipboard';
+import { copyRichSignature, downloadCollaboratorPortalFile, downloadSignatureHtmlFile } from '../utils/clipboard';
 import {
   User,
   Phone,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export const UserModeView: React.FC = () => {
-  const { state, updateState, rawHtml, showToast, setAppMode } = useSignature();
+  const { state, updateState, rawHtml, showToast, setAppMode, diagnostic } = useSignature();
   const { personal, labels, visibility } = state;
   const [copied, setCopied] = useState(false);
 
@@ -34,14 +34,22 @@ export const UserModeView: React.FC = () => {
 
   const handleCopy = async () => {
     const res = await copyRichSignature(rawHtml);
-    setCopied(true);
+    if (res.success) setCopied(true);
     showToast(res.message, res.success ? 'success' : 'error');
-    setTimeout(() => setCopied(false), 3000);
+    if (res.success) setTimeout(() => setCopied(false), 3000);
   };
 
-  const handleDownload = () => {
-    downloadHtmlFile(rawHtml, `signature-ragt-${personal.lastName.toLowerCase()}.html`, state);
-    showToast('Fichier signature.html interactif téléchargé !', 'success');
+  const handleDownloadSignature = async () => {
+    await downloadSignatureHtmlFile(rawHtml, `signature-ragt-${personal.lastName.toLowerCase() || 'ragt'}.html`);
+    showToast('Signature HTML téléchargée.', 'success');
+  };
+
+  const handleDownloadPortal = async () => {
+    const result = await downloadCollaboratorPortalFile(rawHtml, state, `portail-ragt-${personal.lastName.toLowerCase() || 'ragt'}.html`);
+    showToast(
+      result.unresolvedImages > 0 ? `Portail téléchargé, ${result.unresolvedImages} image(s) restent externes.` : 'Portail collaborateur téléchargé hors connexion.',
+      result.unresolvedImages > 0 ? 'warning' : 'success'
+    );
   };
 
   return (
@@ -65,7 +73,7 @@ export const UserModeView: React.FC = () => {
             </button>
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Renseignez simplement vos informations personnelles ci-dessous. Votre signature se met à jour en direct avec la mise en page validée par le service Communication.
+            Renseignez vos informations personnelles. Votre signature se met à jour en direct avec la mise en page configurée dans le Studio.
           </p>
         </div>
 
@@ -81,6 +89,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Prénom *</label>
               <input
                 type="text"
+                aria-label="Prénom"
                 value={personal.firstName}
                 onChange={(e) => updatePersonal('firstName', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white"
@@ -91,6 +100,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Nom *</label>
               <input
                 type="text"
+                aria-label="Nom"
                 value={personal.lastName}
                 onChange={(e) => updatePersonal('lastName', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white font-bold uppercase"
@@ -103,6 +113,7 @@ export const UserModeView: React.FC = () => {
             <label className="text-xs font-semibold text-slate-700 block mb-1">Fonction / Poste *</label>
             <input
               type="text"
+              aria-label="Fonction ou poste"
               value={personal.jobTitle}
               onChange={(e) => updatePersonal('jobTitle', e.target.value)}
               className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white"
@@ -115,6 +126,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Département</label>
               <input
                 type="text"
+                aria-label="Département"
                 value={personal.department}
                 onChange={(e) => updatePersonal('department', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white"
@@ -124,6 +136,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Société</label>
               <input
                 type="text"
+                aria-label="Société"
                 value={personal.company}
                 onChange={(e) => updatePersonal('company', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white font-semibold text-[#0C3866]"
@@ -143,6 +156,7 @@ export const UserModeView: React.FC = () => {
             <label className="text-xs font-semibold text-slate-700 block mb-1">E-mail professionnel *</label>
             <input
               type="email"
+              aria-label="E-mail professionnel"
               value={personal.email}
               onChange={(e) => updatePersonal('email', e.target.value)}
               className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white font-medium text-[#0C3866]"
@@ -154,6 +168,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Ligne fixe directe</label>
               <input
                 type="text"
+                aria-label="Ligne fixe directe"
                 value={personal.phone}
                 onChange={(e) => updatePersonal('phone', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white font-mono"
@@ -163,6 +178,7 @@ export const UserModeView: React.FC = () => {
               <label className="text-xs font-semibold text-slate-700 block mb-1">Téléphone mobile</label>
               <input
                 type="text"
+                aria-label="Téléphone mobile"
                 value={personal.mobile}
                 onChange={(e) => updatePersonal('mobile', e.target.value)}
                 className="w-full px-3 py-2 text-sm border rounded-lg bg-slate-50 focus:bg-white font-mono"
@@ -184,11 +200,19 @@ export const UserModeView: React.FC = () => {
 
           <button
             type="button"
-            onClick={handleDownload}
+            onClick={handleDownloadSignature}
             className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-colors"
           >
             <Download className="w-4 h-4 text-emerald-600" />
-            <span>Télécharger signature.html (Portail autonome)</span>
+            <span>Télécharger la signature HTML</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleDownloadPortal}
+            className="w-full bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold text-xs py-2.5 px-4 rounded-xl shadow-2xs flex items-center justify-center gap-2 transition-colors"
+          >
+            <Download className="w-4 h-4 text-[#0C3866]" />
+            <span>Télécharger le portail collaborateur</span>
           </button>
         </div>
       </div>
@@ -208,15 +232,15 @@ export const UserModeView: React.FC = () => {
               <span className="font-semibold text-slate-700">Objet :</span>
               <span className="italic">RAGT Semences — Correspondance professionnelle</span>
             </div>
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold shrink-0">
-              ✓ Prête pour Outlook
+            <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold shrink-0 ${diagnostic.summary.errorsCount > 0 ? 'bg-rose-100 text-rose-800' : diagnostic.summary.warningsCount > 0 ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'}`}>
+              {diagnostic.scorePercent}% automatique
             </span>
           </div>
 
           {/* Email Body Simulation */}
           <div className="p-6 md:p-8 font-sans text-sm text-slate-800 space-y-3">
             <p>Bonjour,</p>
-            <p>Veuillez trouver ci-dessous ma signature professionnelle officielle validée.</p>
+            <p>Veuillez trouver ci-dessous mes coordonnées professionnelles.</p>
             <p className="pb-3">Bien cordialement,</p>
 
             {/* Rendered HTML Signature Table */}

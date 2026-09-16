@@ -17,26 +17,26 @@ export const ExportMasterPanel: React.FC = () => {
             <CheckCheck className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">5. Contrôle & Diffusion</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Vérifier & installer</h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Audit de conformité Outlook, scores techniques & copie 1-clic
+              Vérifiez la signature, puis copiez-la ou téléchargez les fichiers utiles.
             </p>
           </div>
         </div>
 
         {/* Sous-onglets */}
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mt-2.5 text-xs font-semibold">
+        <div className="grid grid-cols-2 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mt-2.5 text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveSubTab('verify')}
-            className={`flex-1 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+            className={`min-w-0 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
               currentSubTab === 'verify'
                 ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <CheckCheck className="w-3.5 h-3.5" />
-            <span>Diagnostic & Audit</span>
+            <span className="truncate">Vérifier</span>
             {diagnostic.summary.errorsCount > 0 && (
               <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-red-500 text-white font-bold ml-0.5">
                 {diagnostic.summary.errorsCount}
@@ -46,14 +46,14 @@ export const ExportMasterPanel: React.FC = () => {
           <button
             type="button"
             onClick={() => setActiveSubTab('copy')}
-            className={`flex-1 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+            className={`min-w-0 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
               currentSubTab === 'copy'
                 ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <CopyCheck className="w-3.5 h-3.5" />
-            <span>Copier & Exporter</span>
+            <span className="truncate">Installer</span>
           </button>
         </div>
       </div>

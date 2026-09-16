@@ -1,6 +1,7 @@
 import { SignatureState } from '../types/signature';
 import { SOCIAL_ICONS_SVG } from '../constants/logos';
 import { svgDataUrlToPng, imageUrlToBase64Png } from './svgToPng';
+import { isCampaignActive } from './campaignStatus';
 
 /**
  * Escapes HTML entities to prevent injection
@@ -212,8 +213,8 @@ function buildCoordinatesHtml(state: SignatureState, iconCache: Record<string, s
   const makeLink = (href: string, text: string, color: string, isBold: boolean = false, targetBlank: boolean = false) => {
     const targetAttr = targetBlank ? ' target="_blank" rel="noopener noreferrer"' : '';
     const weightStyle = isBold ? ' font-weight:600;' : '';
-    const linkStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily};${weightStyle}`;
-    const spanStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; display:inline;${weightStyle}`;
+    const linkStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
+    const spanStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
     return `<a href="${href}"${targetAttr} style="${linkStyle}"><span style="${spanStyle}">${escapeHtml(text)}</span></a>`;
   };
 
@@ -227,7 +228,7 @@ function buildCoordinatesHtml(state: SignatureState, iconCache: Record<string, s
               <td style="vertical-align:middle; width:${iconSettings.size + 4}px; padding-right:${iconSettings.spacing}px;">
                 <img src="${iconUrl}" width="${iconSettings.size}" height="${iconSettings.size}" alt="${iconType}" border="0" style="display:block; width:${iconSettings.size}px; height:${iconSettings.size}px;" />
               </td>
-              <td style="font-family:${t.fontFamily}; font-size:${t.fontSize}px; line-height:${t.lineHeight}; color:${design.colors.text}; vertical-align:middle;">
+              <td style="font-family:${t.fontFamily}; font-size:${t.fontSize}px; line-height:${t.lineHeight}; color:${design.colors.text}; vertical-align:middle; word-break:break-word; overflow-wrap:anywhere;">
                 ${label ? `<strong style="color:${design.colors.muted}; font-weight:600;">${escapeHtml(label)}:</strong> ` : ''}${valueHtml}
               </td>
             </tr>
@@ -423,16 +424,20 @@ function buildQrHtml(state: SignatureState, qrDataUrl: string): string {
  */
 function buildBannerHtml(state: SignatureState, iconCache: Record<string, string> = {}): string {
   const { banner, visibility } = state;
-  if (!visibility.banner || !banner.enabled || !banner.imageUrl) return '';
+  if (!visibility.banner || !isCampaignActive(banner)) return '';
 
   const effectiveBannerUrl = iconCache['banner_image'] || banner.imageUrl;
 
-  const heightStyle = banner.maintainRatio === false 
-    ? `height:${banner.height}px; object-fit:cover;`
+  // Fixed-height campaigns must remain a compact full-width strip. This cap
+  // also protects older imported configurations that used taller values.
+  const fixedHeight = Math.min(90, Math.max(20, banner.height));
+  const renderedHeight = banner.maintainRatio === false ? fixedHeight : banner.height;
+  const heightStyle = banner.maintainRatio === false
+    ? `height:${renderedHeight}px; object-fit:cover;`
     : `height:auto;`;
 
   const bannerImg = `
-    <img data-ragt-dropzone="banner" src="${effectiveBannerUrl}" width="${banner.width}" height="${banner.height}" alt="${escapeHtml(banner.altText || banner.title)}" border="0" style="display:block; width:100%; max-width:${banner.width}px; ${heightStyle} border-radius:4px;" />
+    <img data-ragt-dropzone="banner" src="${effectiveBannerUrl}" width="${banner.width}" height="${renderedHeight}" alt="${escapeHtml(banner.altText || banner.title)}" border="0" style="display:block; width:${banner.width}px; max-width:100%; ${heightStyle} border-radius:4px;" />
   `;
 
   const content = banner.linkUrl
@@ -440,7 +445,7 @@ function buildBannerHtml(state: SignatureState, iconCache: Record<string, string
     : bannerImg;
 
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:100%; max-width:${banner.width}px; margin-top:${banner.marginTop}px; margin-bottom:${banner.marginBottom}px;">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${banner.width}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${banner.width}px; max-width:100%; margin-top:${banner.marginTop}px; margin-bottom:${banner.marginBottom}px;">
       <tr>
         <td style="vertical-align:top; text-align:center;">
           ${content}
@@ -527,6 +532,60 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
   const leftBannerHtml = state.banner.position === 'left' ? bannerHtml : '';
   const centerBannerHtml = (state.banner.position === 'center' || !state.banner.position) ? bannerHtml : '';
 
+  // Layout D is the free, centered composition. It uses the persisted block
+  // order so a designer can change the reading order without turning content
+  // into a flat image. Job and company are part of the identity block.
+  const orderedBlockKeys = Array.from(new Set(
+    layout.blockOrder
+      .map((key) => (key === 'job' || key === 'company' ? 'identity' : key))
+      .filter((key): key is 'logo' | 'identity' | 'coordinates' | 'social' | 'qr' | 'slogan' | 'banner' =>
+        ['logo', 'identity', 'coordinates', 'social', 'qr', 'slogan', 'banner'].includes(key)
+      )
+  ));
+  for (const key of ['logo', 'identity', 'coordinates', 'social', 'qr', 'slogan', 'banner'] as const) {
+    if (!orderedBlockKeys.includes(key)) orderedBlockKeys.push(key);
+  }
+  const orderedCenterBlocks: Record<(typeof orderedBlockKeys)[number], string> = {
+    logo: `${logoHtml}${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ''}`,
+    identity: identityHtml,
+    coordinates: coordsHtml,
+    social: socialsHtml,
+    qr: qrHtml,
+    slogan: sloganHtml,
+    // Top and bottom campaigns retain their dedicated Outlook-safe wrappers.
+    // Only a centered image becomes part of the freely ordered composition.
+    banner: centerBannerHtml
+  };
+  const orderedCenterRows = orderedBlockKeys
+    .map((key) => orderedCenterBlocks[key] ? `<tr><td align="center" style="text-align:center; padding-top:4px;">${orderedCenterBlocks[key]}</td></tr>` : '')
+    .join('');
+
+  // All layouts share this ordered information column. The free centered
+  // layout also moves the logo; horizontal layouts keep their logo/QR columns
+  // intact for Outlook, while identity, contact, social, slogan and a centered
+  // image can be reordered by the same persisted blockOrder.
+  const defaultBlockOrder = ['logo', 'identity', 'coordinates', 'social', 'qr', 'slogan', 'banner'];
+  const usesDefaultBlockOrder = orderedBlockKeys.every((key, index) => key === defaultBlockOrder[index]);
+  const buildOrderedInfoHtml = (options: { includeSocial?: boolean; includeCenterBanner?: boolean } = {}) => {
+    const includeSocial = options.includeSocial !== false;
+    const includeCenterBanner = options.includeCenterBanner !== false;
+    const blocks: Partial<Record<(typeof orderedBlockKeys)[number], string>> = {
+      identity: identityHtml,
+      coordinates: coordsHtml,
+      social: includeSocial ? socialsHtml : '',
+      slogan: sloganHtml,
+      qr: state.qr.position === 'bottom' ? qrHtml : '',
+      banner: includeCenterBanner ? centerBannerHtml : ''
+    };
+    const legacyOrder = ['banner', 'identity', 'coordinates', 'social', 'slogan', 'qr'] as const;
+    const order = usesDefaultBlockOrder ? legacyOrder : orderedBlockKeys;
+    const rows = order
+      .filter((key) => key !== 'logo')
+      .map((key) => blocks[key] ? `<tr><td style="padding-top:4px;">${blocks[key]}</td></tr>` : '')
+      .join('');
+    return rows ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">${rows}</table>` : '';
+  };
+
   // Border style logic
   let borderStyle = '';
   if (design.border.type === 'all') {
@@ -577,11 +636,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           <!-- Info Column -->
           <td style="vertical-align:${layout.alignV}; padding-right:${p.innerSpacing}px;">
             ${(state.qr.position === 'left' && qrHtml) ? `<div style="padding-bottom:10px;">${qrHtml}</div>` : ''}
-            ${identityHtml}
-            ${coordsHtml}
-            ${socialsHtml}
-            ${sloganHtml}
-            ${(state.qr.position === 'bottom' && qrHtml) ? `<div style="padding-top:10px;">${qrHtml}</div>` : ''}
+            ${buildOrderedInfoHtml()}
           </td>
           ${verticalSeparatorTd}
           <!-- Logo & QR Column -->
@@ -611,11 +666,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
         ${horizontalSeparatorTr}
         <tr>
           <td style="vertical-align:top; text-align:${layout.alignH}; padding-top:${p.innerSpacing}px;">
-            ${identityHtml}
-            ${coordsHtml}
-            ${socialsHtml}
-            ${sloganHtml}
-            ${(state.qr.position === 'bottom' && qrHtml) ? `<div style="padding-top:10px; ${layout.alignH === 'center' ? 'text-align:center;' : ''}">${qrHtml}</div>` : ''}
+            ${buildOrderedInfoHtml()}
           </td>
         </tr>
       `;
@@ -624,28 +675,9 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
     case 'layout-d': // Centered Info (Format Centré Mobile Institutionnel)
       innerStructure = `
         <tr>
-          <td style="vertical-align:middle; text-align:center; padding-bottom:10px;">
+          <td style="vertical-align:middle; text-align:center;">
             <table border="0" cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:0 auto; border-collapse:collapse; text-align:center;">
-              <tr>
-                ${(state.qr.position === 'left' && qrHtml) ? `<td style="vertical-align:middle; padding-right:12px;">${qrHtml}</td>` : ''}
-                <td align="center" style="text-align:center;">
-                  ${logoHtml}
-                  ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ''}
-                </td>
-                ${(state.qr.position === 'right' && qrHtml) ? `<td style="vertical-align:middle; padding-left:12px;">${qrHtml}</td>` : ''}
-              </tr>
-            </table>
-          </td>
-        </tr>
-        ${horizontalSeparatorTr}
-        <tr>
-          <td style="vertical-align:middle; text-align:center; padding-top:6px;">
-            <table border="0" cellpadding="0" cellspacing="0" role="presentation" align="center" style="margin:0 auto; border-collapse:collapse; text-align:center;">
-              <tr><td align="center" style="text-align:center;">${identityHtml}</td></tr>
-              <tr><td align="center" style="text-align:center; padding-top:4px;">${coordsHtml}</td></tr>
-              <tr><td align="center" style="text-align:center; padding-top:4px;">${socialsHtml}</td></tr>
-              <tr><td align="center" style="text-align:center; padding-top:4px;">${sloganHtml}</td></tr>
-              ${(state.qr.position === 'bottom' && qrHtml) ? `<tr><td align="center" style="text-align:center; padding-top:8px;">${qrHtml}</td></tr>` : ''}
+              ${orderedCenterRows}
             </table>
           </td>
         </tr>
@@ -664,11 +696,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           ${verticalSeparatorTd}
           <!-- Info Column -->
           <td style="vertical-align:${layout.alignV}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
-            ${identityHtml}
-            ${coordsHtml}
-            ${socialsHtml}
-            ${sloganHtml}
-            ${(state.qr.position === 'bottom' && qrHtml) ? `<div style="padding-top:10px;">${qrHtml}</div>` : ''}
+            ${buildOrderedInfoHtml()}
           </td>
           <!-- QR Column -->
           ${(state.qr.position === 'right' && qrHtml) ? `
@@ -690,9 +718,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           </td>
           ${verticalSeparatorTd}
           <td style="vertical-align:middle; padding-left:12px;">
-            ${identityHtml}
-            ${coordsHtml}
-            ${(state.qr.position === 'bottom' && qrHtml) ? `<div style="padding-top:8px;">${qrHtml}</div>` : ''}
+            ${buildOrderedInfoHtml()}
           </td>
           ${(state.qr.position === 'right' && qrHtml) ? `
             <td style="vertical-align:middle; text-align:center; padding-left:12px;">
@@ -720,11 +746,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
         ${horizontalSeparatorTr}
         <tr>
           <td style="text-align:left; padding-top:8px; vertical-align:top;">
-            ${identityHtml}
-            ${coordsHtml}
-            ${socialsHtml}
-            ${sloganHtml}
-            ${(state.qr.position === 'bottom' && qrHtml) ? `<div style="padding-top:8px;">${qrHtml}</div>` : ''}
+            ${buildOrderedInfoHtml()}
           </td>
         </tr>
       `;
@@ -753,10 +775,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           ${verticalSeparatorTd}
           <!-- Info Column Center: Photo on top, then Name & Title, then Coordinates -->
           <td style="vertical-align:middle; text-align:left; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
-            ${centerBannerHtml ? `<div style="padding-bottom:8px; text-align:left;">${centerBannerHtml}</div>` : ''}
-            ${identityHtml}
-            ${coordsHtml}
-            ${sloganHtml}
+            ${buildOrderedInfoHtml({ includeSocial: false })}
           </td>
           <!-- Socials Column Right: 4 white circular discs stacked vertically (and QR code if position is right) -->
           <td style="width:46px; vertical-align:middle; text-align:center; padding-left:${p.innerSpacing}px;" width="46" align="center">
@@ -792,22 +811,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           ${verticalSeparatorTd}
           <!-- Info Column -->
           <td style="vertical-align:${layout.alignV}; padding-left:${p.innerSpacing}px;">
-            ${(state.banner.position === 'center' || !state.banner.position) && centerBannerHtml ? `<div style="padding-bottom:12px;">${centerBannerHtml}</div>` : ''}
-            <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
-              <tr>
-                <td>${identityHtml}</td>
-              </tr>
-              <tr>
-                <td>${coordsHtml}</td>
-              </tr>
-              <tr>
-                <td>${socialsHtml}</td>
-              </tr>
-              <tr>
-                <td>${sloganHtml}</td>
-              </tr>
-              ${(state.qr.position === 'bottom' && qrHtml) ? `<tr><td style="padding-top:10px;">${qrHtml}</td></tr>` : ''}
-            </table>
+            ${buildOrderedInfoHtml()}
           </td>
           <!-- Right QR if configured -->
           ${(state.qr.position === 'right' && qrHtml) ? `
@@ -885,6 +889,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
 </style>
 <div style="font-family:${design.typography.baseFont}; max-width:100%;">
   ${topBannerHtml}
+  ${state.renderMode === 'flattened-card' ? '' : `
   <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${effectiveTotalWidth}" ${tableBgColorAttr} style="width:${isMobilePreset ? '100%' : `${effectiveTotalWidth}px`}; max-width:${effectiveTotalWidth}px; ${bgStyle} ${borderStyle} border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
     <tbody>
       <tr>
@@ -905,6 +910,7 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
       ` : ''}
     </tbody>
   </table>
+  `}
 </div>
 <!-- End RAGT Signature -->`;
 }

@@ -1,626 +1,103 @@
-import React, { useState, useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
-import { BannerConfig, SloganConfig } from '../../types/signature';
-import {
-  Flag,
-  Calendar,
-  Link as LinkIcon,
-  Image as ImageIcon,
-  Sparkles,
-  Eye,
-  EyeOff,
-  Quote,
-  ChevronDown,
-  ChevronUp,
-  Upload,
-  Check
-} from 'lucide-react';
-import { FONDS_IMAGES, MOTIFS_IMAGES, CLASSIFIED_PNG_ASSETS, BANNER_IMAGES, SIGNATURES_COM } from '../../constants/assets';
+import { BannerConfig } from '../../types/signature';
+import { ChevronDown, ChevronUp, Eye, EyeOff, Image as ImageIcon, Link as LinkIcon, Trash2, Upload } from 'lucide-react';
+import { BANNER_IMAGES, CLASSIFIED_PNG_ASSETS } from '../../constants/assets';
+
+type CardImage = {
+  id: string;
+  name: string;
+  description: string;
+  url: string;
+  placement: 'top' | 'center';
+  width: number;
+  height: number;
+};
+
+const CARD_IMAGES: CardImage[] = [
+  { id: 'carte-ragt-agronomes', name: 'Agronomes RAGT', description: 'Photo originale de la carte.', url: '/assets/bannieres/photo_carte_ragt.png', placement: 'center', width: 175, height: 84 },
+  { id: 'carte-ragt-bags', name: 'Sacs de semences', description: 'Emballages RAGT.', url: '/assets/bannieres/bags_signature.png', placement: 'center', width: 175, height: 84 },
+  { id: 'carte-ragt-field', name: 'Champs & cultures', description: 'Recherche agronomique.', url: '/assets/bannieres/image_signature.png', placement: 'center', width: 175, height: 84 }
+];
+
+const READY_CAMPAIGN_MAX_HEIGHT = 90;
 
 export const BannerPanel: React.FC = () => {
   const { state, updateState, showToast } = useSignature();
-  const { banner, slogan, visibility } = state;
-  const [showGallery, setShowGallery] = useState(false);
-  const cardPhotoInputRef = useRef<HTMLInputElement>(null);
+  const { banner, visibility } = state;
+  const isReadyCampaign = Boolean(banner.campaignName) && banner.position === 'bottom' && banner.maintainRatio === false;
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [showPlacement, setShowPlacement] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleUploadCustomPhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const updateBanner = (patch: Partial<BannerConfig>) => updateState((prev) => ({ ...prev, banner: { ...prev.banner, ...patch } }));
+  const openImport = () => window.setTimeout(() => fileInputRef.current?.click(), 0);
+
+  const applyCardImage = (item: CardImage) => {
+    const position = state.layout.preset === 'layout-i' ? 'center' : item.placement;
+    updateBanner({ title: item.name, campaignName: '', altText: item.description, imageUrl: item.url, enabled: true, position, width: item.width, height: item.height, maintainRatio: true, startDate: '', endDate: '' });
+    updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
+    showToast(`Image « ${item.name} » ajoutée à la carte`, 'success');
+  };
+
+  const uploadImage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const url = event.target?.result as string;
-      if (url) {
-        updateBanner({
-          imageUrl: url,
-          enabled: true,
-          position: state.layout.preset === 'layout-i' ? 'center' : banner.position,
-          width: state.layout.preset === 'layout-i' ? 175 : 400,
-          height: state.layout.preset === 'layout-i' ? 84 : 120,
-          maintainRatio: true
-        });
-        updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-        showToast('Votre photo a été positionnée à cet endroit !', 'success');
-      }
+    reader.onload = () => {
+      const imageUrl = String(reader.result || '');
+      if (!imageUrl) return;
+      const compact = state.layout.preset === 'layout-i';
+      updateBanner({ imageUrl, title: file.name, campaignName: '', altText: file.name, enabled: true, position: compact ? 'center' : 'top', width: compact ? 175 : 400, height: compact ? 84 : 120, maintainRatio: true });
+      updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
+      showToast('Image ajoutée à la carte', 'success');
     };
     reader.readAsDataURL(file);
+    event.target.value = '';
   };
 
-  const updateBanner = (patch: Partial<BannerConfig>) => {
-    updateState((prev) => ({
-      ...prev,
-      banner: {
-        ...prev.banner,
-        ...patch
-      }
-    }));
-  };
-
-  const updateSlogan = (patch: Partial<SloganConfig>) => {
-    updateState((prev) => ({
-      ...prev,
-      slogan: {
-        ...prev.slogan,
-        ...patch
-      }
-    }));
-  };
-
-  // Preset ready-to-test campaign banners
-  const sampleBanners = [
-    {
-      title: 'Salon SPACE 2026',
-      url: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=600&auto=format&fit=crop&q=80',
-      link: 'https://www.ragt-semences.com/evenements/space',
-      campaign: 'SPACE 2026 — Hall 4 Stand B22'
-    },
-    {
-      title: 'Sélection Variétale Blé & Maïs',
-      url: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=600&auto=format&fit=crop&q=80',
-      link: 'https://www.ragt.fr/varietes',
-      campaign: 'Génétique & Performance 2026'
-    },
-    {
-      title: 'Recrutement & Carrières',
-      url: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=600&auto=format&fit=crop&q=80',
-      link: 'https://www.ragt.fr/carrieres',
-      campaign: 'Rejoignez RAGT Semences'
-    }
-  ];
+  const libraryImages = CLASSIFIED_PNG_ASSETS.filter((asset) => asset.menuTarget === 'banner' && asset.subCategory !== 'Cartes institutionnelles');
 
   return (
-    <div className="p-4 space-y-5 text-slate-800">
-      {/* Header */}
+    <div className="space-y-5 p-4 text-slate-800 dark:text-slate-200">
       <div>
-        <h3 className="text-sm font-bold text-[#0C3866] uppercase tracking-wide flex items-center gap-1.5">
-          <Flag className="w-4 h-4 text-[#F7BD00]" />
-          Bannière de campagne &amp; Slogan
-        </h3>
-        <p className="text-xs text-slate-500 mt-0.5">
-          Diffusez des actualités ponctuelles (salons, vœux, innovations) sans modifier vos coordonnées.
-        </p>
+        <h3 className="flex items-center gap-1.5 text-sm font-bold uppercase tracking-wide text-[#0C3866] dark:text-amber-400"><ImageIcon className="h-4 w-4 text-[#F7BD00]" /> Image</h3>
+        <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Ajoutez une image qui accompagne vos coordonnées.</p>
       </div>
 
-      {/* 19. BANNIÈRE ÉVÉNEMENTIELLE */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-3.5 text-xs">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="font-bold text-slate-800 block">Bannière promotionnelle</span>
-            <span className="text-[11px] text-slate-500">{banner.campaignName || 'Campagne en cours'}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const nextVal = !visibility.banner;
-              updateState((prev) => ({
-                ...prev,
-                visibility: { ...prev.visibility, banner: nextVal },
-                banner: { ...prev.banner, enabled: nextVal }
-              }));
-              showToast(nextVal ? 'Bannière activée' : 'Bannière masquée', 'info');
-            }}
-            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg border transition-all ${
-              visibility.banner && banner.enabled
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-slate-100 border-slate-200 text-slate-600'
-            }`}
-          >
-            {visibility.banner && banner.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{visibility.banner && banner.enabled ? 'Active' : 'Désactivée'}</span>
-          </button>
+      <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-3.5 text-xs dark:border-slate-700 dark:bg-slate-800">
+        <div className="flex items-center justify-between gap-3">
+          <div><span className="block font-bold text-slate-800 dark:text-slate-100">Image de la carte</span><span className="text-[11px] text-slate-500 dark:text-slate-400">{banner.title || 'Aucune image sélectionnée'}</span></div>
+          <div className="flex items-center gap-1"><button id="signature-banner-toggle" type="button" onClick={() => { const enabled = !(visibility.banner && banner.enabled); updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: enabled }, banner: { ...prev.banner, enabled } })); showToast(enabled ? 'Image de carte affichée' : 'Image de carte masquée', 'info'); }} className={`flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-bold ${visibility.banner && banner.enabled ? 'border-emerald-300 bg-emerald-50 text-emerald-800' : 'border-slate-200 bg-slate-100 text-slate-600'}`}>
+            {visibility.banner && banner.enabled ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}{visibility.banner && banner.enabled ? 'Affichée' : 'Masquée'}
+          </button><button type="button" aria-label="Retirer l’image de la carte" onClick={() => { updateState((prev) => ({ ...prev, banner: { ...prev.banner, enabled: false, title: '', campaignName: '', imageUrl: '', altText: '', linkUrl: '' }, visibility: { ...prev.visibility, banner: false } })); showToast('Image retirée de la carte', 'success'); }} className="rounded-lg border border-rose-200 p-1.5 text-rose-600 hover:bg-rose-50"><Trash2 className="h-3.5 w-3.5" /></button></div>
         </div>
 
-        {/* Emplacement Photo de la Carte RAGT (« À cet endroit ») */}
-        <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-700/60 rounded-xl space-y-2.5">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div>
-              <span className="text-xs font-bold text-amber-950 dark:text-amber-300 flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
-                Emplacement Photo de la Carte RAGT (« À cet endroit »)
-              </span>
-              <span className="text-[10px] text-amber-900/80 dark:text-amber-300/80">
-                Positionnez l'image de la carte ou une autre image au-dessus de votre signature
-              </span>
-            </div>
-            <input
-              ref={cardPhotoInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleUploadCustomPhoto}
-              className="hidden"
-            />
-            <button
-              type="button"
-              onClick={() => cardPhotoInputRef.current?.click()}
-              className="px-2.5 py-1 text-[10px] font-bold bg-[#0C3866] hover:bg-[#092b50] text-white rounded-lg transition-colors flex items-center gap-1 shrink-0 shadow-2xs"
-            >
-              <Upload className="w-3 h-3" />
-              <span>Autre image...</span>
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {[
-              {
-                name: 'Photo de la Carte',
-                sub: 'Agronomes & Tracteur vert',
-                url: '/assets/bannieres/photo_carte_ragt.png'
-              },
-              {
-                name: 'Sacs de Semences RAGT',
-                sub: 'Emballages officiels',
-                url: '/assets/bannieres/bags_signature.png'
-              },
-              {
-                name: 'Champs & Cultures RAGT',
-                sub: 'Recherche agronomique',
-                url: '/assets/bannieres/image_signature.png'
-              }
-            ].map((item) => {
-              const isSelected = banner.imageUrl === item.url;
-              return (
-                <button
-                  key={item.url}
-                  type="button"
-                  onClick={() => {
-                    updateBanner({
-                      imageUrl: item.url,
-                      enabled: true,
-                      position: state.layout.preset === 'layout-i' ? 'center' : banner.position,
-                      width: state.layout.preset === 'layout-i' ? 175 : 400,
-                      height: state.layout.preset === 'layout-i' ? 84 : 120,
-                      maintainRatio: true
-                    });
-                    updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                    showToast(`Image « ${item.name} » positionnée à cet endroit`, 'success');
-                  }}
-                  className={`p-2 rounded-lg border text-left transition-all flex flex-col justify-between bg-white dark:bg-slate-800 ${
-                    isSelected
-                      ? 'border-[#0C3866] ring-2 ring-[#0C3866]/30 shadow-xs'
-                      : 'border-slate-200 hover:border-slate-300'
-                  }`}
-                >
-                  <div className="h-14 w-full rounded overflow-hidden mb-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-100 flex items-center justify-center">
-                    <img src={item.url} alt={item.name} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex items-center justify-between w-full">
-                    <div className="min-w-0 pr-1">
-                      <div className="text-[11px] font-bold text-slate-800 dark:text-slate-200 truncate">{item.name}</div>
-                      <div className="text-[9px] text-slate-500 truncate">{item.sub}</div>
-                    </div>
-                    {isSelected && <Check className="w-3.5 h-3.5 text-[#0C3866] shrink-0" />}
-                  </div>
-                </button>
-              );
-            })}
-          </div>
+        <input ref={fileInputRef} type="file" accept="image/*" onChange={uploadImage} className="hidden" />
+        <div className="rounded-xl border border-[#0C3866]/20 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+          <div className="mb-2 flex items-start justify-between gap-2"><div><span className="block font-bold text-slate-800 dark:text-slate-100">Image</span><span className="text-[10px] text-slate-500 dark:text-slate-400">Image à positionner à cet endroit, en haut des coordonnées.</span></div><button type="button" onClick={openImport} className="shrink-0 rounded-lg bg-[#0C3866] px-2.5 py-1.5 text-[10px] font-bold text-white"><Upload className="mr-1 inline h-3 w-3" />Importer</button></div>
+          <div className="grid grid-cols-3 gap-2">{CARD_IMAGES.map((item) => <button key={item.id} type="button" onClick={() => applyCardImage(item)} className={`rounded-lg border p-1.5 text-left transition-all ${banner.imageUrl === item.url ? 'border-[#0C3866] ring-2 ring-[#0C3866]/20' : 'border-slate-200 hover:border-[#0C3866] dark:border-slate-700'}`}><img src={item.url} alt="" className="mb-1 h-12 w-full rounded object-cover" /><span className="block truncate text-[10px] font-bold">{item.name}</span></button>)}</div>
         </div>
 
-        {/* Banner Presets */}
-        <div>
-          <label className="text-slate-600 font-semibold block mb-1">Exemples de campagnes prêtes à l'emploi :</label>
-          <div className="grid grid-cols-3 gap-2">
-            {sampleBanners.map((sb) => (
-              <button
-                key={sb.title}
-                type="button"
-                onClick={() => {
-                      updateBanner({
-                        title: sb.title,
-                        imageUrl: sb.url,
-                        linkUrl: sb.link,
-                        campaignName: sb.campaign,
-                        enabled: true,
-                        maintainRatio: true
-                      });
-                  updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                  showToast(`Campagne « ${sb.title} » appliquée`, 'success');
-                }}
-                className="p-2 border rounded-lg hover:border-[#0C3866] bg-slate-50 text-left transition-colors"
-              >
-                <div className="h-10 rounded overflow-hidden mb-1 bg-slate-200">
-                  <img src={sb.url} alt={sb.title} className="w-full h-full object-cover" />
-                </div>
-                <div className="text-[10px] font-bold text-[#0C3866] truncate">{sb.title}</div>
-              </button>
-            ))}
-          </div>
+        <button type="button" onClick={() => setShowLibrary((value) => !value)} className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"><span>Bibliothèque d’images RAGT</span>{showLibrary ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</button>
+        {showLibrary && <div className="max-h-64 space-y-3 overflow-y-auto rounded-lg border border-slate-200 bg-slate-50 p-2 dark:border-slate-700 dark:bg-slate-900"><div><span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Photos et visuels RAGT</span><div className="grid grid-cols-2 gap-2">{libraryImages.map((item) => <button key={item.id} type="button" onClick={() => applyCardImage({ id: item.id, name: item.name, description: item.description, url: item.url, placement: 'center', width: 175, height: 84 })} className="rounded-lg border border-slate-200 bg-white p-1.5 text-left hover:border-[#0C3866] dark:border-slate-700 dark:bg-slate-800"><img src={item.url} alt="" className="mb-1 h-14 w-full rounded object-cover" /><span className="block truncate text-[10px] font-bold">{item.name}</span></button>)}</div></div><div><span className="mb-1.5 block text-[10px] font-bold uppercase tracking-wide text-slate-500">Bandeaux, fonds et motifs importés</span><div className="grid grid-cols-2 gap-2">{BANNER_IMAGES.map((imageUrl) => <button key={imageUrl} type="button" onClick={() => { updateBanner({ imageUrl, campaignName: '', enabled: true, position: 'bottom', width: state.layout.dimensions.totalWidth, height: 30, maintainRatio: false }); updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } })); }} className="overflow-hidden rounded-lg border border-slate-200 bg-white p-1 hover:border-[#0C3866] dark:border-slate-700 dark:bg-slate-800"><img src={imageUrl} alt="Ressource de communication RAGT" className="h-9 w-full rounded object-cover" /></button>)}</div></div></div>}
 
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={() => setShowGallery(!showGallery)}
-              className="flex items-center justify-between w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 transition-colors"
-            >
-              <span>Voir les ressources importées (Fonds & Motifs)</span>
-              {showGallery ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-            </button>
-            
-            {showGallery && (
-              <div className="mt-2 p-2.5 border border-slate-200 rounded-lg bg-slate-50 max-h-80 overflow-y-auto space-y-3">
-                {/* Official PNG Banners */}
-                <div>
-                  <div className="text-[10px] font-bold text-[#0C3866] uppercase tracking-wider mb-1.5 flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-[#F7BD00]" />
-                    <span>Bandeaux Photographiques Officiels RAGT (PNG)</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mb-2">
-                    {CLASSIFIED_PNG_ASSETS.filter((p) => p.menuTarget === 'banner').map((item) => (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => {
-                          updateBanner({ imageUrl: item.url, enabled: true });
-                          updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                          showToast(`Bannière « ${item.name} » appliquée`, 'success');
-                        }}
-                        className={`group p-2 rounded-lg border text-left transition-all bg-white hover:border-[#0C3866] ${
-                          banner.imageUrl === item.url ? 'border-[#0C3866] ring-2 ring-[#0C3866]/20' : 'border-slate-200'
-                        }`}
-                      >
-                        <div className="h-16 w-full rounded overflow-hidden mb-1.5 bg-slate-100">
-                          <img src={item.url} alt={item.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
-                        </div>
-                        <div className="text-[10px] font-bold text-slate-800 line-clamp-1">{item.name}</div>
-                        <div className="text-[9px] font-mono text-slate-500">{item.width} × {item.height} px</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="text-[10px] font-bold text-[#0C3866] mb-1 uppercase tracking-wider mt-4">Vraies Bannières (JPG)</div>
-                <div className="text-[9px] text-slate-500 mb-2">Bannières adaptées à la largeur de la carte (Hauteur max 30px)</div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {BANNER_IMAGES.map((img) => (
-                    <button
-                      key={img}
-                      type="button"
-                      onClick={() => {
-                        updateBanner({ 
-                          imageUrl: img, 
-                          enabled: true,
-                          position: 'bottom',
-                          width: state.layout.dimensions.totalWidth,
-                          height: 30,
-                          maintainRatio: false
-                        });
-                        updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                      }}
-                      className="group relative rounded overflow-hidden border border-slate-200 hover:border-[#0C3866] focus:outline-none"
-                    >
-                      <img src={img} alt="Bannière" className="w-full h-8 object-cover group-hover:scale-105 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-[10px] font-bold text-[#0C3866] mb-1 uppercase tracking-wider mt-4">Signatures Com (JPG)</div>
-                <div className="grid grid-cols-2 gap-2 mb-3">
-                  {SIGNATURES_COM.map((img) => (
-                    <button
-                      key={img}
-                      type="button"
-                      onClick={() => {
-                        updateBanner({ 
-                          imageUrl: img, 
-                          enabled: true,
-                          position: 'bottom',
-                          width: state.layout.dimensions.totalWidth,
-                          height: 30,
-                          maintainRatio: false
-                        });
-                        updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                      }}
-                      className="group relative rounded overflow-hidden border border-slate-200 hover:border-[#0C3866] focus:outline-none"
-                    >
-                      <img src={img} alt="Signature Com" className="w-full h-8 object-cover group-hover:scale-105 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider mt-4">Fonds d'écran (Bandeaux JPG)</div>
-                <div className="grid grid-cols-3 gap-2 mb-3">
-                  {FONDS_IMAGES.filter((img) => !img.endsWith('.png')).map((img) => (
-                    <button
-                      key={img}
-                      type="button"
-                      onClick={() => {
-                        updateBanner({ imageUrl: img, enabled: true });
-                        updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                      }}
-                      className="group relative rounded overflow-hidden border border-slate-200 hover:border-[#0C3866] focus:outline-none"
-                    >
-                      <img src={img} alt="Fond" className="w-full h-12 object-cover group-hover:scale-105 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-
-                <div className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Motifs institutionnels</div>
-                <div className="grid grid-cols-4 gap-2">
-                  {MOTIFS_IMAGES.map((img) => (
-                    <button
-                      key={img}
-                      type="button"
-                      onClick={() => {
-                        updateBanner({ imageUrl: img, enabled: true });
-                        updateState((prev) => ({ ...prev, visibility: { ...prev.visibility, banner: true } }));
-                      }}
-                      className="group relative rounded overflow-hidden border border-slate-200 hover:border-[#0C3866] focus:outline-none"
-                    >
-                      <img src={img} alt="Motif" className="w-full h-12 object-cover group-hover:scale-105 transition-transform" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="grid gap-3 border-t border-slate-100 pt-3 dark:border-slate-700">
+          <label className="block"><span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">URL de l’image</span><input value={banner.imageUrl} onChange={(event) => updateBanner({ imageUrl: event.target.value })} placeholder="https://…" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 font-mono text-[11px] text-blue-700 dark:border-slate-700 dark:bg-slate-900" /></label>
+          <label className="block"><span className="mb-1 block text-[11px] font-semibold text-slate-600 dark:text-slate-300">Texte alternatif</span><input value={banner.altText || ''} onChange={(event) => updateBanner({ altText: event.target.value })} placeholder="Décrivez l’image" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900" /></label>
+          <label className="block"><span className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300"><LinkIcon className="h-3.5 w-3.5" /> Lien au clic (facultatif)</span><input value={banner.linkUrl || ''} onChange={(event) => updateBanner({ linkUrl: event.target.value })} placeholder="https://www.ragt.fr" className="w-full rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-xs dark:border-slate-700 dark:bg-slate-900" /></label>
+          <button type="button" onClick={() => setShowSchedule((value) => !value)} className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-left text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"><span>Planifier l’affichage de cette image</span>{showSchedule ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</button>
+          {showSchedule && <div className="grid grid-cols-2 gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-900"><label><span className="mb-1 block text-[10px] font-semibold text-slate-500">Début</span><input type="date" aria-label="Début d’affichage" value={banner.startDate || ''} onChange={(event) => updateBanner({ startDate: event.target.value })} className="w-full rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] dark:border-slate-700 dark:bg-slate-800" /></label><label><span className="mb-1 block text-[10px] font-semibold text-slate-500">Fin</span><input type="date" aria-label="Fin d’affichage" min={banner.startDate || undefined} value={banner.endDate || ''} onChange={(event) => updateBanner({ endDate: event.target.value })} className="w-full rounded border border-slate-200 bg-white px-1.5 py-1 text-[11px] dark:border-slate-700 dark:bg-slate-800" /></label><p className="col-span-2 text-[10px] text-slate-500">Les dates affectent les nouvelles signatures générées ; une signature déjà collée dans Outlook reste inchangée.</p></div>}
+          <button type="button" onClick={() => setShowPlacement((value) => !value)} className="flex w-full items-center justify-between rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-2 text-left text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"><span>Position et dimensions</span>{showPlacement ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}</button>
+          {showPlacement && <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-900">
+            <div><span className="mb-1.5 block text-[10px] font-semibold text-slate-500">Position dans la signature</span><div className="grid grid-cols-3 gap-1.5">{(['top', 'left', 'center', 'right', 'bottom'] as const).map((position) => <button key={position} type="button" onClick={() => updateBanner({ position })} className={`rounded border px-2 py-1.5 text-[10px] font-semibold ${banner.position === position ? 'border-[#0C3866] bg-white text-[#0C3866] dark:bg-slate-800 dark:text-amber-400' : 'border-slate-200 bg-white text-slate-600 hover:border-[#0C3866] dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'}`}>{({ top: 'Haut', left: 'Gauche', center: 'Centre', right: 'Droite', bottom: 'Bas' } as const)[position]}</button>)}</div></div>
+            <div className="grid grid-cols-2 gap-2"><label><span className="mb-1 block text-[10px] font-semibold text-slate-500">{isReadyCampaign ? 'Largeur de la signature (px)' : 'Largeur (px)'}</span><input type="number" min="40" max="600" value={isReadyCampaign ? state.layout.dimensions.totalWidth : banner.width} disabled={isReadyCampaign} onChange={(event) => { const width = Math.max(40, Number(event.target.value) || 40); updateBanner({ width, height: banner.maintainRatio ? Math.max(20, Math.round(width * banner.height / Math.max(1, banner.width))) : banner.height }); }} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px] disabled:cursor-not-allowed disabled:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:disabled:bg-slate-700" /></label><label><span className="mb-1 block text-[10px] font-semibold text-slate-500">Hauteur (px)</span><input type="number" min="20" max={isReadyCampaign ? READY_CAMPAIGN_MAX_HEIGHT : 400} value={banner.height} onChange={(event) => { const requestedHeight = Math.max(20, Number(event.target.value) || 20); const height = isReadyCampaign ? Math.min(READY_CAMPAIGN_MAX_HEIGHT, requestedHeight) : requestedHeight; updateBanner({ height, width: banner.maintainRatio ? Math.max(40, Math.round(height * banner.width / Math.max(1, banner.height))) : banner.width }); }} className="w-full rounded border border-slate-200 bg-white px-2 py-1 text-[11px] dark:border-slate-700 dark:bg-slate-800" /></label></div>
+            <label className="flex cursor-pointer items-center gap-2 text-[10px] text-slate-600 dark:text-slate-300"><input type="checkbox" checked={banner.maintainRatio} onChange={(event) => updateBanner({ maintainRatio: event.target.checked })} className="rounded border-slate-300 text-[#0C3866]" />Conserver les proportions de l’image</label>
+          </div>}
         </div>
+      </section>
 
-        {/* Custom Image URL */}
-        <div>
-          <label className="text-slate-600 font-semibold block mb-1">URL de l'image de la bannière :</label>
-          <input
-            type="text"
-            placeholder="https://..."
-            value={banner.imageUrl}
-            onChange={(e) => updateBanner({ imageUrl: e.target.value })}
-            className="w-full px-2.5 py-1.5 border rounded-lg bg-slate-50 font-mono text-[11px] text-blue-700 focus:bg-white"
-          />
-        </div>
-
-        {/* Link URL */}
-        <div>
-          <label className="text-slate-600 font-semibold block mb-1">Lien de redirection :</label>
-          <div className="flex items-center gap-1.5">
-            <LinkIcon className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <input
-              type="text"
-              placeholder="https://www.ragt.fr/evenement"
-              value={banner.linkUrl}
-              onChange={(e) => updateBanner({ linkUrl: e.target.value })}
-              className="w-full px-2.5 py-1.5 border rounded-lg bg-slate-50 text-xs"
-            />
-          </div>
-        </div>
-
-        {/* Width / Height & Standard Aspect Ratios */}
-        <div className="space-y-2 pt-2 border-t border-slate-100">
-          <label className="text-slate-600 font-semibold block">Dimensions (px) & Formats :</label>
-          <div className="flex gap-2 mb-2">
-            <button
-              type="button"
-              onClick={() => updateBanner({ width: 600, height: 150 })}
-              className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-200"
-            >
-              600x150 (Large)
-            </button>
-            <button
-              type="button"
-              onClick={() => updateBanner({ width: 400, height: 100 })}
-              className="px-2 py-1 bg-slate-100 border border-slate-200 rounded text-[10px] font-bold text-slate-700 hover:bg-slate-200"
-            >
-              400x100 (Compact)
-            </button>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex-1">
-              <span className="text-[10px] text-slate-500 block mb-0.5">Largeur</span>
-              <input
-                type="number"
-                value={banner.width || 600}
-                onChange={(e) => {
-                  const newWidth = Number(e.target.value);
-                  if (banner.maintainRatio) {
-                    const ratio = banner.height / banner.width;
-                    updateBanner({ width: newWidth, height: Math.round(newWidth * ratio) });
-                  } else {
-                    updateBanner({ width: newWidth });
-                  }
-                }}
-                className="w-full px-2 py-1 border rounded bg-slate-50 text-[11px] font-mono"
-              />
-            </div>
-            <div className="flex-1">
-              <span className="text-[10px] text-slate-500 block mb-0.5">Hauteur</span>
-              <input
-                type="number"
-                value={banner.height || 150}
-                onChange={(e) => {
-                  const newHeight = Number(e.target.value);
-                  if (banner.maintainRatio) {
-                    const ratio = banner.width / banner.height;
-                    updateBanner({ height: newHeight, width: Math.round(newHeight * ratio) });
-                  } else {
-                    updateBanner({ height: newHeight });
-                  }
-                }}
-                className="w-full px-2 py-1 border rounded bg-slate-50 text-[11px] font-mono"
-              />
-            </div>
-            <div className="flex items-end pb-1">
-              <label className="flex items-center gap-1.5 cursor-pointer text-[10px] text-slate-600 font-semibold" title="Conserver les proportions">
-                <input
-                  type="checkbox"
-                  checked={banner.maintainRatio !== false}
-                  onChange={(e) => updateBanner({ maintainRatio: e.target.checked })}
-                  className="rounded border-slate-300 text-[#0C3866] focus:ring-[#0C3866]"
-                />
-                Ratio lié
-              </label>
-            </div>
-          </div>
-        </div>
-
-        {/* Position & Dates (Requirement 47) */}
-        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-100">
-          <div>
-            <label className="text-slate-600 font-semibold block mb-1">Positionnement :</label>
-            <div className="grid grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200">
-              <button
-                type="button"
-                onClick={() => updateBanner({ position: 'top' })}
-                className={`py-1 text-center rounded text-[11px] font-medium ${
-                  banner.position === 'top' ? 'bg-white text-[#0C3866] font-bold shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Haut
-              </button>
-              <button
-                type="button"
-                onClick={() => updateBanner({ position: 'center' })}
-                className={`py-1 text-center rounded text-[11px] font-medium ${
-                  banner.position === 'center' || !banner.position ? 'bg-white text-[#0C3866] font-bold shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Centre
-              </button>
-              <button
-                type="button"
-                onClick={() => updateBanner({ position: 'bottom' })}
-                className={`py-1 text-center rounded text-[11px] font-medium ${
-                  banner.position === 'bottom' ? 'bg-white text-[#0C3866] font-bold shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Bas
-              </button>
-              <button
-                type="button"
-                onClick={() => updateBanner({ position: 'left' })}
-                className={`py-1 text-center rounded text-[11px] font-medium ${
-                  banner.position === 'left' ? 'bg-white text-[#0C3866] font-bold shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Gauche
-              </button>
-              <button
-                type="button"
-                onClick={() => updateBanner({ position: 'right' })}
-                className={`py-1 text-center rounded text-[11px] font-medium ${
-                  banner.position === 'right' ? 'bg-white text-[#0C3866] font-bold shadow-xs' : 'text-slate-600'
-                }`}
-              >
-                Droite
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="text-slate-600 font-semibold block mb-1">Dates de campagne :</label>
-            <div className="flex items-center gap-1">
-              <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-              <input
-                type="date"
-                value={banner.startDate || ''}
-                onChange={(e) => updateBanner({ startDate: e.target.value })}
-                className="w-full px-1.5 py-1 border rounded bg-slate-50 text-[11px] font-mono"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 20. SLOGAN INDÉPENDANT */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-3 text-xs">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Quote className="w-4 h-4 text-[#F7BD00]" />
-            <span className="font-bold text-slate-800">Slogan institutionnel RAGT</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => {
-              const nextVal = !visibility.slogan;
-              updateState((prev) => ({
-                ...prev,
-                visibility: { ...prev.visibility, slogan: nextVal },
-                slogan: { ...prev.slogan, enabled: nextVal }
-              }));
-            }}
-            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg border transition-all ${
-              visibility.slogan && slogan.enabled
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-slate-100 border-slate-200 text-slate-600'
-            }`}
-          >
-            {visibility.slogan && slogan.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{visibility.slogan && slogan.enabled ? 'Affiché' : 'Masqué'}</span>
-          </button>
-        </div>
-
-        <div>
-          <label className="text-slate-600 font-semibold block mb-1">Texte du slogan :</label>
-          <input
-            type="text"
-            value={slogan.text}
-            onChange={(e) => updateSlogan({ text: e.target.value })}
-            placeholder="Des semences pour demain"
-            className="w-full px-2.5 py-1.5 border rounded-lg bg-slate-50 font-medium text-[#0C3866]"
-          />
-        </div>
-
-        <div className="grid grid-cols-3 gap-2 pt-1 border-t border-slate-100">
-          <div>
-            <span className="text-[11px] text-slate-600 block mb-1">Taille :</span>
-            <input
-              type="number"
-              min="9"
-              max="16"
-              value={slogan.fontSize}
-              onChange={(e) => updateSlogan({ fontSize: Number(e.target.value) })}
-              className="w-full px-2 py-1 border rounded bg-slate-50 font-mono"
-            />
-          </div>
-
-          <div>
-            <span className="text-[11px] text-slate-600 block mb-1">Couleur :</span>
-            <div className="flex items-center gap-1">
-              <input
-                type="color"
-                value={slogan.color}
-                onChange={(e) => updateSlogan({ color: e.target.value })}
-                className="w-6 h-6 rounded border cursor-pointer"
-              />
-              <input
-                type="text"
-                value={slogan.color}
-                onChange={(e) => updateSlogan({ color: e.target.value })}
-                className="w-full text-[10px] font-mono border rounded uppercase px-1 py-0.5 bg-slate-50"
-              />
-            </div>
-          </div>
-
-          <div>
-            <span className="text-[11px] text-slate-600 block mb-1">Alignement :</span>
-            <select
-              value={slogan.align}
-              onChange={(e) => updateSlogan({ align: e.target.value as any })}
-              className="w-full px-1.5 py-1 border rounded bg-slate-50 text-[11px]"
-            >
-              <option value="left">Gauche</option>
-              <option value="center">Centre</option>
-              <option value="right">Droite</option>
-            </select>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { PersonalInfo, LabelsConfig, VisibilityConfig } from '../../types/signature';
 import {
@@ -18,6 +18,17 @@ export const InfoPanel: React.FC = () => {
   const { state, updateState } = useSignature();
   const { personal, labels, visibility } = state;
   const [activeSection, setActiveSection] = useState<'identity' | 'contact' | 'address' | 'labels'>('identity');
+
+  useEffect(() => {
+    const focusRequestedControl = (event: Event) => {
+      const target = (event as CustomEvent<{ target?: string }>).detail?.target;
+      if (target !== 'signature-email') return;
+      setActiveSection('contact');
+      window.setTimeout(() => document.getElementById(target)?.focus(), 0);
+    };
+    window.addEventListener('ragt:focus-control', focusRequestedControl);
+    return () => window.removeEventListener('ragt:focus-control', focusRequestedControl);
+  }, []);
 
   const updatePersonal = (key: keyof PersonalInfo, value: string) => {
     updateState((prev) => ({
@@ -121,6 +132,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Civilité"
                 placeholder="M."
                 value={personal.civility}
                 onChange={(e) => updatePersonal('civility', e.target.value)}
@@ -142,6 +154,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Prénom"
                 value={personal.firstName}
                 onChange={(e) => updatePersonal('firstName', e.target.value)}
                 className="w-full text-xs px-2.5 py-1.5 border rounded-lg bg-slate-50 focus:bg-white font-medium text-slate-800"
@@ -164,6 +177,7 @@ export const InfoPanel: React.FC = () => {
             </div>
             <input
               type="text"
+              aria-label="Nom de famille"
               value={personal.lastName}
               onChange={(e) => updatePersonal('lastName', e.target.value)}
               className="w-full text-xs px-2.5 py-1.5 border rounded-lg bg-slate-50 focus:bg-white font-bold text-[#0C3866] uppercase"
@@ -185,6 +199,7 @@ export const InfoPanel: React.FC = () => {
             </div>
             <input
               type="text"
+              aria-label="Fonction ou poste"
               value={personal.jobTitle}
               onChange={(e) => updatePersonal('jobTitle', e.target.value)}
               className="w-full text-xs px-2.5 py-1.5 border rounded-lg bg-slate-50 focus:bg-white text-slate-700 italic"
@@ -207,6 +222,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Département"
                 placeholder="Ex: Systèmes d’Information"
                 value={personal.department}
                 onChange={(e) => updatePersonal('department', e.target.value)}
@@ -228,6 +244,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Service"
                 placeholder="Ex: Assistance"
                 value={personal.service}
                 onChange={(e) => updatePersonal('service', e.target.value)}
@@ -252,6 +269,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Société"
                 value={personal.company}
                 onChange={(e) => updatePersonal('company', e.target.value)}
                 className="w-full text-xs px-2 py-1.5 border rounded-lg bg-slate-50 focus:bg-white font-bold text-[#0C3866]"
@@ -272,6 +290,7 @@ export const InfoPanel: React.FC = () => {
               </div>
               <input
                 type="text"
+                aria-label="Établissement ou filiale"
                 placeholder="Ex: Siège Social"
                 value={personal.subsidiary}
                 onChange={(e) => updatePersonal('subsidiary', e.target.value)}
@@ -299,7 +318,9 @@ export const InfoPanel: React.FC = () => {
               </button>
             </div>
             <input
+              id="signature-email"
               type="email"
+              aria-label="Adresse e-mail professionnelle"
               value={personal.email}
               onChange={(e) => updatePersonal('email', e.target.value)}
               className="w-full text-xs px-2.5 py-1.5 border rounded-lg bg-slate-50 focus:bg-white font-medium text-[#0C3866]"

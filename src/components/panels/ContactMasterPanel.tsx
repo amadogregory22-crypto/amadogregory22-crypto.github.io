@@ -18,50 +18,50 @@ export const ContactMasterPanel: React.FC = () => {
             <UserCheck className="w-4 h-4" />
           </div>
           <div>
-            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">2. Identité & Contact</h2>
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">Coordonnées & liens</h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Coordonnées détaillées, réseaux sociaux & QR Code vCard
+              Renseignez votre identité, vos réseaux et votre QR code vCard.
             </p>
           </div>
         </div>
 
         {/* Sous-onglets */}
-        <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mt-2.5 text-xs font-semibold">
+        <div className="grid grid-cols-3 bg-slate-100 dark:bg-slate-800 p-1 rounded-lg mt-2.5 text-xs font-semibold">
           <button
             type="button"
             onClick={() => setActiveSubTab('info')}
-            className={`flex-1 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+            className={`min-w-0 py-1.5 px-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
               currentSubTab === 'info'
                 ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <UserCheck className="w-3.5 h-3.5" />
-            <span>Coordonnées</span>
+            <span className="truncate">Infos</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveSubTab('social')}
-            className={`flex-1 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+            className={`min-w-0 py-1.5 px-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
               currentSubTab === 'social'
                 ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>Réseaux Sociaux</span>
+            <span className="truncate">Réseaux</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveSubTab('qr')}
-            className={`flex-1 py-1.5 px-2 rounded-md transition-all flex items-center justify-center gap-1.5 ${
+            className={`min-w-0 py-1.5 px-1.5 rounded-md transition-all flex items-center justify-center gap-1 ${
               currentSubTab === 'qr'
                 ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
             }`}
           >
             <QrCode className="w-3.5 h-3.5" />
-            <span>QR Code</span>
+            <span className="truncate">QR</span>
           </button>
         </div>
       </div>

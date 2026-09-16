@@ -62,6 +62,16 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
     });
   }
 
+  if (visibility.jobTitle && !personal.jobTitle) {
+    items.push({
+      id: 'job-missing',
+      category: 'personal',
+      label: 'Fonction du collaborateur',
+      status: 'warning',
+      message: 'La fonction est vide. Elle aide le destinataire à comprendre immédiatement le rôle de la personne.'
+    });
+  }
+
   // 2. Email validation
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!personal.email) {
@@ -87,6 +97,16 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
       label: 'Adresse e-mail professionnelle',
       status: 'ok',
       message: `${personal.email} est valide`
+    });
+  }
+
+  if (visibility.logo && logos.primary.url && !logos.primary.keepRatio) {
+    items.push({
+      id: 'logo-ratio',
+      category: 'images',
+      label: 'Proportions du logo',
+      status: 'warning',
+      message: 'La conservation des proportions du logo est désactivée. Réactivez-la pour éviter une déformation.'
     });
   }
 
@@ -143,7 +163,7 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
       category: 'outlook',
       label: 'Largeur standard e-mail',
       status: 'ok',
-      message: `Largeur optimale (${layout.dimensions.totalWidth}px) pour tous les écrans`
+      message: `Largeur ${layout.dimensions.totalWidth}px compatible avec la règle automatique du Studio.`
     });
   }
 
@@ -166,6 +186,36 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
         message: `QR actif encodant un format ${qr.type.toUpperCase()}`
       });
     }
+    if (qr.size < 60) {
+      items.push({
+        id: 'qr-size',
+        category: 'qr',
+        label: 'Taille du QR Code',
+        status: 'warning',
+        message: `Le QR Code mesure ${qr.size}px. Prévoyez au moins 60px pour un scan fiable.`
+      });
+    }
+    const qrContrast = getContrast(qr.fgColor || '#0C3866', qr.bgColor || '#FFFFFF');
+    if (qrContrast < 4.5) {
+      items.push({
+        id: 'qr-contrast',
+        category: 'qr',
+        label: 'Contraste du QR Code',
+        status: 'warning',
+        message: `Le contraste du QR Code (${qrContrast.toFixed(1)}:1) est faible. Utilisez un premier plan sombre sur fond clair.`
+      });
+    }
+  }
+
+  const inactiveLinks = state.social.items.filter((item) => item.active && !item.url);
+  if (visibility.socials && inactiveLinks.length > 0) {
+    items.push({
+      id: 'social-link-missing',
+      category: 'links',
+      label: 'Liens des réseaux sociaux',
+      status: 'warning',
+      message: `${inactiveLinks.length} réseau(x) actif(s) sans lien. Ajoutez une URL ou désactivez-les.`
+    });
   }
 
   // 7. Banner validation
@@ -187,6 +237,15 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
         message: `Bannière configurée avec lien de redirection`
       });
     }
+    if (!banner.altText?.trim()) {
+      items.push({
+        id: 'banner-alt-missing',
+        category: 'a11y',
+        label: 'Texte alternatif de l’image',
+        status: 'warning',
+        message: 'Ajoutez une description de l’image pour les images bloquées et les lecteurs d’écran.'
+      });
+    }
   }
 
   // 8. Security & HTML checks
@@ -204,7 +263,7 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
       category: 'security',
       label: 'Sécurité et conformité HTML',
       status: 'ok',
-      message: 'Aucun script ou tag malveillant'
+      message: 'Aucun protocole javascript: n’a été détecté dans le HTML généré.'
     });
   }
 
@@ -239,9 +298,17 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
       category: 'outlook',
       label: 'Compatibilité CSS Outlook',
       status: 'ok',
-      message: 'Aucune propriété CSS bloquante détectée pour le moteur Word (Outlook Classique).'
+      message: 'Aucune propriété CSS bloquante de la règle automatique n’a été détectée. Une recette Outlook reste nécessaire.'
     });
   }
+
+  items.push({
+    id: 'outlook-manual-review',
+    category: 'outlook',
+    label: 'Recette clients e-mail',
+    status: 'warning',
+    message: 'Contrôles automatiques terminés. Tester et consigner Outlook classique, New Outlook et Outlook Web avant de déclarer la signature validée.'
+  });
 
   // 9. Accessibility (WCAG Contrast)
   const bgColor = state.design.background.type === 'color' && state.design.background.color
@@ -293,37 +360,44 @@ export function validateSignature(state: SignatureState, rawHtml: string): Signa
   const earnedPoints = okCount * 2 + warningsCount * 1;
   const scorePercent = Math.round((earnedPoints / (totalPoints || 1)) * 100);
 
-  // Dynamic compatibility scores per client
+  // Generated HTML can be checked automatically, but no client is declared
+  // compatible until a dated manual recipe has been documented.
   const clientScores: ClientCompatibilityScore[] = [
     {
       client: 'Outlook Windows (Classique / 365)',
-      stars: errorsCount > 0 ? 3 : warningsCount > 1 ? 4 : 5,
-      status: errorsCount > 0 ? 'fair' : warningsCount > 1 ? 'good' : 'perfect',
-      notes: 'Rendu basé sur le moteur Microsoft Word. Tableaux stricts et styles inline garantis.'
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner avec la version exacte du client.'
     },
     {
       client: 'New Outlook (Windows / Mac)',
-      stars: 5,
-      status: 'perfect',
-      notes: 'Moteur moderne Chromium / WebKit. Support complet du HTML généré.'
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner avec la version exacte du client.'
     },
     {
       client: 'Outlook Web (OWA / Office 365)',
-      stars: 5,
-      status: 'perfect',
-      notes: 'Excellente prise en charge des tableaux, styles et images.'
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner avec le navigateur et la version utilisés.'
     },
     {
-      client: 'Gmail (Web & Application)',
-      stars: warningsCount > 2 ? 4 : 5,
-      status: 'perfect',
-      notes: 'Respect strict des balises <table> et liens tel/mailto natifs.'
+      client: 'Outlook mobile',
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner sur les appareils réellement utilisés.'
     },
     {
-      client: 'Clients Mobiles (iOS Mail & Android)',
-      stars: layout.dimensions.totalWidth > 580 ? 4 : 5,
-      status: layout.dimensions.totalWidth > 580 ? 'good' : 'perfect',
-      notes: 'Affichage fluide sur smartphone sans déformation de la typographie.'
+      client: 'Gmail Web',
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner après collage et envoi de contrôle.'
+    },
+    {
+      client: 'Outlook.com',
+      stars: 0,
+      status: 'unverified',
+      notes: 'Recette manuelle à consigner après collage et envoi de contrôle.'
     }
   ];
 

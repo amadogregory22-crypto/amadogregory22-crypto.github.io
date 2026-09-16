@@ -66,36 +66,60 @@ export interface CommunicationSignatureGraphic {
   height: number;
   description: string;
   badge: string;
+  backgroundColor: string;
 }
 
 // Full graphic signatures designed by the Communication department (Cleaned of example coordinates)
 export const COMMUNICATION_SIGNATURES: CommunicationSignatureGraphic[] = [
   {
+    id: 'ragt-preconfigured-products',
+    name: 'Carte Préconfigurée — Produits',
+    url: '/assets/bannieres/carte-ragt-produits-reseaux.png',
+    width: 1024,
+    height: 512,
+    description: 'Carte préconfigurée institutionnelle. Applique la structure RAGT et conserve l’image déjà choisie dans vos visuels.',
+    badge: 'Coordonnées personnalisables',
+    backgroundColor: '#FDC420'
+  },
+  {
+    id: 'ragt-preconfigured-yellow',
+    name: 'Carte Préconfigurée — Fond jaune',
+    url: '/assets/bannieres/carte-ragt-fond-jaune.png',
+    width: 1024,
+    height: 512,
+    description: 'Carte préconfigurée institutionnelle sur fond jaune. Applique la structure RAGT et conserve l’image déjà choisie dans vos visuels.',
+    badge: 'Coordonnées personnalisables',
+    backgroundColor: '#DDB126'
+  },
+  {
     id: 'ragt-com-signature-1',
-    name: 'Carte RAGT Officielle — Variante 1',
+    name: 'Carte Préconfigurée Variante 1',
     url: '/assets/signatures/6ddaec15-be56-451a-a316-6c8017a63885.png',
     width: 345,
     height: 173,
     description: 'Carte corporate fond jaune : coordonnées d’exemple vidées pour intégrer votre signature personnalisée. Emplacement photo supérieur personnalisable.',
-    badge: 'Coordonnées Personnalisables'
+    badge: 'Coordonnées Personnalisables',
+    backgroundColor: '#FDC420'
   },
   {
     id: 'ragt-com-signature-2',
-    name: 'Carte RAGT Officielle — Variante 2',
+    name: 'Carte Préconfigurée Variante 2',
     url: '/assets/signatures/a3d7dcd5-94b8-49e3-98d3-274cce590391.png',
     width: 344,
     height: 172,
     description: 'Variante carte corporate : coordonnées d’exemple vidées, prête à recevoir vos données et votre photo choisie.',
-    badge: 'Coordonnées Personnalisables'
+    badge: 'Coordonnées Personnalisables',
+    backgroundColor: '#F7BD00'
   },
   {
     id: 'ragt-com-signature-3',
-    name: 'Carte RAGT Officielle — Variante 3',
+    name: 'Carte Préconfigurée Variante 3',
     url: '/assets/signatures/e95bc73e-a651-4ba3-a84e-eb93ed1f20a2.png',
     width: 355,
     height: 179,
     description: 'Variante carte corporate : espace coordonnées épuré pour votre signature et image supérieure modifiable.',
-    badge: 'Coordonnées Personnalisables'
+    badge: 'Coordonnées Personnalisables',
+    backgroundColor: '#E7B51E'
   }
 ];
 

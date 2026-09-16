@@ -1,4 +1,3 @@
-import QRCode from 'qrcode';
 import { SignatureState } from '../types/signature';
 
 /**
@@ -53,6 +52,7 @@ export async function generateQrSvgString(state: SignatureState): Promise<string
   const content = getQrRawContent(state);
   const { qr } = state;
   try {
+    const QRCode = (await import('qrcode')).default;
     const svgString = await QRCode.toString(content, {
       type: 'svg',
       width: Math.max(60, qr.size || 80),
@@ -75,6 +75,7 @@ export async function generateQrDataUrl(state: SignatureState): Promise<string> 
   const { qr } = state;
 
   try {
+    const QRCode = (await import('qrcode')).default;
     const dataUrl = await QRCode.toDataURL(content, {
       width: Math.max(60, qr.size || 80),
       margin: qr.margin ?? 1,

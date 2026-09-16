@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { copyRawHtml } from '../../utils/clipboard';
-import { appendUtmParams, sanitizeUrl } from '../../utils/htmlGenerator';
 import {
   CheckCheck,
   AlertTriangle,
@@ -17,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const VerifyPanel: React.FC = () => {
-  const { diagnostic, rawHtml, showToast, state } = useSignature();
+  const { diagnostic, rawHtml, showToast, setActiveTab } = useSignature();
   const [activeSubTab, setActiveSubTab] = useState<'checklist' | 'compatibility' | 'links' | 'code'>('checklist');
 
   const handleCopyCode = async () => {
@@ -25,29 +24,25 @@ export const VerifyPanel: React.FC = () => {
     showToast(res.message, res.success ? 'success' : 'error');
   };
 
-  // Collect all links in the signature for the link tester (Requirement 31)
-  const linksList: { type: string; label: string; url: string }[] = [];
-  if (state.personal.email) {
-    linksList.push({ type: 'E-mail', label: state.personal.email, url: `mailto:${state.personal.email}` });
-  }
-  if (state.personal.phone) {
-    linksList.push({ type: 'Téléphone Fixe', label: state.personal.phone, url: `tel:${state.personal.phone.replace(/\s+/g, '')}` });
-  }
-  if (state.personal.mobile) {
-    linksList.push({ type: 'Mobile', label: state.personal.mobile, url: `tel:${state.personal.mobile.replace(/\s+/g, '')}` });
-  }
-  if (state.personal.website) {
-    const webUrl = appendUtmParams(sanitizeUrl(state.personal.website), state.utm);
-    linksList.push({ type: 'Site Web RAGT', label: webUrl, url: webUrl });
-  }
-  state.social.items.filter((i) => i.active && i.url).forEach((item) => {
-    const socUrl = appendUtmParams(sanitizeUrl(item.url), state.utm);
-    linksList.push({ type: `Réseau : ${item.name}`, label: socUrl, url: socUrl });
+  // Read the final export so this list exactly matches the links users will copy.
+  const linksList = [...rawHtml.matchAll(/<a\s+[^>]*href="([^"]+)"[^>]*>/gi)].map((match, index) => {
+    const url = match[1];
+    const type = url.startsWith('mailto:') ? 'E-mail' : url.startsWith('tel:') ? 'Téléphone' : 'Lien web';
+    return { type, label: url, url, id: `${index}-${url}` };
   });
-  if (state.visibility.banner && state.banner.enabled && state.banner.linkUrl) {
-    const bannerUrl = appendUtmParams(sanitizeUrl(state.banner.linkUrl), state.utm);
-    linksList.push({ type: 'Bannière Campagne', label: bannerUrl, url: bannerUrl });
-  }
+
+  const correctDiagnosticItem = (id: string) => {
+    if (id.startsWith('name') || id.startsWith('email') || id.startsWith('phone') || id.startsWith('job')) setActiveTab('contact', 'info');
+    else if (id.startsWith('logo') || id.startsWith('banner')) setActiveTab('media', id.startsWith('banner') ? 'banner' : 'logos');
+    else if (id.startsWith('qr')) setActiveTab('contact', 'qr');
+    else if (id.startsWith('social')) setActiveTab('contact', 'social');
+    else if (id.startsWith('width')) setActiveTab('structure', 'layout');
+    else if (id.startsWith('a11y')) setActiveTab('style', 'design');
+    else return;
+    showToast('Ouverture du réglage à corriger.', 'info');
+  };
+
+  const hasCorrectionDestination = (id: string) => /^(name|email|phone|job|logo|banner|qr|social|width|a11y)/.test(id);
 
   return (
     <div className="p-4 space-y-4 text-slate-800">
@@ -58,7 +53,7 @@ export const VerifyPanel: React.FC = () => {
           Vérification &amp; Diagnostics
         </h3>
         <p className="text-xs text-slate-500 mt-0.5">
-          Audit en temps réel de la conformité Microsoft Outlook, sécurité et accessibilité.
+          Vérifications automatiques du HTML, des données et de l’accessibilité. Elles ne remplacent pas une recette dans les clients e-mail.
         </p>
       </div>
 
@@ -149,6 +144,11 @@ export const VerifyPanel: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-[11px] opacity-85 mt-0.5 leading-relaxed">{item.message}</div>
+                {item.status !== 'ok' && hasCorrectionDestination(item.id) && (
+                  <button type="button" onClick={() => correctDiagnosticItem(item.id)} className="mt-2 rounded-md border border-current/20 bg-white/50 px-2 py-1 text-[10px] font-bold transition-colors hover:bg-white">
+                    Corriger
+                  </button>
+                )}
               </div>
             </div>
           ))}
@@ -158,20 +158,18 @@ export const VerifyPanel: React.FC = () => {
       {/* 73. DIAGNOSTIC PAR CLIENT DE MESSAGERIE */}
       {activeSubTab === 'compatibility' && (
         <div className="space-y-2.5">
+          <p className="rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-950">Les contrôles du Studio vérifient la structure générée. Une étoile de compatibilité n’est affichée qu’après une recette manuelle datée.</p>
           {diagnostic.clientScores.map((c) => (
             <div key={c.client} className="bg-white p-3 rounded-xl border border-slate-200 text-xs space-y-1.5">
               <div className="flex items-center justify-between">
                 <span className="font-bold text-slate-800">{c.client}</span>
-                <div className="flex items-center text-amber-500">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-3.5 h-3.5 ${
-                        i < c.stars ? 'fill-amber-400 text-amber-500' : 'text-slate-300'
-                      }`}
-                    />
-                  ))}
-                </div>
+                {c.status === 'unverified' ? (
+                  <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">À tester</span>
+                ) : (
+                  <div className="flex items-center text-amber-500">
+                    {Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`w-3.5 h-3.5 ${i < c.stars ? 'fill-amber-400 text-amber-500' : 'text-slate-300'}`} />)}
+                  </div>
+                )}
               </div>
               <p className="text-[11px] text-slate-500 leading-relaxed">{c.notes}</p>
             </div>
@@ -183,11 +181,11 @@ export const VerifyPanel: React.FC = () => {
       {activeSubTab === 'links' && (
         <div className="space-y-2">
           <p className="text-xs text-slate-500 mb-2">
-            Cliquez pour vérifier le bon fonctionnement de chaque lien avant l'envoi :
+            Liens extraits du HTML final. Leur ouverture permet une vérification manuelle avant l’envoi.
           </p>
           <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden text-xs">
-            {linksList.map((link, idx) => (
-              <div key={idx} className="p-2.5 flex items-center justify-between hover:bg-slate-50">
+            {linksList.map((link) => (
+              <div key={link.id} className="p-2.5 flex items-center justify-between hover:bg-slate-50">
                 <div className="min-w-0 pr-2">
                   <span className="text-[10px] font-bold text-[#0C3866] block uppercase tracking-wider">
                     {link.type}

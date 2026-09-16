@@ -264,6 +264,10 @@ export interface SloganConfig {
 export interface SignatureState {
   appVersion: string;
   presetName: string;
+  /** A pre-rendered card image replaces the standard table structure. */
+  renderMode?: 'standard' | 'flattened-card';
+  /** Original template used to regenerate a flattened card after contact details change. */
+  cardTemplateUrl?: string;
   layout: {
     preset: LayoutPreset;
     dimensions: LayoutDimensions;
@@ -299,7 +303,7 @@ export interface ValidationItem {
 
 export interface ClientCompatibilityScore {
   client: string;
-  stars: number; // 1 to 5
-  status: 'perfect' | 'good' | 'fair';
+  stars: number; // 0 when no manual client recipe has been recorded
+  status: 'perfect' | 'good' | 'fair' | 'unverified';
   notes: string;
 }

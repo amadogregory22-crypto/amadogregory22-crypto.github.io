@@ -206,12 +206,12 @@ export const DesignPanel: React.FC = () => {
         </p>
       </div>
 
-      {/* Segmented Sub-Tabs */}
-      <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold">
+      {/* Segmented Sub-Tabs sur 2 lignes */}
+      <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 text-xs font-semibold">
         <button
           type="button"
           onClick={() => setActiveSubTab('colors')}
-          className={`flex-1 py-1.5 rounded-md transition-all ${
+          className={`py-2 px-2.5 rounded-md text-center transition-all ${
             activeSubTab === 'colors' ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -220,7 +220,7 @@ export const DesignPanel: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveSubTab('typography')}
-          className={`flex-1 py-1.5 rounded-md transition-all ${
+          className={`py-2 px-2.5 rounded-md text-center transition-all ${
             activeSubTab === 'typography' ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -229,7 +229,7 @@ export const DesignPanel: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveSubTab('background')}
-          className={`flex-1 py-1.5 rounded-md transition-all ${
+          className={`py-2 px-2.5 rounded-md text-center transition-all ${
             activeSubTab === 'background' ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >
@@ -238,7 +238,7 @@ export const DesignPanel: React.FC = () => {
         <button
           type="button"
           onClick={() => setActiveSubTab('borders')}
-          className={`flex-1 py-1.5 rounded-md transition-all ${
+          className={`py-2 px-2.5 rounded-md text-center transition-all ${
             activeSubTab === 'borders' ? 'bg-white dark:bg-slate-700 text-[#0C3866] dark:text-amber-400 shadow-xs font-bold' : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
           }`}
         >

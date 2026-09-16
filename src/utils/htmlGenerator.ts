@@ -455,6 +455,43 @@ function buildBannerHtml(state: SignatureState, iconCache: Record<string, string
   `;
 }
 
+/**
+ * Builds promotional or institutional campaign banner (rendered below the signature card)
+ */
+function buildCampaignHtml(state: SignatureState, iconCache: Record<string, string> = {}): string {
+  const { campaign, banner, visibility, layout } = state;
+  const isDedicated = Boolean(campaign && campaign.enabled && campaign.imageUrl);
+  const isLegacyBannerCampaign = Boolean(
+    visibility.banner && banner.enabled && (banner.campaignName || banner.position === 'bottom') && banner.imageUrl
+  );
+
+  if (!isDedicated && !isLegacyBannerCampaign) return '';
+
+  const active = isDedicated ? campaign! : banner;
+  if (!isCampaignActive(active)) return '';
+
+  const effectiveUrl = iconCache['campaign_image'] || iconCache['banner_image'] || active.imageUrl;
+  const isMobilePreset = layout.preset === 'layout-c' || layout.preset === 'layout-d' || layout.preset === 'layout-g';
+  const totalWidth = isMobilePreset ? Math.min(layout.dimensions.totalWidth, 340) : layout.dimensions.totalWidth;
+  const height = Math.min(90, Math.max(20, active.height || 90));
+
+  const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${height}" alt="${escapeHtml(active.altText || active.title || 'Campagne RAGT')}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; height:${height}px; object-fit:cover; border-radius:4px;" />`;
+
+  const linkContent = active.linkUrl
+    ? `<a href="${appendUtmParams(sanitizeUrl(active.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">${imgHtml}</a>`
+    : imgHtml;
+
+  return `
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${totalWidth}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${totalWidth}px; max-width:100%; margin-top:12px; margin-bottom:4px;">
+      <tr>
+        <td style="vertical-align:top; text-align:center; padding:0;">
+          ${linkContent}
+        </td>
+      </tr>
+    </table>
+  `;
+}
+
 export async function generateAllIconPngs(state: SignatureState): Promise<Record<string, string>> {
   const cache: Record<string, string> = {};
   const { design, iconSettings, social, logos, banner, visibility } = state;
@@ -483,6 +520,14 @@ export async function generateAllIconPngs(state: SignatureState): Promise<Record
       cache['banner_image'] = await imageUrlToBase64Png(banner.imageUrl, 400);
     } catch {
       cache['banner_image'] = banner.imageUrl;
+    }
+  }
+
+  if (state.campaign && state.campaign.enabled && state.campaign.imageUrl) {
+    try {
+      cache['campaign_image'] = await imageUrlToBase64Png(state.campaign.imageUrl, 540);
+    } catch {
+      cache['campaign_image'] = state.campaign.imageUrl;
     }
   }
 
@@ -526,8 +571,9 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
   const secondaryLogoHtml = buildLogoHtml(state, true, iconCache);
   const qrHtml = buildQrHtml(state, qrDataUrl);
   const bannerHtml = buildBannerHtml(state, iconCache);
+  const campaignHtml = buildCampaignHtml(state, iconCache);
   const topBannerHtml = state.banner.position === 'top' ? bannerHtml : '';
-  const bottomBannerHtml = state.banner.position === 'bottom' ? bannerHtml : '';
+  const bottomBannerHtml = (!campaignHtml && state.banner.position === 'bottom') ? bannerHtml : '';
   const rightBannerHtml = state.banner.position === 'right' ? bannerHtml : '';
   const leftBannerHtml = state.banner.position === 'left' ? bannerHtml : '';
   const centerBannerHtml = (state.banner.position === 'center' || !state.banner.position) ? bannerHtml : '';
@@ -901,16 +947,10 @@ export function generateEmailHTML(state: SignatureState, qrDataUrl = '', iconCac
           </table>
         </td>
       </tr>
-      ${bottomBannerHtml ? `
-      <tr>
-        <td ${tableBgColorAttr} style="padding:0; text-align:center; vertical-align:bottom;">
-          ${bottomBannerHtml}
-        </td>
-      </tr>
-      ` : ''}
     </tbody>
   </table>
   `}
+  ${campaignHtml || bottomBannerHtml}
 </div>
 <!-- End RAGT Signature -->`;
 }

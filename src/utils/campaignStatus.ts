@@ -1,9 +1,11 @@
-import { BannerConfig } from '../types/signature';
+import { BannerConfig, CampaignConfig } from '../types/signature';
 
 export type CampaignStatus = 'inactive' | 'scheduled' | 'active' | 'expired';
 
+type SchedulableCampaign = Pick<BannerConfig | CampaignConfig, 'enabled' | 'imageUrl' | 'startDate' | 'endDate'>;
+
 /** Campaign dates apply when a signature is generated, not after it is pasted into a mail client. */
-export function getCampaignStatus(banner: BannerConfig, now = new Date()): CampaignStatus {
+export function getCampaignStatus(banner: SchedulableCampaign, now = new Date()): CampaignStatus {
   if (!banner.enabled || !banner.imageUrl) return 'inactive';
 
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
@@ -16,6 +18,6 @@ export function getCampaignStatus(banner: BannerConfig, now = new Date()): Campa
   return 'active';
 }
 
-export function isCampaignActive(banner: BannerConfig, now = new Date()): boolean {
+export function isCampaignActive(banner: SchedulableCampaign, now = new Date()): boolean {
   return getCampaignStatus(banner, now) === 'active';
 }

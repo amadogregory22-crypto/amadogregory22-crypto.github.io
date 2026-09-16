@@ -964,7 +964,7 @@ function renderSignature() {
   const bannerHeight = banner.maintainRatio === false ? fixedBannerHeight : requestedBannerHeight;
   const bannerHeightStyle = banner.maintainRatio === false ? 'height:' + bannerHeight + 'px; object-fit:cover;' : 'height:auto;';
   const bannerImg = campaignActive ? '<img src="' + esc(banner.imageUrl) + '" width="' + bannerWidth + '" height="' + bannerHeight + '" alt="' + esc(banner.altText || 'Bannière RAGT') + '" border="0" style="display:block; width:' + bannerWidth + 'px; max-width:100%; ' + bannerHeightStyle + ' border-radius:4px;" />' : '';
-  const bannerHtml = bannerImg ? '<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="' + bannerWidth + '" style="border-collapse:collapse; width:' + bannerWidth + 'px; max-width:100%;"><tr><td style="vertical-align:top; text-align:center;">' + (banner.linkUrl ? '<a href="' + esc(normUrl(banner.linkUrl)) + '" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">' + bannerImg + '</a>' : bannerImg) + '</td></tr></table>' : '';
+  const bannerHtml = bannerImg ? '<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="' + bannerWidth + '" style="border-collapse:collapse; width:' + bannerWidth + 'px; max-width:100%; margin-top:12px; margin-bottom:4px;"><tr><td style="vertical-align:top; text-align:center;">' + (banner.linkUrl ? '<a href="' + esc(normUrl(banner.linkUrl)) + '" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">' + bannerImg + '</a>' : bannerImg) + '</td></tr></table>' : '';
   const infoHtml = identityHtml + coordsHtml + socialsHtml + sloganHtml;
 
   // Separator line

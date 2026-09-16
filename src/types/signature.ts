@@ -78,6 +78,7 @@ export interface VisibilityConfig {
   qr: boolean;
   socials: boolean;
   banner: boolean;
+  campaign?: boolean;
   slogan: boolean;
 }
 
@@ -247,6 +248,19 @@ export interface BannerConfig {
   endDate?: string;
 }
 
+export interface CampaignConfig {
+  enabled: boolean;
+  title: string;
+  campaignName: string;
+  imageUrl: string;
+  linkUrl: string;
+  altText: string;
+  width: number;
+  height: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface SloganConfig {
   enabled: boolean;
   text: string;
@@ -290,6 +304,7 @@ export interface SignatureState {
   social: SocialConfig;
   utm: UTMConfig;
   banner: BannerConfig;
+  campaign?: CampaignConfig;
   slogan: SloganConfig;
 }
 

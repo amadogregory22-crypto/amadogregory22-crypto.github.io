@@ -106,6 +106,7 @@ export const DEFAULT_SIGNATURE_STATE: SignatureState = {
     qr: false,
     socials: true,
     banner: false,
+    campaign: false,
     slogan: true
   },
   design: {
@@ -350,6 +351,18 @@ export const DEFAULT_SIGNATURE_STATE: SignatureState = {
     campaignName: 'SPACE 2026 - Hall 4 Stand B22',
     startDate: '2026-09-15',
     endDate: '2026-09-18'
+  },
+  campaign: {
+    enabled: false,
+    title: 'Innovation variétale',
+    campaignName: 'Génétique & performance',
+    imageUrl: '/assets/bannieres/046806_BD.jpg',
+    linkUrl: 'https://www.ragt-semences.fr',
+    altText: 'Innovation variétale RAGT',
+    width: 540,
+    height: 90,
+    startDate: '',
+    endDate: ''
   },
   slogan: {
     enabled: true,

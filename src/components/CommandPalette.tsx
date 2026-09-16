@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSignature } from '../context/SignatureContext';
-import { Search, LayoutTemplate, Palette, Info, Image as ImageIcon, QrCode, Share2, Flag, CheckCircle, FileText } from 'lucide-react';
+import { Search, LayoutTemplate, Palette, Info, Image as ImageIcon, QrCode, Share2, Flag, CheckCircle, FileText, Award } from 'lucide-react';
 import { ActiveTab } from '../context/SignatureContext';
 
 interface CommandItem {
@@ -19,8 +19,10 @@ export const COMMANDS: CommandItem[] = [
   { id: 'contact', subTab: 'social', name: 'Réseaux Sociaux & UTM (LinkedIn, Facebook, X, Instagram, Tracking)', icon: <Share2 className="w-4 h-4" /> },
   { id: 'contact', subTab: 'qr', name: 'QR Code vCard (Scan smartphone, contact direct)', icon: <QrCode className="w-4 h-4" /> },
   { id: 'contact', subTab: 'qr', focusTarget: 'signature-qr-toggle', name: 'Activer ou modifier le QR Code', icon: <QrCode className="w-4 h-4" /> },
-  { id: 'media', subTab: 'logos', name: 'Logos & Filiales RAGT (80+ logos, ISO 9001, HVE, upload SVG)', icon: <ImageIcon className="w-4 h-4" /> },
+  { id: 'media', subTab: 'logos', name: 'Logos & Filiales RAGT (80+ logos, SVG, upload)', icon: <ImageIcon className="w-4 h-4" /> },
   { id: 'media', subTab: 'logos', focusTarget: 'signature-logo-upload', name: 'Importer ou changer le logo', icon: <ImageIcon className="w-4 h-4" /> },
+  { id: 'media', subTab: 'badges', name: 'Badges & Certifications RAGT (ISO 9001 Qualité, HVE Durable)', icon: <Award className="w-4 h-4" /> },
+  { id: 'media', subTab: 'badges', focusTarget: 'signature-badge-toggle', name: 'Activer ou modifier les Badges RAGT', icon: <Award className="w-4 h-4" /> },
   { id: 'media', subTab: 'banner', name: 'Images carte & slogan', icon: <Flag className="w-4 h-4" /> },
   { id: 'media', subTab: 'banner', focusTarget: 'signature-banner-toggle', name: 'Afficher ou modifier une image de carte', icon: <Flag className="w-4 h-4" /> },
   { id: 'style', subTab: 'design', name: 'Style & Charte (Palette RAGT, polices Outlook, contraste WCAG, bordures)', icon: <Palette className="w-4 h-4" /> },
@@ -43,6 +45,7 @@ const commandSearchText = (command: CommandItem) => {
   const aliases: Record<string, string> = {
     'E-mail professionnel': 'email e mail courriel mail adresse email',
     'Importer ou changer le logo': 'logo image importer televerser upload',
+    'Activer ou modifier les Badges RAGT': 'badge certification iso 9001 hve qualite durable label afaq',
     'Afficher ou modifier une image de carte': 'banniere image carte campagne photo',
     'Police de caractères': 'police typographie fonte caractere',
     'Activer ou modifier le QR Code': 'qr qrcode qr code flashcode vcard',

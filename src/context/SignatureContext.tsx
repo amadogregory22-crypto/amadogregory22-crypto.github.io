@@ -37,6 +37,7 @@ export type ActiveTab =
   | 'banner'
   | 'verify'
   | 'templates'
+  | 'badges'
   | 'copy';
 
 export type AppMode = 'studio' | 'user';
@@ -187,9 +188,9 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } else if (tab === 'contact' || tab === 'info' || tab === 'social' || tab === 'qr') {
       target = 'contact';
       if (!targetSub) targetSub = tab === 'social' ? 'social' : tab === 'qr' ? 'qr' : 'info';
-    } else if (tab === 'media' || tab === 'logos' || tab === 'banner') {
+    } else if (tab === 'media' || tab === 'logos' || tab === 'banner' || tab === 'badges') {
       target = 'media';
-      if (!targetSub) targetSub = tab === 'banner' ? 'banner' : 'logos';
+      if (!targetSub) targetSub = tab === 'banner' ? 'banner' : tab === 'badges' ? 'badges' : 'logos';
     } else if (tab === 'style' || tab === 'design') {
       target = 'style';
       if (!targetSub) targetSub = 'design';

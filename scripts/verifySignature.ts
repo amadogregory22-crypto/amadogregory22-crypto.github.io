@@ -333,5 +333,30 @@ const customMobileHtml = generateEmailHTML(customMobileState);
 assert.match(customMobileHtml, /color:#056573[^>]*>05 65 73 41 00/, 'phone number must use design.colors.phone');
 assert.match(customMobileHtml, /color:#F7BD00[^>]*>06 12 34 56 78/, 'mobile phone number must use design.colors.mobile');
 
+// Fallback test: when mobile is uncustomized default #0C3866 and phone is #F7BD00, mobile adopts phone color
+const fallbackMobileState = {
+  ...DEFAULT_SIGNATURE_STATE,
+  personal: {
+    ...DEFAULT_SIGNATURE_STATE.personal,
+    phone: '05 65 73 41 00',
+    mobile: '06 12 34 56 78'
+  },
+  visibility: {
+    ...DEFAULT_SIGNATURE_STATE.visibility,
+    phone: true,
+    mobile: true
+  },
+  design: {
+    ...DEFAULT_SIGNATURE_STATE.design,
+    colors: {
+      ...DEFAULT_SIGNATURE_STATE.design.colors,
+      phone: '#F7BD00',
+      mobile: '#0C3866'
+    }
+  }
+};
+const fallbackMobileHtml = generateEmailHTML(fallbackMobileState);
+assert.match(fallbackMobileHtml, /color:#F7BD00[^>]*>06 12 34 56 78/, 'mobile phone must adopt customized phone color when mobile is default #0C3866');
+
 console.log(`Verified ${layouts.length} layouts, the complete RAGT card journey, Studio-to-portal rendering, configuration normalization, styles, revisions, campaign statuses, social icon colors, and mobile phone colors.`);
 

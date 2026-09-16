@@ -176,6 +176,17 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           };
         }
 
+        // Auto-heal mobile phone color if desynchronized by legacy "Téléphones (Fixe / Mob)" control
+        if (parsed.design?.colors) {
+          if (
+            parsed.design.colors.phone &&
+            (parsed.design.colors.mobile === '#0C3866' || parsed.design.colors.mobile === '#2D3748' || !parsed.design.colors.mobile) &&
+            parsed.design.colors.phone !== parsed.design.colors.mobile
+          ) {
+            parsed.design.colors.mobile = parsed.design.colors.phone;
+          }
+        }
+
         return normalizeSignatureConfig(parsed) || DEFAULT_SIGNATURE_STATE;
       }
     } catch (e) {

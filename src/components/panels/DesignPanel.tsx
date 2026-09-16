@@ -140,7 +140,7 @@ export const DesignPanel: React.FC = () => {
           ...prev.design.colors,
           [key]: value,
           ...(key === 'firstName' ? { lastName: value } : {}),
-          ...(key === 'phone' && (!prev.design.colors.mobile || prev.design.colors.mobile === prev.design.colors.phone) ? { mobile: value } : {})
+          ...(key === 'phone' ? { mobile: value } : {})
         }
       },
       layout: key === 'separator'

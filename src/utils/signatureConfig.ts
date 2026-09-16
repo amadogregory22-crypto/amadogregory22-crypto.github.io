@@ -32,6 +32,13 @@ export function normalizeSignatureConfig(value: unknown): SignatureState | null 
   }
 
   const normalized = mergeWithDefaults(DEFAULT_SIGNATURE_STATE, candidate);
+  if (
+    normalized.design?.colors?.phone &&
+    (normalized.design.colors.mobile === '#0C3866' || normalized.design.colors.mobile === '#2D3748' || !normalized.design.colors.mobile) &&
+    normalized.design.colors.phone !== normalized.design.colors.mobile
+  ) {
+    normalized.design.colors.mobile = normalized.design.colors.phone;
+  }
   return { ...normalized, appVersion: APP_VERSION };
 }
 

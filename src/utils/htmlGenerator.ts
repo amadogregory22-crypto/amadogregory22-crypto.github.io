@@ -281,7 +281,10 @@ function buildCoordinatesHtml(state: SignatureState, iconCache: Record<string, s
   // Mobile
   if (visibility.mobile && personal.mobile) {
     const telLink = `tel:${sanitizeTel(personal.mobile)}`;
-    addCoordRow('mobile', labels.mobile, makeLink(telLink, personal.mobile, design.colors.mobile || design.colors.phone || design.colors.text, false, false));
+    const effectiveMobileColor = (design.colors.mobile && design.colors.mobile !== '#0C3866' && design.colors.mobile !== '#2D3748')
+      ? design.colors.mobile
+      : (design.colors.phone || design.colors.text);
+    addCoordRow('mobile', labels.mobile, makeLink(telLink, personal.mobile, effectiveMobileColor, false, false));
   }
 
   // Standard or Direct extra

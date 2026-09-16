@@ -2,7 +2,6 @@ import React from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { SocialNetwork, SocialConfig, SocialIconStyle } from '../../types/signature';
 import { getSocialIconDataUrl } from '../../utils/htmlGenerator';
-import { UTMConfig } from '../../types/signature';
 import {
   Share2,
   Eye,
@@ -10,23 +9,13 @@ import {
   Link as LinkIcon,
   Sliders,
   ExternalLink,
-  Activity,
   Sparkles
 } from 'lucide-react';
 
 export const SocialPanel: React.FC = () => {
   const { state, updateState } = useSignature();
-  const { social, visibility, design, utm } = state;
+  const { social, visibility, design } = state;
 
-  const updateUtm = (patch: Partial<UTMConfig>) => {
-    updateState((prev) => ({
-      ...prev,
-      utm: {
-        ...prev.utm,
-        ...patch
-      }
-    }));
-  };
 
   const updateSocialConfig = (patch: Partial<SocialConfig>) => {
     updateState((prev) => ({
@@ -419,67 +408,6 @@ export const SocialPanel: React.FC = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* UTM Tracking (Link Builder) */}
-      <div className="bg-white p-3.5 rounded-xl border border-slate-200 space-y-3 text-xs">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Activity className="w-4 h-4 text-[#0C3866]" />
-            <span className="font-bold text-slate-800">Suivi des clics (UTM)</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => updateUtm({ enabled: !utm?.enabled })}
-            className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-lg border transition-all ${
-              utm?.enabled
-                ? 'bg-emerald-50 border-emerald-300 text-emerald-800'
-                : 'bg-slate-100 border-slate-200 text-slate-600'
-            }`}
-          >
-            {utm?.enabled ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-            <span>{utm?.enabled ? 'Activé' : 'Désactivé'}</span>
-          </button>
-        </div>
-        
-        {utm?.enabled && (
-          <div className="space-y-2 pt-2 border-t border-slate-100">
-            <p className="text-[10px] text-slate-500 mb-2">Ajoute automatiquement ces paramètres à tous les liens de la signature (Site web, Réseaux, Bannière).</p>
-            
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-slate-600 font-semibold block mb-1">Source (utm_source) :</label>
-                <input
-                  type="text"
-                  value={utm.source}
-                  onChange={(e) => updateUtm({ source: e.target.value })}
-                  placeholder="email_signature"
-                  className="w-full px-2 py-1.5 border rounded bg-slate-50 font-mono text-[11px]"
-                />
-              </div>
-              <div>
-                <label className="text-slate-600 font-semibold block mb-1">Médium (utm_medium) :</label>
-                <input
-                  type="text"
-                  value={utm.medium}
-                  onChange={(e) => updateUtm({ medium: e.target.value })}
-                  placeholder="email"
-                  className="w-full px-2 py-1.5 border rounded bg-slate-50 font-mono text-[11px]"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-slate-600 font-semibold block mb-1">Campagne (utm_campaign) :</label>
-              <input
-                type="text"
-                value={utm.campaign}
-                onChange={(e) => updateUtm({ campaign: e.target.value })}
-                placeholder="nom_de_campagne"
-                className="w-full px-2 py-1.5 border rounded bg-slate-50 font-mono text-[11px]"
-              />
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

@@ -1,17 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { LogosPanel } from './LogosPanel';
 import { RagtBadgesPanel } from './RagtBadgesPanel';
+import { PictogramsPanel } from './PictogramsPanel';
+import { LibraryPanel } from './LibraryPanel';
 import { BannerPanel } from './BannerPanel';
 import { CampaignPanel } from './CampaignPanel';
 import { useSignature } from '../../context/SignatureContext';
-import { Flag, ImageIcon, Library, Award } from 'lucide-react';
+import { Flag, ImageIcon, Award, Palette, FolderHeart } from 'lucide-react';
 
-type MediaTab = 'logos' | 'badges' | 'image' | 'campaigns';
+type MediaTab = 'logos' | 'badges' | 'pictograms' | 'library' | 'image' | 'campaigns';
 
 export const MediaMasterPanel: React.FC = () => {
   const { activeSubTab, setActiveSubTab } = useSignature();
   const [activeTab, setActiveTab] = useState<MediaTab>(() => {
     if (activeSubTab === 'badges') return 'badges';
+    if (activeSubTab === 'pictograms' || activeSubTab === 'icons') return 'pictograms';
+    if (activeSubTab === 'library' || activeSubTab === 'gallery') return 'library';
     if (activeSubTab === 'image' || activeSubTab === 'banner') return 'image';
     if (activeSubTab === 'campaigns' || activeSubTab === 'slogan') return 'campaigns';
     return 'logos';
@@ -19,14 +23,18 @@ export const MediaMasterPanel: React.FC = () => {
 
   useEffect(() => {
     if (activeSubTab === 'badges') setActiveTab('badges');
+    else if (activeSubTab === 'pictograms' || activeSubTab === 'icons') setActiveTab('pictograms');
+    else if (activeSubTab === 'library' || activeSubTab === 'gallery') setActiveTab('library');
     else if (activeSubTab === 'image' || activeSubTab === 'banner') setActiveTab('image');
     else if (activeSubTab === 'campaigns' || activeSubTab === 'slogan') setActiveTab('campaigns');
     else if (activeSubTab === 'logos') setActiveTab('logos');
   }, [activeSubTab]);
 
   const tabs: Array<{ id: MediaTab; label: string; icon: React.ElementType }> = [
-    { id: 'logos', label: 'Logos & filiales', icon: Library },
+    { id: 'logos', label: 'Logos & filiales', icon: ImageIcon },
     { id: 'badges', label: 'Badges RAGT', icon: Award },
+    { id: 'pictograms', label: 'Pictogrammes', icon: Palette },
+    { id: 'library', label: 'Ma Bibliothèque', icon: FolderHeart },
     { id: 'image', label: 'Image', icon: ImageIcon },
     { id: 'campaigns', label: 'Campagnes', icon: Flag }
   ];
@@ -48,7 +56,7 @@ export const MediaMasterPanel: React.FC = () => {
               Visuels de la signature
             </h2>
             <p className="text-[11px] text-slate-500 dark:text-slate-400">
-              Logos, certifications, photos et campagnes de communication.
+              Logos, certifications, pictogrammes, bibliothèque et campagnes.
             </p>
           </div>
         </div>
@@ -79,6 +87,8 @@ export const MediaMasterPanel: React.FC = () => {
       <div className="flex-1 overflow-y-auto">
         {activeTab === 'logos' && <LogosPanel />}
         {activeTab === 'badges' && <RagtBadgesPanel />}
+        {activeTab === 'pictograms' && <PictogramsPanel />}
+        {activeTab === 'library' && <LibraryPanel />}
         {activeTab === 'image' && <BannerPanel />}
         {activeTab === 'campaigns' && <CampaignPanel />}
       </div>

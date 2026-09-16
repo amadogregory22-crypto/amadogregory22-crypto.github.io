@@ -38,6 +38,8 @@ export type ActiveTab =
   | 'verify'
   | 'templates'
   | 'badges'
+  | 'pictograms'
+  | 'library'
   | 'copy';
 
 export type AppMode = 'studio' | 'user';
@@ -188,9 +190,20 @@ export const SignatureProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     } else if (tab === 'contact' || tab === 'info' || tab === 'social' || tab === 'qr') {
       target = 'contact';
       if (!targetSub) targetSub = tab === 'social' ? 'social' : tab === 'qr' ? 'qr' : 'info';
-    } else if (tab === 'media' || tab === 'logos' || tab === 'banner' || tab === 'badges') {
+    } else if (tab === 'media' || tab === 'logos' || tab === 'banner' || tab === 'badges' || tab === 'pictograms' || tab === 'library') {
       target = 'media';
-      if (!targetSub) targetSub = tab === 'banner' ? 'banner' : tab === 'badges' ? 'badges' : 'logos';
+      if (!targetSub) {
+        targetSub =
+          tab === 'banner'
+            ? 'banner'
+            : tab === 'badges'
+            ? 'badges'
+            : tab === 'pictograms'
+            ? 'pictograms'
+            : tab === 'library'
+            ? 'library'
+            : 'logos';
+      }
     } else if (tab === 'style' || tab === 'design') {
       target = 'style';
       if (!targetSub) targetSub = 'design';

@@ -75,7 +75,7 @@ const MainLayout: React.FC = () => {
               {(activeTab === 'structure' || activeTab === 'layout' || activeTab === 'template' || activeTab === 'templates') && <StructureMasterPanel />}
               {activeTab === 'versions' && <VersionsMasterPanel />}
               {(activeTab === 'contact' || activeTab === 'info' || activeTab === 'social' || activeTab === 'qr') && <ContactMasterPanel />}
-              {(activeTab === 'media' || activeTab === 'logos' || activeTab === 'banner') && <MediaMasterPanel />}
+              {(activeTab === 'media' || activeTab === 'logos' || activeTab === 'banner' || activeTab === 'badges' || activeTab === 'pictograms' || activeTab === 'library') && <MediaMasterPanel />}
               {(activeTab === 'style' || activeTab === 'design') && <StyleMasterPanel />}
               {(activeTab === 'export' || activeTab === 'verify' || activeTab === 'copy') && <ExportMasterPanel />}
             </React.Suspense>

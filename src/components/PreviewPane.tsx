@@ -80,6 +80,30 @@ export const PreviewPane: React.FC = () => {
         visibility: { ...prev.visibility, banner: true }
       }));
       showToast('Bannière mise à jour', 'success');
+    } else if (dropzoneId === 'campaign') {
+      const width = state.layout.dimensions.totalWidth || 540;
+      const height = Math.round((width * 450) / 800);
+      updateState((prev) => ({
+        ...prev,
+        campaign: {
+          ...(prev.campaign || {
+            title: 'Campagne RAGT',
+            campaignName: 'Actualités RAGT',
+            altText: 'Campagne RAGT',
+            linkUrl: '',
+            startDate: '',
+            endDate: ''
+          }),
+          imageUrl: assetUrl,
+          enabled: true,
+          width,
+          height,
+          maintainRatio: true,
+          fitMode: 'contain'
+        },
+        visibility: { ...prev.visibility, campaign: true }
+      }));
+      showToast('Bandeau de campagne mis à jour', 'success');
     }
   };
 

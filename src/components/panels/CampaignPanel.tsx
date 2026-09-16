@@ -1,12 +1,38 @@
-import React from 'react';
-import { Flag, Quote, Maximize2, Sliders, CheckCircle2, Eye, EyeOff, Calendar } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import {
+  Flag,
+  Quote,
+  Maximize2,
+  Sliders,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Calendar,
+  Upload,
+  Plus,
+  Trash2,
+  Link as LinkIcon,
+  ChevronDown,
+  ChevronUp,
+  FolderOpen,
+  Image as ImageIcon
+} from 'lucide-react';
 import { useSignature } from '../../context/SignatureContext';
 import { CampaignConfig, SloganConfig } from '../../types/signature';
+import { SIGNATURES_COM } from '../../constants/assets';
 
-const CAMPAIGNS = [
-  { title: 'Salon & événements', campaign: 'Actualités RAGT', url: '/assets/bannieres/046805_BD.jpg' },
-  { title: 'Innovation variétale', campaign: 'Génétique & performance', url: '/assets/bannieres/046806_BD.jpg' },
-  { title: 'Recrutement', campaign: 'Rejoignez RAGT Semences', url: '/assets/bannieres/046807_BD.jpg' }
+interface CustomCampaignItem {
+  id: string;
+  title: string;
+  campaign: string;
+  url: string;
+  isCustom?: boolean;
+}
+
+const OFFICIAL_CAMPAIGNS: CustomCampaignItem[] = [
+  { id: 'ragt-events', title: 'Salon & événements', campaign: 'Actualités RAGT', url: '/assets/bannieres/046805_BD.jpg' },
+  { id: 'ragt-varieties', title: 'Innovation variétale', campaign: 'Génétique & performance', url: '/assets/bannieres/046806_BD.jpg' },
+  { id: 'ragt-recruitment', title: 'Recrutement', campaign: 'Rejoignez RAGT Semences', url: '/assets/bannieres/046807_BD.jpg' }
 ];
 
 export const CampaignPanel: React.FC = () => {
@@ -16,12 +42,36 @@ export const CampaignPanel: React.FC = () => {
   const totalWidth = state.layout.dimensions.totalWidth || 540;
   const naturalHeight = Math.round((totalWidth * 450) / 800); // 304px for 540px width (16:9)
 
+  const [customCampaigns, setCustomCampaigns] = useState<CustomCampaignItem[]>(() => {
+    try {
+      const saved = localStorage.getItem('ragt_custom_campaigns');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlInputValue, setUrlInputValue] = useState('');
+  const [showLibrary, setShowLibrary] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const saveCustomCampaigns = (items: CustomCampaignItem[]) => {
+    setCustomCampaigns(items);
+    try {
+      localStorage.setItem('ragt_custom_campaigns', JSON.stringify(items));
+    } catch (e) {
+      console.warn('Could not save custom campaigns', e);
+    }
+  };
+
   const campaignData: CampaignConfig = state.campaign || {
     enabled: Boolean((visibility.campaign ?? visibility.banner) && banner.enabled && banner.campaignName),
-    title: banner.campaignName ? banner.title : CAMPAIGNS[1].title,
-    campaignName: banner.campaignName || CAMPAIGNS[1].campaign,
-    altText: banner.campaignName ? banner.altText : CAMPAIGNS[1].title,
-    imageUrl: banner.campaignName ? banner.imageUrl : CAMPAIGNS[1].url,
+    title: banner.campaignName ? banner.title : OFFICIAL_CAMPAIGNS[1].title,
+    campaignName: banner.campaignName || OFFICIAL_CAMPAIGNS[1].campaign,
+    altText: banner.campaignName ? banner.altText : OFFICIAL_CAMPAIGNS[1].title,
+    imageUrl: banner.campaignName ? banner.imageUrl : OFFICIAL_CAMPAIGNS[1].url,
     width: totalWidth,
     height: naturalHeight,
     maintainRatio: true,
@@ -57,7 +107,7 @@ export const CampaignPanel: React.FC = () => {
   const updateSlogan = (patch: Partial<SloganConfig>) =>
     updateState((prev) => ({ ...prev, slogan: { ...prev.slogan, ...patch } }));
 
-  const handleSelectCampaign = (item: typeof CAMPAIGNS[number]) => {
+  const applyCampaignImage = (params: { title: string; campaign: string; url: string; height?: number }) => {
     updateState((prev) => {
       // If prev.banner was contaminated by a campaign image, restore the official card photo
       let restoredBanner = prev.banner;
@@ -77,7 +127,7 @@ export const CampaignPanel: React.FC = () => {
 
       const isRatio = prev.campaign?.maintainRatio !== false;
       const width = prev.layout.dimensions.totalWidth || 540;
-      const calcHeight = Math.round((width * 450) / 800);
+      const targetHeight = params.height || (isRatio ? Math.round((width * 450) / 800) : (prev.campaign?.height || 120));
 
       return {
         ...prev,
@@ -88,12 +138,12 @@ export const CampaignPanel: React.FC = () => {
         },
         campaign: {
           enabled: true,
-          title: item.title,
-          campaignName: item.campaign,
-          altText: item.title,
-          imageUrl: item.url,
+          title: params.title,
+          campaignName: params.campaign,
+          altText: params.title,
+          imageUrl: params.url,
           width,
-          height: isRatio ? calcHeight : (prev.campaign?.height || calcHeight),
+          height: targetHeight,
           maintainRatio: isRatio,
           fitMode: prev.campaign?.fitMode || 'contain',
           linkUrl: prev.campaign?.linkUrl || '',
@@ -102,7 +152,112 @@ export const CampaignPanel: React.FC = () => {
         }
       };
     });
+  };
+
+  const handleSelectCampaign = (item: CustomCampaignItem) => {
+    applyCampaignImage({
+      title: item.title,
+      campaign: item.campaign,
+      url: item.url
+    });
     showToast(`Campagne « ${item.title} » appliquée`, 'success');
+  };
+
+  const handleFileProcess = (file: File) => {
+    if (file.size > 5 * 1024 * 1024) {
+      showToast('Choisissez une image de moins de 5 Mo.', 'warning');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || '');
+      if (!dataUrl) return;
+
+      const img = new Image();
+      img.onload = () => {
+        const naturalWidth = img.naturalWidth || 800;
+        const naturalHeight = img.naturalHeight || 450;
+        const aspect = naturalWidth / naturalHeight;
+        const computedHeight = Math.round(totalWidth / aspect);
+        const cleanName = file.name.replace(/\.[^/.]+$/, '');
+
+        const newCampaign: CustomCampaignItem = {
+          id: 'custom-' + Date.now(),
+          title: cleanName,
+          campaign: 'Campagne importée',
+          url: dataUrl,
+          isCustom: true
+        };
+
+        const nextList = [newCampaign, ...customCampaigns.filter(c => c.url !== dataUrl)];
+        saveCustomCampaigns(nextList);
+
+        applyCampaignImage({
+          title: newCampaign.title,
+          campaign: newCampaign.campaign,
+          url: newCampaign.url,
+          height: computedHeight
+        });
+
+        showToast(`Image « ${cleanName} » importée et appliquée`, 'success');
+      };
+      img.src = dataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) handleFileProcess(file);
+    event.target.value = '';
+  };
+
+  const handleApplyUrl = () => {
+    const url = urlInputValue.trim();
+    if (!url) return;
+
+    const img = new Image();
+    img.onload = () => {
+      const naturalWidth = img.naturalWidth || 800;
+      const naturalHeight = img.naturalHeight || 450;
+      const aspect = naturalWidth / naturalHeight;
+      const computedHeight = Math.round(totalWidth / aspect);
+      const name = 'Visuel web';
+
+      const newCampaign: CustomCampaignItem = {
+        id: 'custom-' + Date.now(),
+        title: name,
+        campaign: 'Image en ligne',
+        url,
+        isCustom: true
+      };
+
+      const nextList = [newCampaign, ...customCampaigns.filter(c => c.url !== url)];
+      saveCustomCampaigns(nextList);
+
+      applyCampaignImage({
+        title: newCampaign.title,
+        campaign: newCampaign.campaign,
+        url: newCampaign.url,
+        height: computedHeight
+      });
+
+      setUrlInputValue('');
+      setShowUrlInput(false);
+      showToast('Image en ligne appliquée avec succès', 'success');
+    };
+    img.onerror = () => {
+      showToast('Impossible de charger l’image depuis cette URL.', 'error');
+    };
+    img.src = url;
+  };
+
+  const handleDeleteCustomCampaign = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const nextList = customCampaigns.filter(c => c.id !== id);
+    saveCustomCampaigns(nextList);
+    showToast('Image supprimée de vos campagnes', 'info');
   };
 
   const handleToggle = () => {
@@ -110,6 +265,8 @@ export const CampaignPanel: React.FC = () => {
     updateCampaign({ enabled: nextState });
     showToast(nextState ? 'Bandeau de campagne affiché sous la signature' : 'Campagne masquée', 'info');
   };
+
+  const allAvailableCampaigns = [...customCampaigns, ...OFFICIAL_CAMPAIGNS];
 
   return (
     <div className="space-y-5 p-4 text-slate-800 dark:text-slate-200">
@@ -138,20 +295,171 @@ export const CampaignPanel: React.FC = () => {
           </button>
         </div>
 
-        {/* Sélection visuelle des campagnes */}
+        {/* Boutons d'action : Importer, Lien URL, Bibliothèque */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/png,image/jpeg,image/jpg,image/webp,image/gif,image/svg+xml"
+            onChange={handleFileInputChange}
+            className="hidden"
+          />
+
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-lg bg-[#0C3866] px-3 py-1.5 text-[11px] font-bold text-white shadow-xs hover:bg-[#08284a] transition-all"
+          >
+            <Upload className="h-3.5 w-3.5 text-[#F7BD00]" />
+            Importer une image
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowUrlInput((prev) => !prev)}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+              showUrlInput
+                ? 'border-[#0C3866] bg-slate-100 text-[#0C3866] dark:border-amber-400 dark:bg-slate-700 dark:text-amber-400'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }`}
+          >
+            <LinkIcon className="h-3.5 w-3.5" />
+            Lien web (URL)
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setShowLibrary((prev) => !prev)}
+            className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition-all ${
+              showLibrary
+                ? 'border-[#0C3866] bg-slate-100 text-[#0C3866] dark:border-amber-400 dark:bg-slate-700 dark:text-amber-400'
+                : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
+            }`}
+          >
+            <FolderOpen className="h-3.5 w-3.5 text-[#0C3866] dark:text-amber-400" />
+            Bibliothèque RAGT {showLibrary ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+          </button>
+        </div>
+
+        {/* Champ de saisie d'URL d'image */}
+        {showUrlInput && (
+          <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2.5 dark:border-slate-700 dark:bg-slate-900">
+            <input
+              type="url"
+              value={urlInputValue}
+              onChange={(e) => setUrlInputValue(e.target.value)}
+              placeholder="https://domaine.com/mon-visuel.jpg"
+              className="flex-1 rounded border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-mono text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-300"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleApplyUrl();
+                }
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleApplyUrl}
+              className="rounded bg-[#0C3866] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#08284a]"
+            >
+              Appliquer
+            </button>
+          </div>
+        )}
+
+        {/* Tiroir de la bibliothèque officielle RAGT */}
+        {showLibrary && (
+          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                Visuels & bannières de communication RAGT
+              </span>
+              <span className="text-[10px] text-slate-500">
+                {SIGNATURES_COM.length} visuels officiels
+              </span>
+            </div>
+            <div className="grid max-h-56 grid-cols-3 gap-2 overflow-y-auto p-1">
+              {SIGNATURES_COM.map((url, idx) => (
+                <button
+                  key={url}
+                  type="button"
+                  onClick={() => {
+                    handleSelectCampaign({
+                      id: `ragt-lib-${idx}`,
+                      title: `Bandeau RAGT #${idx + 1}`,
+                      campaign: 'Communication RAGT',
+                      url
+                    });
+                  }}
+                  className="group overflow-hidden rounded-lg border border-slate-200 bg-white p-1 text-left transition-all hover:border-[#0C3866] dark:border-slate-700 dark:bg-slate-800"
+                >
+                  <img
+                    src={url}
+                    alt={`Bandeau RAGT ${idx + 1}`}
+                    className="h-12 w-full rounded object-cover transition-transform group-hover:scale-105"
+                  />
+                  <span className="mt-1 block truncate text-[9px] font-bold text-slate-700 dark:text-slate-300">
+                    Bandeau #{idx + 1}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grille des campagnes disponibles (importées + officielles) */}
         <div className="space-y-1.5">
-          <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
-            Campagnes d'actualité RAGT
-          </span>
+          <div className="flex items-center justify-between">
+            <span className="block text-[11px] font-semibold text-slate-700 dark:text-slate-300">
+              Campagnes disponibles
+            </span>
+            {customCampaigns.length > 0 && (
+              <span className="text-[10px] text-slate-500">
+                {customCampaigns.length} image{customCampaigns.length > 1 ? 's' : ''} importée{customCampaigns.length > 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
+
           <div className="grid grid-cols-3 gap-2">
-            {CAMPAIGNS.map((item) => {
+            {/* Carte rapide pour importer une nouvelle image */}
+            <div
+              onDragOver={(e) => {
+                e.preventDefault();
+                setIsDragOver(true);
+              }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setIsDragOver(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) handleFileProcess(file);
+              }}
+              onClick={() => fileInputRef.current?.click()}
+              className={`group flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-3 text-center transition-all ${
+                isDragOver
+                  ? 'border-[#0C3866] bg-amber-50 dark:border-amber-400 dark:bg-slate-700'
+                  : 'border-slate-200 hover:border-[#0C3866] hover:bg-slate-50 dark:border-slate-700 dark:hover:border-amber-400 dark:hover:bg-slate-700/50'
+              }`}
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-[#0C3866] group-hover:bg-[#0C3866] group-hover:text-white dark:bg-slate-700 dark:text-amber-400 dark:group-hover:bg-amber-400 dark:group-hover:text-slate-900 transition-colors">
+                <Plus className="h-4 w-4" />
+              </div>
+              <span className="mt-1.5 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                + Importer
+              </span>
+              <span className="text-[8px] text-slate-400">
+                Glisser ou cliquer
+              </span>
+            </div>
+
+            {/* Liste combinée des campagnes */}
+            {allAvailableCampaigns.map((item) => {
               const isSelected = isCampaignEnabled && campaignData.imageUrl === item.url;
               return (
-                <button
-                  key={item.title}
-                  type="button"
+                <div
+                  key={item.id}
                   onClick={() => handleSelectCampaign(item)}
-                  className={`group relative flex flex-col overflow-hidden rounded-lg border p-1.5 text-left transition-all ${
+                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border p-1.5 text-left transition-all ${
                     isSelected
                       ? 'border-[#0C3866] ring-2 ring-[#0C3866]/30 bg-amber-50/50 dark:bg-slate-700 dark:border-amber-400'
                       : 'border-slate-200 hover:border-[#0C3866] dark:border-slate-700'
@@ -168,6 +476,17 @@ export const CampaignPanel: React.FC = () => {
                         <CheckCircle2 className="h-3.5 w-3.5 text-[#F7BD00]" />
                       </span>
                     )}
+                    {item.isCustom && (
+                      <button
+                        type="button"
+                        aria-label="Supprimer cette campagne importée"
+                        onClick={(e) => handleDeleteCustomCampaign(item.id, e)}
+                        className="absolute bottom-1 right-1 rounded bg-black/60 p-1 text-white opacity-0 transition-opacity hover:bg-rose-600 group-hover:opacity-100"
+                        title="Supprimer cette image"
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </button>
+                    )}
                   </div>
                   <span className="mt-1.5 block truncate text-[10px] font-bold text-slate-800 dark:text-slate-200">
                     {item.title}
@@ -175,7 +494,7 @@ export const CampaignPanel: React.FC = () => {
                   <span className="block truncate text-[9px] text-slate-500 dark:text-slate-400">
                     {item.campaign}
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>
@@ -223,7 +542,7 @@ export const CampaignPanel: React.FC = () => {
           {isMaintainRatio ? (
             <div className="flex items-center gap-2 rounded-md bg-emerald-50 px-2.5 py-1.5 text-[10px] text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300">
               <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <span>Proportions 16:9 réelles préservées : ciel, paysage et textes visibles sans rognage (~{naturalHeight} px de haut).</span>
+              <span>Proportions réelles préservées : l'image est affichée en totalité sans aucun rognage (~{campaignData.height || naturalHeight} px de haut).</span>
             </div>
           ) : (
             <div className="space-y-2 pt-1">

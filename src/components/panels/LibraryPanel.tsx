@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { useSignature } from '../../context/SignatureContext';
 import { CLASSIFIED_PNG_ASSETS } from '../../constants/assets';
 import { LogoItem } from '../../types/signature';
@@ -18,7 +18,7 @@ const saveCustomAssets = (assets: GalleryAsset[]) => {
 };
 
 export const LibraryPanel: React.FC = () => {
-  const { updateState, showToast } = useSignature();
+  const { state, updateState, showToast } = useSignature();
   const [assets, setAssets] = useState<GalleryAsset[]>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem('ragt_gallery_assets') || '[]') as GalleryAsset[];
@@ -184,6 +184,35 @@ export const LibraryPanel: React.FC = () => {
                   className="flex-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 py-1 text-[10px] font-bold text-[#0C3866] dark:text-amber-300 transition-colors"
                 >
                   Carte
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const width = state.layout.dimensions.totalWidth || 540;
+                    const height = Math.round((width * 450) / 800);
+                    updateState((prev) => ({
+                      ...prev,
+                      visibility: { ...prev.visibility, campaign: true },
+                      campaign: {
+                        enabled: true,
+                        title: asset.name,
+                        campaignName: 'Campagne RAGT',
+                        altText: asset.name,
+                        imageUrl: asset.url,
+                        width,
+                        height,
+                        maintainRatio: true,
+                        fitMode: 'contain',
+                        linkUrl: prev.campaign?.linkUrl || '',
+                        startDate: prev.campaign?.startDate || '',
+                        endDate: prev.campaign?.endDate || ''
+                      }
+                    }));
+                    showToast(`« ${asset.name} » appliqué en tant que Campagne`, 'success');
+                  }}
+                  className="flex-1 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 py-1 text-[10px] font-bold text-[#0C3866] dark:text-amber-300 transition-colors"
+                >
+                  Campagne
                 </button>
                 {asset.source !== 'library' && (
                   <button

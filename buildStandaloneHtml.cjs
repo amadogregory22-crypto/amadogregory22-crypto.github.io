@@ -417,6 +417,7 @@ var DEFAULT_SIGNATURE_STATE = {
     marginTop: 12,
     marginBottom: 4,
     position: "bottom",
+    align: "center",
     buttonText: "En savoir plus",
     campaignName: "SPACE 2026 - Hall 4 Stand B22",
     startDate: "2026-09-15",
@@ -567,6 +568,7 @@ var SIGNATURE_PRESETS = [
         imageUrl: "/assets/bannieres/photo_carte_ragt.png",
         altText: "Photo agronomie RAGT",
         position: "center",
+        align: "center",
         width: 175,
         height: 84,
         marginTop: 0,
@@ -2435,14 +2437,16 @@ function buildBannerHtml(state, iconCache = {}) {
   const fixedHeight = Math.min(90, Math.max(20, banner.height));
   const renderedHeight = banner.maintainRatio === false ? fixedHeight : banner.height;
   const heightStyle = banner.maintainRatio === false ? `height:${renderedHeight}px; object-fit:cover;` : `height:auto;`;
+  const align = banner.align || (banner.position === "left" ? "left" : banner.position === "right" ? "right" : "center");
+  const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const bannerImg = `
-    <img data-ragt-dropzone="banner" src="${effectiveBannerUrl}" width="${banner.width}" height="${renderedHeight}" alt="${escapeHtml(banner.altText || banner.title)}" border="0" style="display:block; width:${banner.width}px; max-width:100%; ${heightStyle} border-radius:4px;" />
+    <img data-ragt-dropzone="banner" src="${effectiveBannerUrl}" width="${banner.width}" height="${renderedHeight}" alt="${escapeHtml(banner.altText || banner.title)}" border="0" style="display:block; width:${banner.width}px; max-width:100%; ${heightStyle} ${marginStyle} border-radius:4px;" />
   `;
-  const content = banner.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(banner.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">${bannerImg}</a>` : bannerImg;
+  const content = banner.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(banner.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none; ${marginStyle}">${bannerImg}</a>` : bannerImg;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${banner.width}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${banner.width}px; max-width:100%; margin-top:${banner.marginTop}px; margin-bottom:${banner.marginBottom}px;">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${banner.width}" align="${align}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${banner.width}px; max-width:100%; margin-top:${banner.marginTop || 0}px; margin-bottom:${banner.marginBottom || 0}px; ${marginStyle} text-align:${align};">
       <tr>
-        <td style="vertical-align:top; text-align:center;">
+        <td align="${align}" style="vertical-align:top; text-align:${align};">
           ${content}
         </td>
       </tr>
@@ -2530,8 +2534,13 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     };
     const legacyOrder = ["banner", "identity", "coordinates", "social", "slogan", "qr"];
     const order = usesDefaultBlockOrder ? legacyOrder : orderedBlockKeys;
-    const rows = order.filter((key) => key !== "logo").map((key) => blocks[key] ? `<tr><td style="padding-top:4px;">${blocks[key]}</td></tr>` : "").join("");
-    return rows ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">${rows}</table>` : "";
+    const bannerAlign = state.banner.align || (state.banner.position === "left" ? "left" : state.banner.position === "right" ? "right" : "center");
+    const rows = order.filter((key) => key !== "logo").map((key) => {
+      if (!blocks[key]) return "";
+      const tdAlign = key === "banner" ? `align="${bannerAlign}" style="padding-top:4px; text-align:${bannerAlign};"` : `style="padding-top:4px;"`;
+      return `<tr><td ${tdAlign}>${blocks[key]}</td></tr>`;
+    }).join("");
+    return rows ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:100%;">${rows}</table>` : "";
   };
   let borderStyle = "";
   if (design.border.type === "all") {

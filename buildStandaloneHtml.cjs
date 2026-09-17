@@ -1860,8 +1860,8 @@ function renderSignature() {
 
   // Logos HTML
   const logoWidth = dim.logoColumnWidth || 140;
-  const logoHtml = doc.logoSrc ? '<img src="' + esc(doc.logoSrc) + '" width="' + logoWidth + '" alt="RAGT Semences" border="0" style="display:block; width:' + logoWidth + 'px; max-width:' + logoWidth + 'px; height:auto; border:0;" />' : '';
-  const secondaryLogoHtml = doc.secondaryLogoSrc ? '<div style="padding-top:8px;"><img src="' + esc(doc.secondaryLogoSrc) + '" width="95" alt="Certification" border="0" style="display:block; width:95px; height:auto; border:0;" /></div>' : '';
+  const logoHtml = doc.logoSrc ? '<img src="' + esc(doc.logoSrc) + '" width="' + logoWidth + '" alt="RAGT Semences" border="0" style="display:block; width:' + logoWidth + 'px; max-width:' + logoWidth + 'px; height:auto; border:0; margin:0 auto;" />' : '';
+  const secondaryLogoHtml = doc.secondaryLogoSrc ? '<div style="padding-top:8px; text-align:center;"><img src="' + esc(doc.secondaryLogoSrc) + '" width="95" alt="Certification" border="0" style="display:block; width:95px; height:auto; border:0; margin:0 auto;" /></div>' : '';
 
   const slogan = doc.slogan || {};
   const sloganHtml = v.slogan && slogan.enabled && slogan.text
@@ -2382,27 +2382,39 @@ function buildSloganHtml(state) {
   `;
 }
 function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
-  const { logos, visibility } = state;
+  const { logos, visibility, layout } = state;
   const logo = isSecondary ? logos.secondary : logos.primary;
   const isVisible = isSecondary ? visibility.secondaryLogo : visibility.logo;
   if (!isVisible || !logo.url) return "";
   const cacheKey = isSecondary ? "logo_secondary" : "logo_primary";
   const effectiveUrl = iconCache[cacheKey] || logo.url;
   const dropzoneId = isSecondary ? "logo-secondary" : "logo-primary";
+  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const align = isRagtCard || layout.preset === "layout-d" ? "center" : logo.align || layout.alignH || "center";
+  const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const imgTag = `
-    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:${logo.height}px; max-width:${logo.width}px; outline:none; text-decoration:none;" />
+    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:${logo.height}px; max-width:${logo.width}px; ${marginStyle} outline:none; text-decoration:none;" />
   `;
-  if (logo.linkUrl) {
-    return `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none; border:0;">${imgTag}</a>`;
-  }
-  return imgTag;
+  const innerContent = logo.linkUrl ? `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none; border:0; ${marginStyle}">${imgTag}</a>` : imgTag;
+  return `
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${logo.width}" align="${align}" style="display:inline-table; width:${logo.width}px; min-width:${logo.width}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
+      <tr>
+        <td align="${align}" style="text-align:${align}; padding:0; line-height:0;">
+          ${innerContent}
+        </td>
+      </tr>
+    </table>
+  `;
 }
 function buildQrHtml(state, qrDataUrl) {
-  const { qr, visibility } = state;
+  const { qr, visibility, layout } = state;
   if (!visibility.qr || !qrDataUrl) return "";
+  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const align = qr.position === "left" && !isRagtCard ? layout.alignH || "center" : "center";
+  const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const qrBoxWidth = qr.size + 6;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" align="${align}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
       <tr>
         <td width="${qr.size + 4}" style="width:${qr.size + 4}px; min-width:${qr.size + 4}px; padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
           <img src="${qrDataUrl}" width="${qr.size}" height="${qr.size}" alt="QR Code vCard" border="0" style="display:block; width:${qr.size}px; min-width:${qr.size}px; max-width:${qr.size}px; height:${qr.size}px; min-height:${qr.size}px; max-height:${qr.size}px; aspect-ratio:1/1; margin:0 auto;" />
@@ -2618,10 +2630,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       innerStructure = `
         <tr>
           <!-- Logo Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}">
+          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
             ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px;">${qrHtml}</div>` : ""}
+            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
@@ -2640,10 +2652,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     case "layout-f":
       innerStructure = `
         <tr>
-          <td style="width:120px; vertical-align:middle; padding-right:12px;" width="120">
+          <td style="width:120px; vertical-align:middle; text-align:${layout.alignH || "left"}; padding-right:12px;" width="120" align="${layout.alignH || "left"}">
             ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:6px;">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:8px;">${qrHtml}</div>` : ""}
+            ${secondaryLogoHtml ? `<div style="padding-top:6px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
           </td>
           ${verticalSeparatorTd}
           <td style="vertical-align:middle; padding-left:12px;">
@@ -2696,8 +2708,8 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           <!-- Logo Column Left -->
           <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:middle; text-align:center; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="center">
             ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:center;">${qrHtml}</div>` : ""}
+            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:center;" align="center">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:center;" align="center">${qrHtml}</div>` : ""}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column Center: Photo on top, then Name & Title, then Coordinates -->
@@ -2732,10 +2744,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
             </td>
           ` : ""}
           <!-- Logo Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}">
+          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
             ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px;">${qrHtml}</div>` : ""}
+            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->

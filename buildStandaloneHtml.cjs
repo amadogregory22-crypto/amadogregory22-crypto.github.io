@@ -1915,15 +1915,16 @@ function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
 function buildQrHtml(state, qrDataUrl) {
   const { qr, visibility } = state;
   if (!visibility.qr || !qrDataUrl) return "";
+  const qrBoxWidth = qr.size + 6;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="display:inline-table; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center;">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
       <tr>
-        <td style="padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
-          <img src="${qrDataUrl}" width="${qr.size}" height="${qr.size}" alt="QR Code vCard" border="0" style="display:block; width:${qr.size}px; height:${qr.size}px; margin:0 auto;" />
+        <td width="${qr.size + 4}" style="width:${qr.size + 4}px; min-width:${qr.size + 4}px; padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
+          <img src="${qrDataUrl}" width="${qr.size}" height="${qr.size}" alt="QR Code vCard" border="0" style="display:block; width:${qr.size}px; min-width:${qr.size}px; max-width:${qr.size}px; height:${qr.size}px; min-height:${qr.size}px; max-height:${qr.size}px; aspect-ratio:1/1; margin:0 auto;" />
         </td>
       </tr>
       <tr>
-        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:#A0AEC0; text-align:center; padding-top:2px;" align="center">
+        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:#A0AEC0; text-align:center; padding-top:2px; white-space:nowrap;" align="center">
           Scan contact
         </td>
       </tr>
@@ -2130,7 +2131,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           </td>
           <!-- QR Column -->
           ${state.qr.position === "right" && qrHtml ? `
-            <td style="width:${p.qrSize + 20}px; vertical-align:${layout.alignV}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0;" width="${p.qrSize + 20}">
+            <td style="width:${(p.qrSize || 75) + 20}px; min-width:${(p.qrSize || 75) + 20}px; vertical-align:${layout.alignV}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0;" width="${(p.qrSize || 75) + 20}">
               ${qrHtml}
             </td>
           ` : ""}
@@ -2180,18 +2181,21 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       `;
       break;
     case "layout-i":
+      const hasRightQr = (state.qr.position === "right" || !["left", "bottom"].includes(state.qr.position)) && Boolean(qrHtml);
+      const rightQrSize = state.qr.size || 75;
+      const rightColWidth = hasRightQr ? Math.max(50, rightQrSize + 10) : 46;
       const rightSocialsHtml = state.visibility.socials ? buildSocialsHtml(state, iconCache, "vertical") : "";
-      const rightQrHtml = state.qr.position === "right" && qrHtml ? `<tr><td style="text-align:center; padding-bottom:8px;" align="center">${qrHtml}</td></tr>` : "";
+      const rightQrHtml = hasRightQr ? `<tr><td style="text-align:center; padding-bottom:8px;" align="center">${qrHtml}</td></tr>` : "";
       const rightColumnHtml = `
-        <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="display:inline-table; text-align:center;">
+        <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
           ${rightQrHtml}
-          ${rightSocialsHtml ? `<tr><td style="text-align:center; vertical-align:middle;" align="center">${rightSocialsHtml}</td></tr>` : ""}
+          ${rightSocialsHtml ? `<tr><td style="text-align:center; vertical-align:middle; width:46px;" width="46" align="center">${rightSocialsHtml}</td></tr>` : ""}
         </table>
       `;
       innerStructure = `
         <tr>
           <!-- Logo Column Left -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:middle; text-align:center; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="center">
+          <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:middle; text-align:center; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="center">
             ${logoHtml}
             ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}
             ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:center;">${qrHtml}</div>` : ""}
@@ -2202,7 +2206,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
             ${buildOrderedInfoHtml({ includeSocial: false })}
           </td>
           <!-- Socials Column Right: 4 white circular discs stacked vertically (and QR code if position is right) -->
-          <td style="width:46px; vertical-align:middle; text-align:center; padding-left:${p.innerSpacing}px;" width="46" align="center">
+          <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:middle; text-align:center; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="center">
              ${rightColumnHtml}
           </td>
         </tr>

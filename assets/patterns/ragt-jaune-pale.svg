@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 500" width="1080" height="500" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" width="1024" height="512" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
   <defs>
     <linearGradient id="ragtYellowBg" x1="0%" y1="0%" x2="0%" y2="100%">
       <stop offset="0%" stop-color="#FDC420"/>
@@ -7,22 +7,22 @@
   </defs>
 
   <!-- Base background -->
-  <rect width="1080" height="500" fill="url(#ragtYellowBg)"/>
+  <rect width="1024" height="512" fill="url(#ragtYellowBg)"/>
 
-  <!-- Pale yellow geometric motifs (corner & edge accents only, clear content area) -->
-  <!-- Layer 1: Soft diffuse glow -->
-  <g fill="none" stroke="#FFECA0" stroke-width="6" stroke-linecap="round" stroke-linejoin="miter" opacity="0.45">
-    <path d="M800 0 L765 70 L1060 60"/>
-    <path d="M1060 63 L970 485 L900 485"/>
-    <path d="M0 4 L280 4"/>
-    <path d="M40 485 L120 485"/>
+  <!-- Pale yellow geometric motifs (authentic RAGT communication card framing) -->
+  <!-- Layer 1: Soft warm yellow glow -->
+  <g fill="none" stroke="#FFE27F" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity="0.85">
+    <polyline points="418,-2 298,485 375,485"/>
+    <polyline points="808,-2 785,68 1026,46"/>
+    <polyline points="1026,62 924,480 938,514"/>
+    <polyline points="-2,485 50,485"/>
   </g>
 
-  <!-- Layer 2: Main crisp luminous stroke -->
-  <g fill="none" stroke="#FFF5C4" stroke-width="3" stroke-linecap="round" stroke-linejoin="miter" opacity="0.90">
-    <path d="M800 0 L765 70 L1060 60"/>
-    <path d="M1060 63 L970 485 L900 485"/>
-    <path d="M0 4 L280 4"/>
-    <path d="M40 485 L120 485"/>
+  <!-- Layer 2: Main crisp luminous pale cream stroke -->
+  <g fill="none" stroke="#FFF3AD" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <polyline points="418,-2 298,485 375,485"/>
+    <polyline points="808,-2 785,68 1026,46"/>
+    <polyline points="1026,62 924,480 938,514"/>
+    <polyline points="-2,485 50,485"/>
   </g>
 </svg>

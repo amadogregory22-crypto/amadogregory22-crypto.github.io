@@ -2806,6 +2806,12 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     const coordsCount = [pInfo.phone, pInfo.mobile, pInfo.email, pInfo.addressLine1 || pInfo.city, pInfo.website].filter(Boolean).length;
     const col2H = bannerH + 45 + coordsCount * 18 + (state.visibility.slogan ? 24 : 0);
     estimatedCardHeight = Math.max(260, Math.max(col1H, col2H) + padTop + padBottom);
+  } else {
+    const logoH = state.logos.primary?.height || 90;
+    const pInfo = state.personal;
+    const coordsCount = [pInfo.phone, pInfo.mobile, pInfo.email, pInfo.addressLine1 || pInfo.city, pInfo.website].filter(Boolean).length;
+    const contentH = 45 + coordsCount * 18 + (state.visibility.slogan ? 24 : 0);
+    estimatedCardHeight = Math.max(210, Math.max(logoH, contentH) + padTop + padBottom);
   }
   return `<!-- RAGT Semences Outlook Email Signature V3 -->
 <!--[if mso]>

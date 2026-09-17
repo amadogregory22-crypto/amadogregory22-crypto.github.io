@@ -2061,7 +2061,8 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       return `background-color:${design.background.color};`;
     }
     if (design.background.type === "image" && design.background.imageUrl) {
-      return `background-color:${design.background.color || "#FFFFFF"}; background-image:url('${design.background.imageUrl}'); background-repeat:no-repeat; background-position:center; background-size:${design.background.size || "cover"};`;
+      const effectiveBgUrl = iconCache["bg_image"] || design.background.imageUrl;
+      return `background-color:${design.background.color || "#FDC420"}; background-image:url('${effectiveBgUrl}'); background-repeat:no-repeat; background-position:center; background-size:${design.background.size || "cover"};`;
     }
     return "";
   })();

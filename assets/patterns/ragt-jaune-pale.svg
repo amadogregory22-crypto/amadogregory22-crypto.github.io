@@ -1,13 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
-  <rect width="1024" height="512" fill="#FDC420"/>
-  <g fill="none" stroke="#FFE58A" stroke-width="16" opacity="0.72">
-    <path d="M256 -32 L166 480 L308 480"/>
-    <path d="M824 -26 L1016 -26 L1016 22 L846 22 Z"/>
-    <path d="M900 536 L988 66"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" width="1024" height="512" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
+  <defs>
+    <linearGradient id="ragtYellowBg" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#EDB835"/>
+      <stop offset="35%" stop-color="#E9B12E"/>
+      <stop offset="100%" stop-color="#D69E26"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Base background gradient -->
+  <rect width="1024" height="512" fill="url(#ragtYellowBg)"/>
+
+  <!-- Pale yellow geometric motifs -->
+  <!-- Layer 1: Soft diffuse glow -->
+  <g fill="none" stroke="#FFE89E" stroke-width="25" stroke-linecap="round" stroke-linejoin="miter" opacity="0.45">
+    <path d="M418 -10 L296 495 L372 495"/>
+    <path d="M817 -10 L788 60 L1034 52"/>
+    <path d="M1024 70 L922 506"/>
   </g>
-  <g fill="none" stroke="#FFF0B8" stroke-width="4" opacity="0.55">
-    <path d="M274 -32 L184 496 L322 496"/>
-    <path d="M838 -12 L1030 -12 L1030 36 L860 36 Z"/>
-    <path d="M916 544 L1004 74"/>
+
+  <!-- Layer 2: Main crisp stroke -->
+  <g fill="none" stroke="#FFF0B8" stroke-width="19" stroke-linecap="round" stroke-linejoin="miter" opacity="0.65">
+    <path d="M418 -10 L296 495 L372 495"/>
+    <path d="M817 -10 L788 60 L1034 52"/>
+    <path d="M1024 70 L922 506"/>
+  </g>
+
+  <!-- Layer 3: Inner highlight core -->
+  <g fill="none" stroke="#FFF7D4" stroke-width="9" stroke-linecap="round" stroke-linejoin="miter" opacity="0.40">
+    <path d="M418 -10 L296 495 L372 495"/>
+    <path d="M817 -10 L788 60 L1034 52"/>
+    <path d="M1024 70 L922 506"/>
   </g>
 </svg>

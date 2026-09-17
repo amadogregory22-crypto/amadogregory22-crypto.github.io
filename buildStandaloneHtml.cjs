@@ -499,7 +499,7 @@ var SIGNATURE_PRESETS = [
           imageUrl: "/assets/patterns/ragt-jaune-pale.png",
           pattern: "none",
           opacity: 1,
-          size: "cover"
+          size: "100% 100%"
         },
         border: {
           ...base.design.border,
@@ -2579,10 +2579,11 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     }
     return "";
   })();
+  const bgSize = design.background.size && (design.background.size === "cover" || design.background.size === "contain") ? design.background.size : "100% 100%";
   const bgStyle = (() => {
     if (hasBgImage && effectiveBgUrl) {
       const cssBgUrl = iconCache["bg_image"] || effectiveBgUrl;
-      return `background-color:${design.background.color || "#FDC420"}; background-image:url('${cssBgUrl}'); background-repeat:no-repeat; background-position:center; background-size:${design.background.size || "cover"};`;
+      return `background-color:${design.background.color || "#FDC420"}; background-image:url('${cssBgUrl}'); background-repeat:no-repeat; background-position:center; background-size:${bgSize};`;
     }
     if (design.background.type === "color" && design.background.color) {
       return `background-color:${design.background.color};`;

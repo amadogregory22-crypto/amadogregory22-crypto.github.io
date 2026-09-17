@@ -121,25 +121,25 @@ var DEFAULT_SIGNATURE_STATE = {
   },
   personal: {
     civility: "M.",
-    firstName: "Gr\xE9gory",
-    lastName: "AMADO",
-    jobTitle: "Support informatique",
-    department: "Syst\xE8mes d\u2019Information",
-    service: "Assistance Utilisateurs",
+    firstName: "Pr\xE9nom",
+    lastName: "NOM",
+    jobTitle: "Fonction / Poste",
+    department: "D\xE9partement",
+    service: "Service",
     company: "RAGT Semences",
     subsidiary: "Si\xE8ge Social",
-    phone: "05 65 73 41 66",
-    mobile: "06 12 34 56 78",
+    phone: "05 65 00 00 00",
+    mobile: "06 00 00 00 00",
     fax: "",
-    directPhone: "05 65 73 41 66",
-    standardPhone: "05 65 73 41 00",
-    email: "gregory.amado@ragt.com",
+    directPhone: "05 65 00 00 00",
+    standardPhone: "05 65 00 00 00",
+    email: "prenom.nom@ragt.fr",
     addressLine1: "Rue Emile Singla",
     addressLine2: "Site de Bourran",
     postalCode: "12000",
     city: "Rodez",
     country: "France",
-    website: "https://www.ragt.fr"
+    website: "https://www.ragt-semences.fr"
   },
   labels: {
     phone: "T\xE9l.",
@@ -951,7 +951,7 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
   const d = state.design;
   const l = state.layout;
   const v = state.visibility;
-  const logoBase64 = state.logos.primary?.url || RAGT_LOGO_PNG_BASE64;
+  const logoBase64 = state.logos.primary?.url?.startsWith("data:") ? state.logos.primary.url : RAGT_LOGO_PNG_BASE64;
   const serializedState = JSON.stringify({
     preset: l.preset || "layout-a",
     renderMode: state.renderMode || "standard",
@@ -1019,7 +1019,7 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
     }
     /* Top Brand Bar */
     .top {
-      height: 72px;
+      height: 84px;
       background: #FFFFFF;
       border-bottom: 2px solid #EDF2F7;
       display: flex;
@@ -1032,16 +1032,16 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
     .brand {
       display: flex;
       align-items: center;
-      gap: 14px;
+      gap: 16px;
       font-size: 20px;
       font-weight: 800;
       color: var(--ragt-navy);
       letter-spacing: -0.02em;
     }
     .brand-logo {
-      height: 44px;
+      height: 56px;
       width: auto;
-      max-width: 140px;
+      max-width: 190px;
       object-fit: contain;
       display: block;
     }
@@ -1435,10 +1435,10 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
 
 <header class="top">
   <div class="brand">
-    <img class="brand-logo" src="${RAGT_LOGO_PNG_BASE64}" alt="RAGT Semences" />
-    <div style="border-left: 2px solid #E2E8F0; padding-left: 14px; margin-left: 2px;">
-      <span style="font-size: 18px; font-weight: 800; color: var(--ragt-navy); display: block; line-height: 1.2;">RAGT Semences</span>
-      <small>Portail Collaborateur \xB7 Signature Outlook Officielle</small>
+    <img class="brand-logo" src="${logoBase64}" alt="${state.logos.primary?.alt || "Logo RAGT"}" />
+    <div style="border-left: 2px solid #E2E8F0; padding-left: 16px; margin-left: 4px;">
+      <span style="font-size: 20px; font-weight: 800; color: var(--ragt-navy); display: block; line-height: 1.2;">RAGT Semences</span>
+      <small style="display: block; font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.02em; text-transform: uppercase; margin-top: 2px;">Portail Collaborateur \xB7 Signature Outlook Officielle</small>
     </div>
   </div>
   <button id="btnReset" class="btn-reset" title="R\xE9initialiser avec les valeurs officielles">
@@ -1481,7 +1481,7 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
       </div>
       <div class="field">
         <span>Poste / Fonction *</span>
-        <input type="text" data-k="jobTitle" placeholder="Ex: Responsable D\xE9veloppement Vari\xE9tal">
+        <input type="text" data-k="jobTitle" placeholder="Ex: Responsable d'activit\xE9">
       </div>
       <div class="form-grid">
         <div class="field">
@@ -1505,17 +1505,17 @@ function generateStandaloneSignatureAppHtml(state, initialHtml = "") {
       <div class="form-grid">
         <div class="field">
           <span>Ligne directe / Fixe</span>
-          <input type="tel" data-k="phone" placeholder="05 65 73 41 66" autocomplete="tel">
+          <input type="tel" data-k="phone" placeholder="05 65 00 00 00" autocomplete="tel">
         </div>
         <div class="field">
           <span>T\xE9l\xE9phone mobile</span>
-          <input type="tel" data-k="mobile" placeholder="06 12 34 56 78" autocomplete="tel">
+          <input type="tel" data-k="mobile" placeholder="06 00 00 00 00" autocomplete="tel">
         </div>
       </div>
       <div class="form-grid">
         <div class="field">
           <span>Standard</span>
-          <input type="tel" data-k="standardPhone" placeholder="05 65 73 41 00">
+          <input type="tel" data-k="standardPhone" placeholder="05 65 00 00 00">
         </div>
         <div class="field">
           <span>Fax</span>
@@ -1687,7 +1687,12 @@ function load() {
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const data = JSON.parse(saved);
-      Object.assign(doc.personal, data);
+      const email = String(data.email || '').toLowerCase();
+      if (email && !email.includes('prenom.nom') && email.includes('@ragt')) {
+        localStorage.removeItem(STORAGE_KEY);
+      } else {
+        Object.assign(doc.personal, data);
+      }
     }
   } catch(e) {}
 }
@@ -2831,8 +2836,42 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
 }
 
 // scripts/buildStandaloneHtml.ts
+function fileToDataUrl(url) {
+  if (!url || typeof url !== "string" || url.startsWith("data:")) return url || "";
+  try {
+    const cleanUrl = url.split("?")[0];
+    const filePath = import_path.default.resolve(__dirname, "../public", cleanUrl.replace(/^\//, ""));
+    if (import_fs.default.existsSync(filePath)) {
+      const ext = import_path.default.extname(filePath).slice(1).toLowerCase();
+      const mime = ext === "svg" ? "image/svg+xml" : ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
+      const b64 = import_fs.default.readFileSync(filePath).toString("base64");
+      return `data:${mime};base64,${b64}`;
+    }
+  } catch (e) {
+  }
+  return url;
+}
+function inlineHtmlImages(htmlStr) {
+  return htmlStr.replace(/src=["'](\/[^"']+)["']/g, (_, srcPath) => {
+    const dataUrl = fileToDataUrl(srcPath);
+    return `src="${dataUrl}"`;
+  });
+}
 var carteRagtState = SIGNATURE_PRESETS[0].apply(DEFAULT_SIGNATURE_STATE);
-var html = generateStandaloneSignatureAppHtml(carteRagtState, generateEmailHTML(carteRagtState));
+var embeddedState = {
+  ...carteRagtState,
+  logos: {
+    ...carteRagtState.logos,
+    primary: { ...carteRagtState.logos.primary, url: fileToDataUrl(carteRagtState.logos.primary?.url) },
+    secondary: { ...carteRagtState.logos.secondary, url: fileToDataUrl(carteRagtState.logos.secondary?.url) }
+  },
+  banner: {
+    ...carteRagtState.banner,
+    imageUrl: fileToDataUrl(carteRagtState.banner?.imageUrl)
+  }
+};
+var initialEmailHtml = inlineHtmlImages(generateEmailHTML(embeddedState));
+var html = generateStandaloneSignatureAppHtml(embeddedState, initialEmailHtml);
 var outPath = import_path.default.resolve(__dirname, "../public/signature.html");
 import_fs.default.writeFileSync(outPath, html, "utf-8");
 var distPath = import_path.default.resolve(__dirname, "../dist/signature.html");

@@ -494,12 +494,12 @@ var SIGNATURE_PRESETS = [
           background: "#FDC420"
         },
         background: {
-          type: "image",
+          type: "color",
           color: "#FDC420",
-          imageUrl: "/assets/patterns/ragt-jaune-pale.png",
+          imageUrl: "",
           pattern: "none",
           opacity: 1,
-          size: "100% 100%"
+          size: "auto"
         },
         border: {
           ...base.design.border,
@@ -2560,9 +2560,8 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     }
   }
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
-  const isYellowBg = design.background.color?.toUpperCase() === "#FDC420" || design.colors.background?.toUpperCase() === "#FDC420";
   const RAGT_PUBLIC_PATTERN_URL = "https://amadogregory22-crypto.github.io/assets/patterns/ragt-jaune-pale.png";
-  const hasBgImage = Boolean(design.background.type === "image" && design.background.imageUrl || isRagtCard && isYellowBg);
+  const hasBgImage = Boolean(design.background.type === "image" && design.background.imageUrl);
   const effectiveBgUrl = (() => {
     if (design.background.type === "image" && design.background.imageUrl) {
       if (design.background.imageUrl.includes("ragt-jaune-pale")) return RAGT_PUBLIC_PATTERN_URL;
@@ -2573,9 +2572,6 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         return `https://amadogregory22-crypto.github.io${design.background.imageUrl}`;
       }
       return design.background.imageUrl;
-    }
-    if (isRagtCard && isYellowBg) {
-      return RAGT_PUBLIC_PATTERN_URL;
     }
     return "";
   })();
@@ -2590,7 +2586,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     }
     return "";
   })();
-  const tableBgColorAttr = (design.background.type === "color" || design.background.type === "image" || isRagtCard && isYellowBg) && (design.background.color || "#FDC420") ? `bgcolor="${design.background.color || "#FDC420"}"` : "";
+  const tableBgColorAttr = (design.background.type === "color" || design.background.type === "image") && design.background.color ? `bgcolor="${design.background.color}"` : "";
   const verticalSeparatorTd = sep.type === "vertical" ? `<td style="width:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:0;" width="${sep.thickness}">&nbsp;</td>` : "";
   const horizontalSeparatorTr = sep.type === "horizontal" ? `<tr><td colspan="3" style="height:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:${sep.margin}px 0;" height="${sep.thickness}">&nbsp;</td></tr>` : "";
   let innerStructure = "";

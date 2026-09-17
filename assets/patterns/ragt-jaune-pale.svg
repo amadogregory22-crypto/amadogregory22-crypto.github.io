@@ -9,31 +9,20 @@
   <!-- Base background -->
   <rect width="1080" height="500" fill="url(#ragtYellowBg)"/>
 
-  <!-- Pale yellow geometric motifs -->
+  <!-- Pale yellow geometric motifs (corner & edge accents only, clear content area) -->
   <!-- Layer 1: Soft diffuse glow -->
-  <g fill="none" stroke="#FFE996" stroke-width="12" stroke-linecap="round" stroke-linejoin="miter" opacity="0.55">
-    <path d="M295 -5 L255 475 L340 475"/>
-    <path d="M40 475 L110 475 L110 420"/>
-    <path d="M0 6 L1080 6"/>
-    <path d="M820 -5 L785 85 L1075 75"/>
-    <path d="M1075 88 L970 490 L910 490"/>
+  <g fill="none" stroke="#FFECA0" stroke-width="6" stroke-linecap="round" stroke-linejoin="miter" opacity="0.45">
+    <path d="M800 0 L765 70 L1060 60"/>
+    <path d="M1060 63 L970 485 L900 485"/>
+    <path d="M0 4 L280 4"/>
+    <path d="M40 485 L120 485"/>
   </g>
 
   <!-- Layer 2: Main crisp luminous stroke -->
-  <g fill="none" stroke="#FFF5C4" stroke-width="6" stroke-linecap="round" stroke-linejoin="miter" opacity="0.95">
-    <path d="M295 -5 L255 475 L340 475"/>
-    <path d="M40 475 L110 475 L110 420"/>
-    <path d="M0 6 L1080 6"/>
-    <path d="M820 -5 L785 85 L1075 75"/>
-    <path d="M1075 88 L970 490 L910 490"/>
-  </g>
-
-  <!-- Layer 3: Inner bright highlight core -->
-  <g fill="none" stroke="#FFFFEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter" opacity="0.90">
-    <path d="M295 -5 L255 475 L340 475"/>
-    <path d="M40 475 L110 475 L110 420"/>
-    <path d="M0 6 L1080 6"/>
-    <path d="M820 -5 L785 85 L1075 75"/>
-    <path d="M1075 88 L970 490 L910 490"/>
+  <g fill="none" stroke="#FFF5C4" stroke-width="3" stroke-linecap="round" stroke-linejoin="miter" opacity="0.90">
+    <path d="M800 0 L765 70 L1060 60"/>
+    <path d="M1060 63 L970 485 L900 485"/>
+    <path d="M0 4 L280 4"/>
+    <path d="M40 485 L120 485"/>
   </g>
 </svg>

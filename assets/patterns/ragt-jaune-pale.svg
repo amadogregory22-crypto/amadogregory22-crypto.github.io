@@ -1,34 +1,39 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" width="1024" height="512" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 500" width="1080" height="500" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
   <defs>
     <linearGradient id="ragtYellowBg" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#EDB835"/>
-      <stop offset="35%" stop-color="#E9B12E"/>
-      <stop offset="100%" stop-color="#D69E26"/>
+      <stop offset="0%" stop-color="#FDC420"/>
+      <stop offset="100%" stop-color="#EDB822"/>
     </linearGradient>
   </defs>
 
-  <!-- Base background gradient -->
-  <rect width="1024" height="512" fill="url(#ragtYellowBg)"/>
+  <!-- Base background -->
+  <rect width="1080" height="500" fill="url(#ragtYellowBg)"/>
 
   <!-- Pale yellow geometric motifs -->
   <!-- Layer 1: Soft diffuse glow -->
-  <g fill="none" stroke="#FFE89E" stroke-width="25" stroke-linecap="round" stroke-linejoin="miter" opacity="0.45">
-    <path d="M418 -10 L296 495 L372 495"/>
-    <path d="M817 -10 L788 60 L1034 52"/>
-    <path d="M1024 70 L922 506"/>
+  <g fill="none" stroke="#FFE996" stroke-width="12" stroke-linecap="round" stroke-linejoin="miter" opacity="0.55">
+    <path d="M295 -5 L255 475 L340 475"/>
+    <path d="M40 475 L110 475 L110 420"/>
+    <path d="M0 6 L1080 6"/>
+    <path d="M820 -5 L785 85 L1075 75"/>
+    <path d="M1075 88 L970 490 L910 490"/>
   </g>
 
-  <!-- Layer 2: Main crisp stroke -->
-  <g fill="none" stroke="#FFF0B8" stroke-width="19" stroke-linecap="round" stroke-linejoin="miter" opacity="0.65">
-    <path d="M418 -10 L296 495 L372 495"/>
-    <path d="M817 -10 L788 60 L1034 52"/>
-    <path d="M1024 70 L922 506"/>
+  <!-- Layer 2: Main crisp luminous stroke -->
+  <g fill="none" stroke="#FFF5C4" stroke-width="6" stroke-linecap="round" stroke-linejoin="miter" opacity="0.95">
+    <path d="M295 -5 L255 475 L340 475"/>
+    <path d="M40 475 L110 475 L110 420"/>
+    <path d="M0 6 L1080 6"/>
+    <path d="M820 -5 L785 85 L1075 75"/>
+    <path d="M1075 88 L970 490 L910 490"/>
   </g>
 
-  <!-- Layer 3: Inner highlight core -->
-  <g fill="none" stroke="#FFF7D4" stroke-width="9" stroke-linecap="round" stroke-linejoin="miter" opacity="0.40">
-    <path d="M418 -10 L296 495 L372 495"/>
-    <path d="M817 -10 L788 60 L1034 52"/>
-    <path d="M1024 70 L922 506"/>
+  <!-- Layer 3: Inner bright highlight core -->
+  <g fill="none" stroke="#FFFFEA" stroke-width="2" stroke-linecap="round" stroke-linejoin="miter" opacity="0.90">
+    <path d="M295 -5 L255 475 L340 475"/>
+    <path d="M40 475 L110 475 L110 420"/>
+    <path d="M0 6 L1080 6"/>
+    <path d="M820 -5 L785 85 L1075 75"/>
+    <path d="M1075 88 L970 490 L910 490"/>
   </g>
 </svg>

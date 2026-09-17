@@ -2061,11 +2061,11 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       return `background-color:${design.background.color};`;
     }
     if (design.background.type === "image" && design.background.imageUrl) {
-      return `background-image:url('${design.background.imageUrl}'); background-repeat:repeat; background-size:cover;`;
+      return `background-color:${design.background.color || "#FFFFFF"}; background-image:url('${design.background.imageUrl}'); background-repeat:no-repeat; background-position:center; background-size:${design.background.size || "cover"};`;
     }
     return "";
   })();
-  const tableBgColorAttr = design.background.type === "color" && design.background.color ? `bgcolor="${design.background.color}"` : "";
+  const tableBgColorAttr = (design.background.type === "color" || design.background.type === "image") && design.background.color ? `bgcolor="${design.background.color}"` : "";
   const verticalSeparatorTd = sep.type === "vertical" ? `<td style="width:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:0;" width="${sep.thickness}">&nbsp;</td>` : "";
   const horizontalSeparatorTr = sep.type === "horizontal" ? `<tr><td colspan="3" style="height:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:${sep.margin}px 0;" height="${sep.thickness}">&nbsp;</td></tr>` : "";
   let innerStructure = "";

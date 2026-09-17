@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 512" role="img" aria-label="Motif institutionnel RAGT jaune pâle">
+  <rect width="1024" height="512" fill="#FDC420"/>
+  <g fill="none" stroke="#FFE58A" stroke-width="16" opacity="0.72">
+    <path d="M256 -32 L166 480 L308 480"/>
+    <path d="M824 -26 L1016 -26 L1016 22 L846 22 Z"/>
+    <path d="M900 536 L988 66"/>
+  </g>
+  <g fill="none" stroke="#FFF0B8" stroke-width="4" opacity="0.55">
+    <path d="M274 -32 L184 496 L322 496"/>
+    <path d="M838 -12 L1030 -12 L1030 36 L860 36 Z"/>
+    <path d="M916 544 L1004 74"/>
+  </g>
+</svg>

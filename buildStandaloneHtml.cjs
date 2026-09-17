@@ -1967,10 +1967,11 @@ function buildCampaignHtml(state, iconCache = {}) {
   const styleHeight = shouldMaintainRatio ? "height:auto;" : `height:${active.height || heightAttr}px;`;
   const fitMode = active.fitMode || (shouldMaintainRatio ? "contain" : "cover");
   const objectFitStyle = shouldMaintainRatio ? "" : `object-fit:${fitMode};`;
-  const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${heightAttr}" alt="${escapeHtml(active.altText || active.title || "Campagne RAGT")}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; ${styleHeight} ${objectFitStyle} border-radius:4px;" />`;
+  const bRadius = state.design.border.radius || 4;
+  const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${heightAttr}" alt="${escapeHtml(active.altText || active.title || "Campagne RAGT")}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; ${styleHeight} ${objectFitStyle} border-radius:0 0 ${bRadius}px ${bRadius}px;" />`;
   const linkContent = active.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(active.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">${imgHtml}</a>` : imgHtml;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${totalWidth}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${totalWidth}px; max-width:100%; margin-top:12px; margin-bottom:4px;">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${totalWidth}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${totalWidth}px; max-width:100%; margin-top:0; margin-bottom:0;">
       <tr>
         <td style="vertical-align:top; text-align:center; padding:0;">
           ${linkContent}
@@ -2047,8 +2048,13 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   } else if (design.border.type === "right") {
     borderStyle = `border-right:${design.border.thickness}px ${design.border.style} ${design.border.color};`;
   }
+  const hasCampaignBelow = Boolean(campaignHtml);
   if (design.border.radius && design.border.radius > 0) {
-    borderStyle += ` border-radius:${design.border.radius}px; overflow:hidden;`;
+    if (hasCampaignBelow) {
+      borderStyle += ` border-radius:${design.border.radius}px ${design.border.radius}px 0 0; overflow:hidden;`;
+    } else {
+      borderStyle += ` border-radius:${design.border.radius}px; overflow:hidden;`;
+    }
   }
   const bgStyle = (() => {
     if (design.background.type === "color" && design.background.color) {

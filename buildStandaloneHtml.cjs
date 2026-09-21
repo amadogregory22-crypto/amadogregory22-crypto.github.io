@@ -2265,8 +2265,14 @@ function buildCoordinatesHtml(state, iconCache) {
   const makeLink = (href, text, color, isBold = false, targetBlank = false) => {
     const targetAttr = targetBlank ? ' target="_blank" rel="noopener noreferrer"' : "";
     const weightStyle = isBold ? " font-weight:600;" : "";
-    const linkStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
-    const spanStyle = `color:${color}; text-decoration:${textDecor} !important; text-decoration:${textDecor}; -webkit-text-decoration:${textDecor}; mso-text-underline:${msoUnderline}; text-underline-style:${msoUnderline}; border:none; outline:none; border-bottom:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
+    if (!shouldUnderline) {
+      if (href.startsWith("tel:")) {
+        return `<span style="color:${color}; font-family:${t.fontFamily}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span>`;
+      }
+      return `<a href="${href}"${targetAttr} style="color:${color}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}"><font color="${color}" style="text-decoration:none;"><span style="color:${color}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span></font></a>`;
+    }
+    const linkStyle = `color:${color}; text-decoration:underline !important; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
+    const spanStyle = `color:${color}; text-decoration:underline !important; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
     return `<a href="${href}"${targetAttr} style="${linkStyle}"><span style="${spanStyle}">${escapeHtml(text)}</span></a>`;
   };
   const addCoordRow = (iconType, label, valueHtml) => {
@@ -2342,13 +2348,13 @@ function buildSocialsHtml(state, iconCache, layoutMode = "horizontal") {
     const effectiveStyle = item.iconStyle || social.iconStyle || "circle";
     const effectiveColor = social.useBrandColors ? item.color || "#0C3866" : social.color || item.color || design.colors.icons || "#0C3866";
     const iconDataUrl = iconCache[`social_${item.id}`] || getSocialIconDataUrl(item.id, effectiveColor, effectiveStyle, state.design.background.color || "#FDC420");
-    const displayLabel = social.style === "icons-text" ? ` <span style="font-size:11px; font-family:${design.typography.baseFont}; color:${design.colors.muted}; vertical-align:middle; padding-left:3px;">${escapeHtml(item.name)}</span>` : "";
+    const displayLabel = social.style === "icons-text" ? ` <span style="font-size:11px; font-family:${design.typography.baseFont}; color:${design.colors.muted}; vertical-align:middle; padding-left:3px; text-decoration:none !important; text-underline:none; mso-text-underline:none; text-underline-style:none;">${escapeHtml(item.name)}</span>` : "";
     if (layoutMode === "vertical") {
       return `
         <tr>
           <td style="padding-bottom:${social.spacing}px; vertical-align:middle; white-space:nowrap;">
-            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-block; vertical-align:middle;">
-              <img src="${iconDataUrl}" width="${social.iconSize}" height="${social.iconSize}" alt="${escapeHtml(item.name)}" border="0" style="display:inline-block; vertical-align:middle; width:${social.iconSize}px; height:${social.iconSize}px;" />
+            <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:0; outline:none; display:inline-block; vertical-align:middle;">
+              <img src="${iconDataUrl}" width="${social.iconSize}" height="${social.iconSize}" alt="${escapeHtml(item.name)}" border="0" style="display:inline-block; vertical-align:middle; width:${social.iconSize}px; height:${social.iconSize}px; border:0; outline:none;" />
               ${displayLabel}
             </a>
           </td>
@@ -2357,8 +2363,8 @@ function buildSocialsHtml(state, iconCache, layoutMode = "horizontal") {
     }
     return `
       <td style="padding-right:${social.spacing}px; vertical-align:middle; white-space:nowrap;">
-        <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration:none; display:inline-block; vertical-align:middle;">
-          <img src="${iconDataUrl}" width="${social.iconSize}" height="${social.iconSize}" alt="${escapeHtml(item.name)}" border="0" style="display:inline-block; vertical-align:middle; width:${social.iconSize}px; height:${social.iconSize}px;" />
+        <a href="${targetUrl}" target="_blank" rel="noopener noreferrer" style="text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:0; outline:none; display:inline-block; vertical-align:middle;">
+          <img src="${iconDataUrl}" width="${social.iconSize}" height="${social.iconSize}" alt="${escapeHtml(item.name)}" border="0" style="display:inline-block; vertical-align:middle; width:${social.iconSize}px; height:${social.iconSize}px; border:0; outline:none;" />
           ${displayLabel}
         </a>
       </td>
@@ -2404,13 +2410,13 @@ function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
   const align = logo.align || (isRagtCard || layout.preset === "layout-d" ? "center" : layout.alignH || "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const imgTag = `
-    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:${logo.height}px; max-width:${logo.width}px; ${marginStyle} outline:none; text-decoration:none;" />
+    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:auto; max-width:${logo.width}px; ${marginStyle} outline:none; text-decoration:none; border:0;" />
   `;
-  const innerContent = logo.linkUrl ? `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none; border:0; ${marginStyle}">${imgTag}</a>` : imgTag;
+  const innerContent = logo.linkUrl ? `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none !important; -webkit-text-decoration:none; mso-text-underline:none; text-underline:none; text-underline-style:none; border:0; outline:none; font-size:0; line-height:0; color:transparent; ${marginStyle}">${imgTag}</a>` : imgTag;
   return `
     <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${logo.width}" align="${align}" style="display:inline-table; width:${logo.width}px; min-width:${logo.width}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
       <tr>
-        <td align="${align}" style="text-align:${align}; padding:0; line-height:0;">
+        <td align="${align}" style="text-align:${align}; padding:0; line-height:normal; font-size:0; mso-line-height-rule:exactly;">
           ${innerContent}
         </td>
       </tr>
@@ -2454,7 +2460,7 @@ function buildBannerHtml(state, iconCache = {}) {
   const bannerImg = `
     <img data-ragt-dropzone="banner" src="${effectiveBannerUrl}" width="${banner.width}" height="${renderedHeight}" alt="${escapeHtml(banner.altText || banner.title)}" border="0" style="display:block; width:${banner.width}px; max-width:100%; ${heightStyle} ${marginStyle} border-radius:4px;" />
   `;
-  const content = banner.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(banner.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none; ${marginStyle}">${bannerImg}</a>` : bannerImg;
+  const content = banner.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(banner.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:0; outline:none; ${marginStyle}">${bannerImg}</a>` : bannerImg;
   return `
     <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${banner.width}" align="${align}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${banner.width}px; max-width:100%; margin-top:${banner.marginTop || 0}px; margin-bottom:${banner.marginBottom || 0}px; ${marginStyle} text-align:${align};">
       <tr>
@@ -2482,7 +2488,7 @@ function buildCampaignHtml(state, iconCache = {}) {
   const objectFitStyle = shouldMaintainRatio ? "" : `object-fit:${fitMode};`;
   const bRadius = state.design.border.radius || 4;
   const imgHtml = `<img data-ragt-dropzone="campaign" src="${effectiveUrl}" width="${totalWidth}" height="${heightAttr}" alt="${escapeHtml(active.altText || active.title || "Campagne RAGT")}" border="0" style="display:block; width:${totalWidth}px; max-width:100%; ${styleHeight} ${objectFitStyle} border-radius:0 0 ${bRadius}px ${bRadius}px;" />`;
-  const linkContent = active.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(active.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none;">${imgHtml}</a>` : imgHtml;
+  const linkContent = active.linkUrl ? `<a href="${appendUtmParams(sanitizeUrl(active.linkUrl), state.utm)}" target="_blank" rel="noopener noreferrer" style="display:block; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:0; outline:none;">${imgHtml}</a>` : imgHtml;
   return `
     <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${totalWidth}" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:${totalWidth}px; max-width:100%; margin-top:0; margin-bottom:0;">
       <tr>
@@ -2493,10 +2499,29 @@ function buildCampaignHtml(state, iconCache = {}) {
     </table>
   `;
 }
+function renderStackedBlocks(blocks, align = "left", bgColor = "transparent", gap = 8) {
+  const filtered = blocks.filter(Boolean);
+  if (filtered.length === 0) return "";
+  if (filtered.length === 1) return filtered[0];
+  const bgStyle = bgColor && bgColor !== "transparent" ? `background-color:${bgColor};` : "";
+  const bgAttr = bgColor && bgColor !== "transparent" ? ` bgcolor="${bgColor}"` : "";
+  const rows = filtered.map((b, idx) => `
+    <tr>
+      <td align="${align}" style="text-align:${align}; ${idx > 0 ? `padding-top:${gap}px;` : ""} ${bgStyle}"${bgAttr}>
+        ${b}
+      </td>
+    </tr>
+  `).join("");
+  return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ${bgStyle}"${bgAttr}><tbody>${rows}</tbody></table>`;
+}
 function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const { layout, design } = state;
   const p = layout.dimensions;
   const sep = layout.separator;
+  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const cardBgColor = (design.background.type === "color" || design.background.type === "image") && design.background.color ? design.background.color : isRagtCard ? "#FDC420" : "transparent";
+  const cardBgStyle = cardBgColor && cardBgColor !== "transparent" ? `background-color:${cardBgColor};` : "";
+  const cardBgAttr = cardBgColor && cardBgColor !== "transparent" ? ` bgcolor="${cardBgColor}"` : "";
   const identityHtml = buildIdentityHtml(state);
   const coordsHtml = buildCoordinatesHtml(state, iconCache);
   const socialsHtml = buildSocialsHtml(state, iconCache);
@@ -2521,7 +2546,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     if (!orderedBlockKeys.includes(key)) orderedBlockKeys.push(key);
   }
   const orderedCenterBlocks = {
-    logo: `${logoHtml}${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}`,
+    logo: renderStackedBlocks([logoHtml, secondaryLogoHtml], "center", cardBgColor, 8),
     identity: identityHtml,
     coordinates: coordsHtml,
     social: socialsHtml,
@@ -2531,7 +2556,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     // Only a centered image becomes part of the freely ordered composition.
     banner: centerBannerHtml
   };
-  const orderedCenterRows = orderedBlockKeys.map((key) => orderedCenterBlocks[key] ? `<tr><td align="center" style="text-align:center; padding-top:4px;">${orderedCenterBlocks[key]}</td></tr>` : "").join("");
+  const orderedCenterRows = orderedBlockKeys.map((key) => orderedCenterBlocks[key] ? `<tr><td align="center" style="text-align:center; padding-top:4px; ${cardBgStyle}"${cardBgAttr}>${orderedCenterBlocks[key]}</td></tr>` : "").join("");
   const defaultBlockOrder = ["logo", "identity", "coordinates", "social", "qr", "slogan", "banner"];
   const usesDefaultBlockOrder = orderedBlockKeys.every((key, index) => key === defaultBlockOrder[index]);
   const buildOrderedInfoHtml = (options = {}) => {
@@ -2562,10 +2587,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     const bannerAlign = state.banner.align || (state.banner.position === "left" ? "left" : state.banner.position === "right" ? "right" : "center");
     const rows = order.filter((key) => key !== "logo").map((key) => {
       if (!blocks[key]) return "";
-      const tdAlign = key === "banner" ? `align="${bannerAlign}" style="padding-top:4px; text-align:${bannerAlign};"` : `style="padding-top:4px;"`;
-      return `<tr><td ${tdAlign}>${blocks[key]}</td></tr>`;
+      const tdAlign = key === "banner" ? `align="${bannerAlign}" style="padding-top:4px; text-align:${bannerAlign}; ${cardBgStyle}"` : `style="padding-top:4px; ${cardBgStyle}"`;
+      return `<tr><td ${tdAlign}${cardBgAttr}>${blocks[key]}</td></tr>`;
     }).join("");
-    return rows ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:100%;">${rows}</table>` : "";
+    return rows ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%"${cardBgAttr} style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; width:100%; ${cardBgStyle}">${rows}</table>` : "";
   };
   let borderStyle = "";
   if (design.border.type === "all") {
@@ -2587,7 +2612,6 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       borderStyle += ` border-radius:${design.border.radius}px; overflow:hidden;`;
     }
   }
-  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
   const RAGT_PUBLIC_PATTERN_URL = "https://amadogregory22-crypto.github.io/assets/patterns/ragt-jaune-pale.png";
   const hasBgImage = Boolean(design.background.type === "image" && design.background.imageUrl);
   const effectiveBgUrl = (() => {
@@ -2659,20 +2683,20 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         ` : ""}
         <tr>
           <!-- Info Column (Left) -->
-          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-right:${logoColW || hasCol3 ? p.innerSpacing : 0}px;">
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-bottom:10px;">${qrHtml}</div>` : ""}
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-right:${logoColW || hasCol3 ? p.innerSpacing : 0}px; ${cardBgStyle}"${cardBgAttr}>
+            ${state.qr.position === "left" && qrHtml ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; padding-bottom:10px; margin-bottom:10px; ${cardBgStyle}"${cardBgAttr}><tr><td ${cardBgAttr} style="${cardBgStyle}">${qrHtml}</td></tr></table>` : ""}
             ${buildOrderedInfoHtml({ includeCenterBanner: (isCol1B || isCol2B) && isBannerVis })}
           </td>
           ${logoColW && verticalSeparatorTd ? verticalSeparatorTd : ""}
           <!-- Logo Column (Center / Right) -->
           ${logoColW ? `
-            <td style="width:${logoColW}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px;" width="${logoColW}">
-              ${logoBlocks.join('<div style="padding-top:8px;"></div>')}
+            <td style="width:${logoColW}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px; ${cardBgStyle}" width="${logoColW}"${cardBgAttr}>
+              ${renderStackedBlocks(logoBlocks, layout.alignH || "left", cardBgColor, 8)}
             </td>
           ` : ""}
           <!-- Visual Column 3 (Right) -->
           ${hasCol3 ? `
-            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign}; padding-left:${logoColW ? 0 : p.innerSpacing}px;" width="${rightColW}">
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign}; padding-left:${logoColW ? 0 : p.innerSpacing}px; ${cardBgStyle}" width="${rightColW}"${cardBgAttr}>
               ${bannerHtml}
             </td>
           ` : ""}
@@ -2768,18 +2792,18 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         ` : ""}
         <tr>
           <!-- Logo Column -->
-          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${col1W}" align="${layout.alignH || "left"}">
-            ${col1Blocks.join('<div style="padding-top:8px;"></div>')}
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px; ${cardBgStyle}" width="${col1W}" align="${layout.alignH || "left"}"${cardBgAttr}>
+            ${renderStackedBlocks(col1Blocks, layout.alignH || "left", cardBgColor, 8)}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px; ${cardBgStyle}"${cardBgAttr}>
             ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
           <!-- Right QR & Visual Column -->
           ${hasCol3 ? `
-            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0;" width="${rightColW}">
-              ${col3Blocks.join('<div style="padding-top:8px;"></div>')}
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0; ${cardBgStyle}" width="${rightColW}"${cardBgAttr}>
+              ${renderStackedBlocks(col3Blocks, "center", cardBgColor, 8)}
             </td>
           ` : ""}
         </tr>
@@ -2838,18 +2862,18 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         ` : ""}
         <tr>
           <!-- Logo Column -->
-          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:12px;" width="${col1W}" align="${layout.alignH || "left"}">
-            ${col1Blocks.join('<div style="padding-top:6px;"></div>')}
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:12px; ${cardBgStyle}" width="${col1W}" align="${layout.alignH || "left"}"${cardBgAttr}>
+            ${renderStackedBlocks(col1Blocks, layout.alignH || "left", cardBgColor, 6)}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:12px; padding-right:${hasCol3 ? 12 : 0}px;">
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:12px; padding-right:${hasCol3 ? 12 : 0}px; ${cardBgStyle}"${cardBgAttr}>
             ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
           <!-- Right QR & Visual Column -->
           ${hasCol3 ? `
-            <td style="width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:12px;" width="${rightColW}">
-              ${col3Blocks.join('<div style="padding-top:6px;"></div>')}
+            <td style="width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:12px; ${cardBgStyle}" width="${rightColW}"${cardBgAttr}>
+              ${renderStackedBlocks(col3Blocks, "center", cardBgColor, 6)}
             </td>
           ` : ""}
         </tr>
@@ -2929,12 +2953,13 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         switch (key) {
           case "logo": {
             if (!state.visibility.logo || !logoHtml) return "";
-            return `<div style="text-align:${logoAlign};" align="${logoAlign}">${logoHtml}${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${logoAlign};" align="${logoAlign}">${secondaryLogoHtml}</div>` : ""}</div>`;
+            const logoList = [logoHtml];
+            if (secondaryLogoHtml) logoList.push(secondaryLogoHtml);
+            return renderStackedBlocks(logoList, logoAlign, cardBgColor, 8);
           }
           case "banner": {
             if (!state.visibility.banner || !bannerHtml) return "";
-            const bAlign = state.banner.align || (state.banner.position === "left" ? "left" : state.banner.position === "right" ? "right" : "center");
-            return `<div style="text-align:${bAlign};" align="${bAlign}">${bannerHtml}</div>`;
+            return bannerHtml;
           }
           case "identity": {
             return identityHtml;
@@ -2944,16 +2969,14 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           }
           case "qr": {
             if (!state.visibility.qr || !qrHtml) return "";
-            const qAlign = state.qr.align || (colNum === 1 ? logoAlign : colNum === 3 ? "center" : layout.alignH || "center");
-            return `<div style="text-align:${qAlign};" align="${qAlign}">${qrHtml}</div>`;
+            return qrHtml;
           }
           case "social": {
             if (!state.visibility.socials) return "";
             if (colNum === 3) {
               return buildSocialsHtml(state, iconCache, "vertical");
             }
-            const sAlign = state.social.align || (colNum === 1 ? logoAlign : layout.alignH || "left");
-            return `<div style="text-align:${sAlign};" align="${sAlign}">${buildSocialsHtml(state, iconCache, "horizontal")}</div>`;
+            return buildSocialsHtml(state, iconCache, "horizontal");
           }
           case "slogan": {
             if (!state.visibility.slogan || !sloganHtml) return "";
@@ -2963,10 +2986,15 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
             return "";
         }
       };
+      const hasRightBanner = getColFor("banner") === 3 && state.visibility.banner && Boolean(bannerHtml);
+      const effectiveRightAlign = hasRightBanner && state.banner.align ? state.banner.align : state.social?.align || "center";
+      const hasCol1Banner = getColFor("banner") === 1 && state.visibility.banner && Boolean(bannerHtml);
+      const effectiveCol1Align = hasCol1Banner && state.banner.align ? state.banner.align : logoAlign;
       const buildColHtml = (colNum) => {
         const blocks = allKeysInOrder.filter((key) => getColFor(key) === colNum).map((key) => getBlockHtml(key, colNum)).filter(Boolean);
         if (blocks.length === 0) return "";
-        return blocks.map((b, idx) => `<div style="${idx > 0 ? "padding-top:8px;" : ""}">${b}</div>`).join("");
+        const colAlign = colNum === 1 ? effectiveCol1Align : colNum === 3 ? effectiveRightAlign : layout.alignH || "left";
+        return renderStackedBlocks(blocks, colAlign, cardBgColor, 8);
       };
       const col1Content = buildColHtml(1);
       const col2Content = buildColHtml(2);
@@ -2974,7 +3002,6 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       const bottomBlocks = allKeysInOrder.filter((key) => getColFor(key) === "bottom").map((key) => getBlockHtml(key, "bottom")).filter(Boolean);
       const hasRightQr = getColFor("qr") === 3 && Boolean(qrHtml);
       const rightQrSize = state.qr.size || 75;
-      const hasRightBanner = getColFor("banner") === 3 && state.visibility.banner && Boolean(bannerHtml);
       const rightBannerWidth = Math.max(46, state.banner.width || 175);
       const hasRightLogo = getColFor("logo") === 3 && state.visibility.logo && Boolean(logoHtml);
       const rightLogoWidth = Math.max(46, p.logoColumnWidth || 140);
@@ -2982,10 +3009,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       if (hasRightQr) rightColWidth = Math.max(rightColWidth, rightQrSize + 10);
       if (hasRightBanner) rightColWidth = Math.max(rightColWidth, rightBannerWidth);
       if (hasRightLogo) rightColWidth = Math.max(rightColWidth, rightLogoWidth);
-      const effectiveRightAlign = hasRightBanner && state.banner.align ? state.banner.align : state.social?.align || "center";
-      const hasCol1Banner = getColFor("banner") === 1 && state.visibility.banner && Boolean(bannerHtml);
       const col1Width = Math.max(p.logoColumnWidth || 140, hasCol1Banner ? state.banner.width || 175 : 0);
-      const effectiveCol1Align = hasCol1Banner && state.banner.align ? state.banner.align : logoAlign;
       const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
       const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
       const col1TotalW = col1Content ? col1Width + p.innerSpacing : 0;
@@ -3000,23 +3024,23 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         <tr>
           ${col1Content ? `
             <!-- Column 1 (Left) -->
-            <td style="width:${col1Width}px; min-width:${col1Width}px; vertical-align:${colVAlign}; text-align:${effectiveCol1Align}; padding-right:${p.innerSpacing}px;" width="${col1Width}" align="${effectiveCol1Align}">
+            <td style="width:${col1Width}px; min-width:${col1Width}px; vertical-align:${colVAlign}; text-align:${effectiveCol1Align}; padding-right:${p.innerSpacing}px; ${cardBgStyle}" width="${col1Width}" align="${effectiveCol1Align}"${cardBgAttr}>
               ${col1Content}
             </td>
           ` : ""}
           ${col1Content && verticalSeparatorTd ? verticalSeparatorTd : ""}
           ${col2Content ? `
             <!-- Column 2 (Center) -->
-            <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${col3Content ? p.innerSpacing : 0}px;">
+            <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${col3Content ? p.innerSpacing : 0}px; ${cardBgStyle}"${cardBgAttr}>
               ${col2Content}
             </td>
           ` : ""}
           ${col3Content ? `
             <!-- Column 3 (Right) -->
-            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${effectiveRightAlign};" width="${rightColWidth}" align="${effectiveRightAlign}">
-              <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${effectiveRightAlign}; margin:${effectiveRightAlign === "right" ? "0 0 0 auto" : effectiveRightAlign === "left" ? "0 auto 0 0" : "0 auto"};">
+            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${effectiveRightAlign}; ${cardBgStyle}" width="${rightColWidth}" align="${effectiveRightAlign}"${cardBgAttr}>
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}"${cardBgAttr} style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${effectiveRightAlign}; margin:${effectiveRightAlign === "right" ? "0 0 0 auto" : effectiveRightAlign === "left" ? "0 auto 0 0" : "0 auto"}; ${cardBgStyle}">
                 <tr>
-                  <td align="${effectiveRightAlign}" style="text-align:${effectiveRightAlign};">
+                  <td align="${effectiveRightAlign}" style="text-align:${effectiveRightAlign}; ${cardBgStyle}"${cardBgAttr}>
                     ${col3Content}
                   </td>
                 </tr>
@@ -3026,8 +3050,8 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         </tr>
         ${bottomBlocks.length > 0 ? `
           <tr>
-            <td colspan="${colCount}" align="center" style="text-align:center; padding-top:12px;">
-              ${bottomBlocks.join('<div style="padding-top:8px;"></div>')}
+            <td colspan="${colCount}" align="center" style="text-align:center; padding-top:12px; ${cardBgStyle}"${cardBgAttr}>
+              ${renderStackedBlocks(bottomBlocks, "center", cardBgColor, 8)}
             </td>
           </tr>
         ` : ""}
@@ -3049,6 +3073,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       const topColsW = col1W + (col1W ? p.innerSpacing : 0) + sepW + infoW + (qrW ? qrW + p.innerSpacing : 0) + padLeftH + padRightH;
       const bannerW = state.visibility.banner && bannerHtml ? (state.banner.width || 0) + padLeftH + padRightH : 0;
       layoutHMinWidth = Math.max(topColsW, bannerW);
+      const hCol1Blocks = [];
+      if (logoHtml) hCol1Blocks.push(logoHtml);
+      if (secondaryLogoHtml) hCol1Blocks.push(secondaryLogoHtml);
+      if (state.qr.position === "left" && qrHtml) hCol1Blocks.push(qrHtml);
       innerStructure = `
         ${isTopBanner && hBanner ? `
           <tr>
@@ -3059,19 +3087,17 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         ` : ""}
         <tr>
           <!-- Logo Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
+          <td style="width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px; ${cardBgStyle}" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}"${cardBgAttr}>
+            ${renderStackedBlocks(hCol1Blocks, layout.alignH || "left", cardBgColor, 8)}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td style="vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px;">
+          <td style="vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; ${cardBgStyle}"${cardBgAttr}>
             ${buildOrderedInfoHtml({ includeCenterBanner: false })}
           </td>
           <!-- Right QR if configured -->
           ${state.qr.position === "right" && qrHtml ? `
-            <td style="vertical-align:${colVAlign}; text-align:right; padding-left:${p.innerSpacing}px;">
+            <td style="vertical-align:${colVAlign}; text-align:right; padding-left:${p.innerSpacing}px; ${cardBgStyle}"${cardBgAttr}>
               ${qrHtml}
             </td>
           ` : ""}
@@ -3136,18 +3162,18 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         ` : ""}
         <tr>
           <!-- Logo Column -->
-          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${col1W}" align="${layout.alignH || "left"}">
-            ${col1Blocks.join('<div style="padding-top:8px;"></div>')}
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px; ${cardBgStyle}" width="${col1W}" align="${layout.alignH || "left"}"${cardBgAttr}>
+            ${renderStackedBlocks(col1Blocks, layout.alignH || "left", cardBgColor, 8)}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px;">
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px; ${cardBgStyle}"${cardBgAttr}>
             ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
           <!-- Right QR & Visual Column -->
           ${hasCol3 ? `
-            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign};" width="${rightColW}" align="${bAlign}">
-              ${col3Blocks.join('<div style="padding-top:8px;"></div>')}
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign}; ${cardBgStyle}" width="${rightColW}" align="${bAlign}"${cardBgAttr}>
+              ${renderStackedBlocks(col3Blocks, bAlign, cardBgColor, 8)}
             </td>
           ` : ""}
         </tr>
@@ -3204,12 +3230,14 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
 <style type="text/css">
   a, a:link, a:visited {
     text-decoration: none !important;
+    text-underline: none !important;
     mso-text-underline: none !important;
     text-underline-style: none !important;
   }
   span.MsoHyperlink, span.MsoHyperlinkFollowed {
     color: inherit !important;
     text-decoration: none !important;
+    text-underline: none !important;
     mso-text-underline: none !important;
     text-underline-style: none !important;
     mso-style-priority: 99 !important;
@@ -3220,6 +3248,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   /* Force email clients and Outlook not to underline links */
   a, a:link, a:visited, a:hover, a:active {
     text-decoration: none !important;
+    text-underline: none !important;
     text-underline-style: none !important;
     mso-text-underline: none !important;
   }
@@ -3227,6 +3256,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     mso-style-priority: 99 !important;
     color: inherit !important;
     text-decoration: none !important;
+    text-underline: none !important;
     text-underline-style: none !important;
     mso-text-underline: none !important;
   }
@@ -3260,7 +3290,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     <tbody>
       <tr>
         <td ${hasBgImage ? `background="${effectiveBgUrl}"` : ""} ${hasBgImage ? "" : tableBgColorAttr} style="padding:${padTop}px ${padRight}px ${padBottom}px ${padLeft}px;">
-          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+          <table border="0" cellpadding="0" cellspacing="0" role="presentation"${tableBgColorAttr} style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ${cardBgStyle}">
             <tbody>
               ${innerStructure}
             </tbody>

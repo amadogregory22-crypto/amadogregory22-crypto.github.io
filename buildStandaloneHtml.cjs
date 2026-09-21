@@ -2500,12 +2500,12 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const qrHtml = buildQrHtml(state, qrDataUrl);
   const bannerHtml = buildBannerHtml(state, iconCache);
   const campaignHtml = buildCampaignHtml(state, iconCache);
-  const isCardLayout = layout.preset === "layout-i" || layout.preset === "layout-h";
-  const topBannerHtml = !isCardLayout && state.banner.position === "top" ? bannerHtml : "";
-  const bottomBannerHtml = !isCardLayout && !campaignHtml && state.banner.position === "bottom" ? bannerHtml : "";
-  const rightBannerHtml = !isCardLayout && state.banner.position === "right" ? bannerHtml : "";
-  const leftBannerHtml = !isCardLayout && state.banner.position === "left" ? bannerHtml : "";
-  const centerBannerHtml = state.banner.position === "center" || !state.banner.position ? bannerHtml : "";
+  const isCardLayout = true;
+  const topBannerHtml = "";
+  const bottomBannerHtml = "";
+  const rightBannerHtml = "";
+  const leftBannerHtml = "";
+  const centerBannerHtml = bannerHtml;
   const orderedBlockKeys = Array.from(new Set(
     layout.blockOrder.map((key) => key === "job" || key === "company" ? "identity" : key).filter(
       (key) => ["logo", "identity", "coordinates", "social", "qr", "slogan", "banner"].includes(key)
@@ -2615,25 +2615,72 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   let layoutIMinWidth = 0;
   let layoutHMinWidth = 0;
   let layoutAMinWidth = 0;
+  let layoutBMinWidth = 0;
+  let layoutEMinWidth = 0;
+  let layoutFMinWidth = 0;
   switch (layout.preset) {
-    case "layout-b":
+    case "layout-b": {
+      const colVAlign = layout.alignV || "middle";
+      const isBannerVis = state.visibility.banner && Boolean(bannerHtml);
+      const assignedCols = layout.columnAssignments || {};
+      const bannerColChoice = assignedCols.banner !== void 0 ? assignedCols.banner : state.banner.position === "right" ? 3 : state.banner.position === "left" ? 1 : state.banner.position === "bottom" ? "bottom" : 2;
+      const isTopB = state.banner.position === "top";
+      const isBottomB = bannerColChoice === "bottom" || state.banner.position === "bottom";
+      const isCol3B = !isTopB && !isBottomB && (bannerColChoice === 3 || state.banner.position === "right");
+      const isCol1B = !isTopB && !isBottomB && (bannerColChoice === 1 || state.banner.position === "left");
+      const isCol2B = !isTopB && !isBottomB && (bannerColChoice === 2 || state.banner.position === "center" || !isCol3B && !isCol1B);
+      const hasCol3 = isCol3B && isBannerVis;
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const effectiveInfoColWidth = hasCol3 ? Math.min(p.infoColumnWidth || 320, 260) : p.infoColumnWidth || 320;
+      const logoColW = state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0;
+      const rightColW = hasCol3 ? state.banner.width || 175 : 0;
+      const sepW = verticalSeparatorTd ? (sep.thickness || 2) + p.innerSpacing : 0;
+      layoutBMinWidth = effectiveInfoColWidth + (logoColW ? p.innerSpacing + sepW + logoColW : 0) + (hasCol3 ? p.innerSpacing + rightColW : 0) + padLeftH + padRightH;
+      const colCount = 1 + (verticalSeparatorTd ? 1 : 0) + (logoColW ? 1 : 0) + (hasCol3 ? 1 : 0);
+      const bAlign = state.banner.align || "center";
+      const logoBlocks = [];
+      if (logoHtml) logoBlocks.push(logoHtml);
+      if (secondaryLogoHtml) logoBlocks.push(secondaryLogoHtml);
+      if (state.qr.position === "right" && qrHtml) logoBlocks.push(qrHtml);
       innerStructure = `
+        ${isTopB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-bottom:12px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
         <tr>
-          <!-- Info Column -->
-          <td style="vertical-align:${layout.alignV}; padding-right:${p.innerSpacing}px;">
+          <!-- Info Column (Left) -->
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-right:${logoColW || hasCol3 ? p.innerSpacing : 0}px;">
             ${state.qr.position === "left" && qrHtml ? `<div style="padding-bottom:10px;">${qrHtml}</div>` : ""}
-            ${buildOrderedInfoHtml()}
+            ${buildOrderedInfoHtml({ includeCenterBanner: (isCol1B || isCol2B) && isBannerVis })}
           </td>
-          ${verticalSeparatorTd}
-          <!-- Logo & QR Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; text-align:${layout.alignH}; padding-left:${p.innerSpacing}px;" width="${p.logoColumnWidth}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px;">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "right" && qrHtml ? `<div style="padding-top:10px;">${qrHtml}</div>` : ""}
-          </td>
+          ${logoColW && verticalSeparatorTd ? verticalSeparatorTd : ""}
+          <!-- Logo Column (Center / Right) -->
+          ${logoColW ? `
+            <td style="width:${logoColW}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px;" width="${logoColW}">
+              ${logoBlocks.join('<div style="padding-top:8px;"></div>')}
+            </td>
+          ` : ""}
+          <!-- Visual Column 3 (Right) -->
+          ${hasCol3 ? `
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign}; padding-left:${logoColW ? 0 : p.innerSpacing}px;" width="${rightColW}">
+              ${bannerHtml}
+            </td>
+          ` : ""}
         </tr>
+        ${isBottomB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-top:12px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
       `;
       break;
+    }
     case "layout-c":
       innerStructure = `
         <tr>
@@ -2667,49 +2714,149 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         </tr>
       `;
       break;
-    case "layout-e":
+    case "layout-e": {
+      const colVAlign = layout.alignV || "middle";
+      const isBannerVis = state.visibility.banner && Boolean(bannerHtml);
+      const assignedCols = layout.columnAssignments || {};
+      const bannerColChoice = assignedCols.banner !== void 0 ? assignedCols.banner : state.banner.position === "right" ? 3 : state.banner.position === "left" ? 1 : state.banner.position === "bottom" ? "bottom" : 2;
+      const isTopB = state.banner.position === "top";
+      const isBottomB = bannerColChoice === "bottom" || state.banner.position === "bottom";
+      const isCol3B = !isTopB && !isBottomB && (bannerColChoice === 3 || state.banner.position === "right");
+      const isCol1B = !isTopB && !isBottomB && (bannerColChoice === 1 || state.banner.position === "left");
+      const isCol2B = !isTopB && !isBottomB && (bannerColChoice === 2 || state.banner.position === "center" || !isCol3B && !isCol1B);
+      const hasRightQr = (state.qr.position === "right" || assignedCols.qr === 3 || assignedCols.qr === void 0) && Boolean(qrHtml);
+      const hasCol3 = isCol3B && isBannerVis || hasRightQr;
+      const bAlign = state.banner.align || "center";
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const col1W = Math.max(
+        state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0,
+        isCol1B && isBannerVis ? state.banner.width || 175 : 0
+      );
+      const sepW = verticalSeparatorTd ? (sep.thickness || 2) + p.innerSpacing : 0;
+      const effectiveInfoColWidth = hasCol3 ? Math.min(p.infoColumnWidth || 320, 260) : p.infoColumnWidth || 320;
+      const rightColW = hasCol3 ? Math.max(
+        isCol3B && isBannerVis ? state.banner.width || 175 : 0,
+        hasRightQr ? (p.qrSize || 75) + 20 : 0,
+        46
+      ) : 0;
+      layoutEMinWidth = col1W + (col1W ? p.innerSpacing : 0) + sepW + effectiveInfoColWidth + (hasCol3 ? p.innerSpacing + rightColW : 0) + padLeftH + padRightH;
+      const colCount = 1 + (verticalSeparatorTd ? 1 : 0) + 1 + (hasCol3 ? 1 : 0);
+      const col1Blocks = [];
+      if (isCol1B && isBannerVis && state.banner.position === "top") col1Blocks.push(bannerHtml);
+      if (logoHtml) col1Blocks.push(logoHtml);
+      if (secondaryLogoHtml) col1Blocks.push(secondaryLogoHtml);
+      if (state.qr.position === "left" && qrHtml) col1Blocks.push(qrHtml);
+      if (isCol1B && isBannerVis && state.banner.position !== "top") col1Blocks.push(bannerHtml);
+      const col3Blocks = [];
+      if (isCol3B && isBannerVis && state.banner.position === "top") col3Blocks.push(bannerHtml);
+      if (hasRightQr) col3Blocks.push(qrHtml);
+      if (isCol3B && isBannerVis && state.banner.position !== "top") col3Blocks.push(bannerHtml);
       innerStructure = `
+        ${isTopB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-bottom:12px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
         <tr>
           <!-- Logo Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${col1W}" align="${layout.alignH || "left"}">
+            ${col1Blocks.join('<div style="padding-top:8px;"></div>')}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td style="vertical-align:${layout.alignV}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
-            ${buildOrderedInfoHtml()}
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+            ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
-          <!-- QR Column -->
-          ${state.qr.position === "right" && qrHtml ? `
-            <td style="width:${(p.qrSize || 75) + 20}px; min-width:${(p.qrSize || 75) + 20}px; vertical-align:${layout.alignV}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0;" width="${(p.qrSize || 75) + 20}">
-              ${qrHtml}
+          <!-- Right QR & Visual Column -->
+          ${hasCol3 ? `
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:${p.innerSpacing}px; border-left:1px solid #E2E8F0;" width="${rightColW}">
+              ${col3Blocks.join('<div style="padding-top:8px;"></div>')}
             </td>
           ` : ""}
         </tr>
+        ${isBottomB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-top:12px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
       `;
       break;
-    case "layout-f":
+    }
+    case "layout-f": {
+      const colVAlign = layout.alignV || "middle";
+      const isBannerVis = state.visibility.banner && Boolean(bannerHtml);
+      const assignedCols = layout.columnAssignments || {};
+      const bannerColChoice = assignedCols.banner !== void 0 ? assignedCols.banner : state.banner.position === "right" ? 3 : state.banner.position === "left" ? 1 : state.banner.position === "bottom" ? "bottom" : 2;
+      const isTopB = state.banner.position === "top";
+      const isBottomB = bannerColChoice === "bottom" || state.banner.position === "bottom";
+      const isCol3B = !isTopB && !isBottomB && (bannerColChoice === 3 || state.banner.position === "right");
+      const isCol1B = !isTopB && !isBottomB && (bannerColChoice === 1 || state.banner.position === "left");
+      const isCol2B = !isTopB && !isBottomB && (bannerColChoice === 2 || state.banner.position === "center" || !isCol3B && !isCol1B);
+      const hasRightQr = state.qr.position === "right" && qrHtml;
+      const hasCol3 = isCol3B && isBannerVis || hasRightQr;
+      const bAlign = state.banner.align || "center";
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const col1W = Math.max(120, isCol1B && isBannerVis ? state.banner.width || 175 : 0);
+      const sepW = verticalSeparatorTd ? (sep.thickness || 2) + 12 : 0;
+      const effectiveInfoColWidth = hasCol3 ? Math.min(p.infoColumnWidth || 320, 240) : p.infoColumnWidth || 320;
+      const rightColW = hasCol3 ? Math.max(
+        isCol3B && isBannerVis ? state.banner.width || 175 : 0,
+        hasRightQr ? (p.qrSize || 75) + 20 : 0,
+        46
+      ) : 0;
+      layoutFMinWidth = col1W + 12 + sepW + effectiveInfoColWidth + (hasCol3 ? 12 + rightColW : 0) + padLeftH + padRightH;
+      const colCount = 1 + (verticalSeparatorTd ? 1 : 0) + 1 + (hasCol3 ? 1 : 0);
+      const col1Blocks = [];
+      if (isCol1B && isBannerVis && state.banner.position === "top") col1Blocks.push(bannerHtml);
+      if (logoHtml) col1Blocks.push(logoHtml);
+      if (secondaryLogoHtml) col1Blocks.push(secondaryLogoHtml);
+      if (state.qr.position === "left" && qrHtml) col1Blocks.push(qrHtml);
+      if (isCol1B && isBannerVis && state.banner.position !== "top") col1Blocks.push(bannerHtml);
+      const col3Blocks = [];
+      if (isCol3B && isBannerVis && state.banner.position === "top") col3Blocks.push(bannerHtml);
+      if (hasRightQr) col3Blocks.push(qrHtml);
+      if (isCol3B && isBannerVis && state.banner.position !== "top") col3Blocks.push(bannerHtml);
       innerStructure = `
+        ${isTopB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-bottom:10px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
         <tr>
-          <td style="width:120px; vertical-align:middle; text-align:${layout.alignH || "left"}; padding-right:12px;" width="120" align="${layout.alignH || "left"}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:6px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
+          <!-- Logo Column -->
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:12px;" width="${col1W}" align="${layout.alignH || "left"}">
+            ${col1Blocks.join('<div style="padding-top:6px;"></div>')}
           </td>
           ${verticalSeparatorTd}
-          <td style="vertical-align:middle; padding-left:12px;">
-            ${buildOrderedInfoHtml()}
+          <!-- Info Column -->
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:12px; padding-right:${hasCol3 ? 12 : 0}px;">
+            ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
-          ${state.qr.position === "right" && qrHtml ? `
-            <td style="vertical-align:middle; text-align:center; padding-left:12px;">
-              ${qrHtml}
+          <!-- Right QR & Visual Column -->
+          ${hasCol3 ? `
+            <td style="width:${rightColW}px; vertical-align:${colVAlign}; text-align:center; padding-left:12px;" width="${rightColW}">
+              ${col3Blocks.join('<div style="padding-top:6px;"></div>')}
             </td>
           ` : ""}
         </tr>
+        ${isBottomB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-top:10px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
       `;
       break;
+    }
     case "layout-g":
       innerStructure = `
         <tr>
@@ -2936,53 +3083,89 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     case "layout-a":
     // Default Layout A: Logo Left, Info Right
     default: {
+      const colVAlign = layout.alignV || "middle";
+      const isBannerVis = state.visibility.banner && Boolean(bannerHtml);
+      const assignedCols = layout.columnAssignments || {};
+      const bannerColChoice = assignedCols.banner !== void 0 ? assignedCols.banner : state.banner.position === "right" ? 3 : state.banner.position === "left" ? 1 : state.banner.position === "bottom" ? "bottom" : 2;
+      const isTopB = state.banner.position === "top";
+      const isBottomB = bannerColChoice === "bottom" || state.banner.position === "bottom";
+      const isCol3B = !isTopB && !isBottomB && (bannerColChoice === 3 || state.banner.position === "right");
+      const isCol1B = !isTopB && !isBottomB && (bannerColChoice === 1 || state.banner.position === "left");
+      const isCol2B = !isTopB && !isBottomB && (bannerColChoice === 2 || state.banner.position === "center" || !isCol3B && !isCol1B);
+      const hasRightQr = state.qr.position === "right" && qrHtml;
+      const hasCol3 = isCol3B && isBannerVis || hasRightQr;
+      const bAlign = state.banner.align || "center";
       const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
       const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
-      const col1W = state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0;
+      const col1W = Math.max(
+        state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0,
+        isCol1B && isBannerVis ? state.banner.width || 175 : 0
+      );
       const sepW = verticalSeparatorTd ? (sep.thickness || 2) + p.innerSpacing : 0;
-      const infoW = p.infoColumnWidth || 320;
-      const qrW = state.qr.position === "right" && qrHtml ? (p.qrSize || 75) + 20 : 0;
-      const leftW = leftBannerHtml ? (state.banner.width || 175) + p.innerSpacing : 0;
-      const rightW = rightBannerHtml ? (state.banner.width || 175) + p.innerSpacing : 0;
-      layoutAMinWidth = leftW + col1W + (col1W ? p.innerSpacing : 0) + sepW + infoW + (qrW ? qrW + p.innerSpacing : 0) + rightW + padLeftH + padRightH;
+      const effectiveInfoColWidth = hasCol3 ? Math.min(p.infoColumnWidth || 320, 260) : p.infoColumnWidth || 320;
+      const rightColW = hasCol3 ? Math.max(
+        isCol3B && isBannerVis ? state.banner.width || 175 : 0,
+        hasRightQr ? (p.qrSize || 75) + 20 : 0,
+        46
+      ) : 0;
+      layoutAMinWidth = col1W + (col1W ? p.innerSpacing : 0) + sepW + effectiveInfoColWidth + (hasCol3 ? p.innerSpacing + rightColW : 0) + padLeftH + padRightH;
+      const colCount = 1 + (verticalSeparatorTd ? 1 : 0) + 1 + (hasCol3 ? 1 : 0);
+      const col1Blocks = [];
+      if (isCol1B && isBannerVis && state.banner.position === "top") col1Blocks.push(bannerHtml);
+      if (logoHtml) col1Blocks.push(logoHtml);
+      if (secondaryLogoHtml) col1Blocks.push(secondaryLogoHtml);
+      if (state.qr.position === "left" && qrHtml) col1Blocks.push(qrHtml);
+      if (isCol1B && isBannerVis && state.banner.position !== "top") col1Blocks.push(bannerHtml);
+      const col3Blocks = [];
+      if (isCol3B && isBannerVis && state.banner.position === "top") col3Blocks.push(bannerHtml);
+      if (hasRightQr) col3Blocks.push(qrHtml);
+      if (isCol3B && isBannerVis && state.banner.position !== "top") col3Blocks.push(bannerHtml);
       innerStructure = `
-        <tr>
-          <!-- Left Banner Column if left position -->
-          ${leftBannerHtml ? `
-            <td style="vertical-align:${layout.alignV}; padding-right:${p.innerSpacing}px; text-align:left;">
-              ${leftBannerHtml}
+        ${isTopB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-bottom:12px; text-align:${bAlign};">
+              ${bannerHtml}
             </td>
-          ` : ""}
+          </tr>
+        ` : ""}
+        <tr>
           <!-- Logo Column -->
-          <td style="width:${p.logoColumnWidth}px; vertical-align:${layout.alignV}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
+          <td style="width:${col1W}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${col1W}" align="${layout.alignH || "left"}">
+            ${col1Blocks.join('<div style="padding-top:8px;"></div>')}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column -->
-          <td style="vertical-align:${layout.alignV}; padding-left:${p.innerSpacing}px;">
-            ${buildOrderedInfoHtml()}
+          <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px; padding-right:${hasCol3 ? p.innerSpacing : 0}px;">
+            ${buildOrderedInfoHtml({ includeCenterBanner: isCol2B && isBannerVis })}
           </td>
-          <!-- Right QR if configured -->
-          ${state.qr.position === "right" && qrHtml ? `
-            <td style="vertical-align:${layout.alignV}; text-align:right; padding-left:${p.innerSpacing}px;">
-              ${qrHtml}
-            </td>
-          ` : ""}
-          <!-- Right Banner Column if right position -->
-          ${rightBannerHtml ? `
-            <td style="vertical-align:${layout.alignV}; padding-left:${p.innerSpacing}px; text-align:right;">
-              ${rightBannerHtml}
+          <!-- Right QR & Visual Column -->
+          ${hasCol3 ? `
+            <td style="width:${rightColW}px; min-width:${rightColW}px; vertical-align:${colVAlign}; text-align:${bAlign};" width="${rightColW}" align="${bAlign}">
+              ${col3Blocks.join('<div style="padding-top:8px;"></div>')}
             </td>
           ` : ""}
         </tr>
+        ${isBottomB && isBannerVis ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-top:12px; text-align:${bAlign};">
+              ${bannerHtml}
+            </td>
+          </tr>
+        ` : ""}
       `;
       break;
     }
   }
   const isMobilePreset = layout.preset === "layout-c" || layout.preset === "layout-d" || layout.preset === "layout-g";
-  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : Math.max(p.totalWidth, layoutIMinWidth, layoutHMinWidth, layoutAMinWidth);
+  const layoutMinWidth = Math.max(
+    layoutIMinWidth,
+    layoutHMinWidth,
+    layoutAMinWidth,
+    layoutBMinWidth,
+    layoutEMinWidth,
+    layoutFMinWidth
+  );
+  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : Math.max(p.totalWidth, layoutMinWidth);
   const padLeft = isMobilePreset ? Math.min(p.paddingLeft, 12) : p.paddingLeft;
   const padRight = isMobilePreset ? Math.min(p.paddingRight, 12) : p.paddingRight;
   const padTop = isMobilePreset ? Math.min(p.paddingTop, 10) : p.paddingTop;

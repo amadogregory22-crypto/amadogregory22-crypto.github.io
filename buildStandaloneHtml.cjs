@@ -340,7 +340,10 @@ var DEFAULT_SIGNATURE_STATE = {
     bgColor: "#FFFFFF",
     errorCorrectionLevel: "M",
     margin: 1,
-    visible: false
+    visible: false,
+    showLabel: true,
+    labelText: "Scan contact",
+    labelColor: "#A0AEC0"
   },
   social: {
     style: "icons-only",
@@ -2420,6 +2423,14 @@ function buildQrHtml(state, qrDataUrl) {
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
   const align = qr.align || (qr.position === "left" && !isRagtCard ? layout.alignH || "center" : "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
+  const isLabelActive = qr.showLabel !== false && Boolean(qr.labelText && qr.labelText.trim());
+  const labelColor = qr.labelColor || "#A0AEC0";
+  const labelHtml = isLabelActive ? `
+      <tr>
+        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:${labelColor}; text-align:center; padding-top:2px; white-space:nowrap;" align="center">
+          ${escapeHtml(qr.labelText?.trim() || "Scan contact")}
+        </td>
+      </tr>` : "";
   const qrBoxWidth = qr.size + 6;
   return `
     <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" align="${align}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
@@ -2427,12 +2438,7 @@ function buildQrHtml(state, qrDataUrl) {
         <td width="${qr.size + 4}" style="width:${qr.size + 4}px; min-width:${qr.size + 4}px; padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
           <img src="${qrDataUrl}" width="${qr.size}" height="${qr.size}" alt="QR Code vCard" border="0" style="display:block; width:${qr.size}px; min-width:${qr.size}px; max-width:${qr.size}px; height:${qr.size}px; min-height:${qr.size}px; max-height:${qr.size}px; aspect-ratio:1/1; margin:0 auto;" />
         </td>
-      </tr>
-      <tr>
-        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:#A0AEC0; text-align:center; padding-top:2px; white-space:nowrap;" align="center">
-          Scan contact
-        </td>
-      </tr>
+      </tr>${labelHtml}
     </table>
   `;
 }

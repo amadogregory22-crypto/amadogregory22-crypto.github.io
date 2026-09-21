@@ -117,7 +117,16 @@ var DEFAULT_SIGNATURE_STATE = {
       "qr",
       "slogan",
       "banner"
-    ]
+    ],
+    columnAssignments: {
+      logo: 1,
+      banner: 2,
+      identity: 2,
+      coordinates: 2,
+      social: 3,
+      qr: 1,
+      slogan: 2
+    }
   },
   personal: {
     civility: "M.",
@@ -2719,48 +2728,130 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         </tr>
       `;
       break;
-    case "layout-i":
-      const hasRightQr = (state.qr.position === "right" || !["left", "bottom"].includes(state.qr.position)) && Boolean(qrHtml);
-      const rightQrSize = state.qr.size || 75;
-      const rightColWidth = hasRightQr ? Math.max(50, rightQrSize + 10) : 46;
-      const rightSocialsHtml = state.visibility.socials ? buildSocialsHtml(state, iconCache, "vertical") : "";
-      const rightQrHtml = hasRightQr ? `<tr><td style="text-align:center; padding-bottom:8px;" align="center">${qrHtml}</td></tr>` : "";
-      const rightColumnHtml = `
-        <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
-          ${rightQrHtml}
-          ${rightSocialsHtml ? `<tr><td style="text-align:center; vertical-align:middle; width:46px;" width="46" align="center">${rightSocialsHtml}</td></tr>` : ""}
-        </table>
-      `;
+    case "layout-i": {
       const colVAlign = layout.alignV || "middle";
       const logoAlign = state.logos.primary?.align || "center";
       const rightColAlign = state.social?.align || "center";
+      const assignedCols = layout.columnAssignments || {};
+      const getColFor = (key) => {
+        if (assignedCols[key] !== void 0) {
+          return assignedCols[key];
+        }
+        if (key === "logo") return 1;
+        if (key === "banner") return 2;
+        if (key === "identity") return 2;
+        if (key === "coordinates") return 2;
+        if (key === "social") return 3;
+        if (key === "qr") {
+          if (state.qr.position === "left") return 1;
+          if (state.qr.position === "bottom") return "bottom";
+          if (state.qr.position === "inline") return 2;
+          return 1;
+        }
+        if (key === "slogan") return 2;
+        return 2;
+      };
+      const allKeysInOrder = (() => {
+        if (!usesDefaultBlockOrder) {
+          return orderedBlockKeys.map((k) => k);
+        }
+        if (state.banner.position === "center") {
+          return ["logo", "identity", "banner", "coordinates", "social", "qr", "slogan"];
+        }
+        if (state.banner.position === "bottom") {
+          return ["logo", "identity", "coordinates", "banner", "social", "qr", "slogan"];
+        }
+        return ["logo", "banner", "identity", "coordinates", "social", "qr", "slogan"];
+      })();
+      const getBlockHtml = (key, colNum) => {
+        switch (key) {
+          case "logo": {
+            if (!state.visibility.logo || !logoHtml) return "";
+            return `<div style="text-align:${logoAlign};" align="${logoAlign}">${logoHtml}${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${logoAlign};" align="${logoAlign}">${secondaryLogoHtml}</div>` : ""}</div>`;
+          }
+          case "banner": {
+            if (!state.visibility.banner || !bannerHtml) return "";
+            const bAlign = state.banner.align || (state.banner.position === "left" ? "left" : state.banner.position === "right" ? "right" : "center");
+            return `<div style="text-align:${bAlign};" align="${bAlign}">${bannerHtml}</div>`;
+          }
+          case "identity": {
+            return identityHtml;
+          }
+          case "coordinates": {
+            return coordsHtml;
+          }
+          case "qr": {
+            if (!state.visibility.qr || !qrHtml) return "";
+            const qAlign = state.qr.align || (colNum === 1 ? logoAlign : colNum === 3 ? "center" : layout.alignH || "center");
+            return `<div style="text-align:${qAlign};" align="${qAlign}">${qrHtml}</div>`;
+          }
+          case "social": {
+            if (!state.visibility.socials) return "";
+            if (colNum === 3) {
+              return buildSocialsHtml(state, iconCache, "vertical");
+            }
+            const sAlign = state.social.align || (colNum === 1 ? logoAlign : layout.alignH || "left");
+            return `<div style="text-align:${sAlign};" align="${sAlign}">${buildSocialsHtml(state, iconCache, "horizontal")}</div>`;
+          }
+          case "slogan": {
+            if (!state.visibility.slogan || !sloganHtml) return "";
+            return sloganHtml;
+          }
+          default:
+            return "";
+        }
+      };
+      const buildColHtml = (colNum) => {
+        const blocks = allKeysInOrder.filter((key) => getColFor(key) === colNum).map((key) => getBlockHtml(key, colNum)).filter(Boolean);
+        if (blocks.length === 0) return "";
+        return blocks.map((b, idx) => `<div style="${idx > 0 ? "padding-top:8px;" : ""}">${b}</div>`).join("");
+      };
+      const col1Content = buildColHtml(1);
+      const col2Content = buildColHtml(2);
+      const col3Content = buildColHtml(3);
+      const bottomBlocks = allKeysInOrder.filter((key) => getColFor(key) === "bottom").map((key) => getBlockHtml(key, "bottom")).filter(Boolean);
+      const hasRightQr = getColFor("qr") === 3 && Boolean(qrHtml);
+      const rightQrSize = state.qr.size || 75;
+      const rightColWidth = hasRightQr ? Math.max(50, rightQrSize + 10) : 46;
+      const colCount = (col1Content ? 1 : 0) + (verticalSeparatorTd ? 1 : 0) + (col2Content ? 1 : 0) + (col3Content ? 1 : 0);
       innerStructure = `
         <tr>
-          <!-- Logo Column Left -->
-          <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${logoAlign}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${logoAlign}">
-            ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${logoAlign};" align="${logoAlign}">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${logoAlign};" align="${logoAlign}">${qrHtml}</div>` : ""}
-          </td>
-          ${verticalSeparatorTd}
-          <!-- Info Column Center: Photo on top, then Name & Title, then Coordinates -->
-          <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
-            ${buildOrderedInfoHtml({ includeSocial: false })}
-          </td>
-          <!-- Socials Column Right: 4 white circular discs stacked vertically (and QR code if position is right) -->
-          <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${rightColAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${rightColAlign}">
-             ${rightColumnHtml}
-          </td>
+          ${col1Content ? `
+            <!-- Column 1 (Left) -->
+            <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${logoAlign}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${logoAlign}">
+              ${col1Content}
+            </td>
+          ` : ""}
+          ${col1Content && verticalSeparatorTd ? verticalSeparatorTd : ""}
+          ${col2Content ? `
+            <!-- Column 2 (Center) -->
+            <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+              ${col2Content}
+            </td>
+          ` : ""}
+          ${col3Content ? `
+            <!-- Column 3 (Right) -->
+            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${rightColAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${rightColAlign}">
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
+                <tr>
+                  <td align="${rightColAlign}" style="text-align:${rightColAlign};">
+                    ${col3Content}
+                  </td>
+                </tr>
+              </table>
+            </td>
+          ` : ""}
         </tr>
-        ${state.qr.position === "bottom" && qrHtml ? `
+        ${bottomBlocks.length > 0 ? `
           <tr>
-            <td colspan="${verticalSeparatorTd ? 4 : 3}" align="center" style="text-align:center; padding-top:12px;">
-              ${qrHtml}
+            <td colspan="${colCount}" align="center" style="text-align:center; padding-top:12px;">
+              ${bottomBlocks.join('<div style="padding-top:8px;"></div>')}
             </td>
           </tr>
         ` : ""}
       `;
       break;
+    }
     case "layout-h":
     // Layout with prominent banner
     case "layout-a":

@@ -2500,10 +2500,11 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const qrHtml = buildQrHtml(state, qrDataUrl);
   const bannerHtml = buildBannerHtml(state, iconCache);
   const campaignHtml = buildCampaignHtml(state, iconCache);
-  const topBannerHtml = state.banner.position === "top" ? bannerHtml : "";
-  const bottomBannerHtml = !campaignHtml && state.banner.position === "bottom" ? bannerHtml : "";
-  const rightBannerHtml = state.banner.position === "right" ? bannerHtml : "";
-  const leftBannerHtml = state.banner.position === "left" ? bannerHtml : "";
+  const isCardLayout = layout.preset === "layout-i";
+  const topBannerHtml = !isCardLayout && state.banner.position === "top" ? bannerHtml : "";
+  const bottomBannerHtml = !isCardLayout && !campaignHtml && state.banner.position === "bottom" ? bannerHtml : "";
+  const rightBannerHtml = !isCardLayout && state.banner.position === "right" ? bannerHtml : "";
+  const leftBannerHtml = !isCardLayout && state.banner.position === "left" ? bannerHtml : "";
   const centerBannerHtml = state.banner.position === "center" || !state.banner.position ? bannerHtml : "";
   const orderedBlockKeys = Array.from(new Set(
     layout.blockOrder.map((key) => key === "job" || key === "company" ? "identity" : key).filter(
@@ -2752,16 +2753,21 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         return 2;
       };
       const allKeysInOrder = (() => {
-        if (!usesDefaultBlockOrder) {
-          return orderedBlockKeys.map((k) => k);
-        }
-        if (state.banner.position === "center") {
-          return ["logo", "identity", "banner", "coordinates", "social", "qr", "slogan"];
+        const rawOrder = !usesDefaultBlockOrder ? orderedBlockKeys.map((k) => k) : ["logo", "identity", "coordinates", "social", "qr", "slogan", "banner"];
+        const withoutBanner = rawOrder.filter((k) => k !== "banner");
+        if (state.banner.position === "top") {
+          return ["banner", ...withoutBanner];
         }
         if (state.banner.position === "bottom") {
-          return ["logo", "identity", "coordinates", "banner", "social", "qr", "slogan"];
+          return [...withoutBanner, "banner"];
         }
-        return ["logo", "banner", "identity", "coordinates", "social", "qr", "slogan"];
+        const idIdx = withoutBanner.indexOf("identity");
+        if (idIdx !== -1) {
+          const res = [...withoutBanner];
+          res.splice(idIdx + 1, 0, "banner");
+          return res;
+        }
+        return ["logo", "identity", "banner", "coordinates", "social", "qr", "slogan"];
       })();
       const getBlockHtml = (key, colNum) => {
         switch (key) {
@@ -2812,13 +2818,24 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       const bottomBlocks = allKeysInOrder.filter((key) => getColFor(key) === "bottom").map((key) => getBlockHtml(key, "bottom")).filter(Boolean);
       const hasRightQr = getColFor("qr") === 3 && Boolean(qrHtml);
       const rightQrSize = state.qr.size || 75;
-      const rightColWidth = hasRightQr ? Math.max(50, rightQrSize + 10) : 46;
+      const hasRightBanner = getColFor("banner") === 3 && state.visibility.banner && Boolean(bannerHtml);
+      const rightBannerWidth = Math.max(46, state.banner.width || 175);
+      const hasRightLogo = getColFor("logo") === 3 && state.visibility.logo && Boolean(logoHtml);
+      const rightLogoWidth = Math.max(46, p.logoColumnWidth || 140);
+      let rightColWidth = 46;
+      if (hasRightQr) rightColWidth = Math.max(rightColWidth, rightQrSize + 10);
+      if (hasRightBanner) rightColWidth = Math.max(rightColWidth, rightBannerWidth);
+      if (hasRightLogo) rightColWidth = Math.max(rightColWidth, rightLogoWidth);
+      const effectiveRightAlign = hasRightBanner && state.banner.align ? state.banner.align : state.social?.align || "center";
+      const hasCol1Banner = getColFor("banner") === 1 && state.visibility.banner && Boolean(bannerHtml);
+      const col1Width = Math.max(p.logoColumnWidth || 140, hasCol1Banner ? state.banner.width || 175 : 0);
+      const effectiveCol1Align = hasCol1Banner && state.banner.align ? state.banner.align : logoAlign;
       const colCount = (col1Content ? 1 : 0) + (verticalSeparatorTd ? 1 : 0) + (col2Content ? 1 : 0) + (col3Content ? 1 : 0);
       innerStructure = `
         <tr>
           ${col1Content ? `
             <!-- Column 1 (Left) -->
-            <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${logoAlign}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${logoAlign}">
+            <td style="width:${col1Width}px; min-width:${col1Width}px; vertical-align:${colVAlign}; text-align:${effectiveCol1Align}; padding-right:${p.innerSpacing}px;" width="${col1Width}" align="${effectiveCol1Align}">
               ${col1Content}
             </td>
           ` : ""}
@@ -2831,10 +2848,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           ` : ""}
           ${col3Content ? `
             <!-- Column 3 (Right) -->
-            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${rightColAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${rightColAlign}">
-              <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:center; margin:0 auto;">
+            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${effectiveRightAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${effectiveRightAlign}">
+              <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${effectiveRightAlign}; margin:${effectiveRightAlign === "right" ? "0 0 0 auto" : effectiveRightAlign === "left" ? "0 auto 0 0" : "0 auto"};">
                 <tr>
-                  <td align="${rightColAlign}" style="text-align:${rightColAlign};">
+                  <td align="${effectiveRightAlign}" style="text-align:${effectiveRightAlign};">
                     ${col3Content}
                   </td>
                 </tr>

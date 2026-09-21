@@ -2612,6 +2612,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const verticalSeparatorTd = sep.type === "vertical" ? `<td style="width:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:0;" width="${sep.thickness}">&nbsp;</td>` : "";
   const horizontalSeparatorTr = sep.type === "horizontal" ? `<tr><td colspan="3" style="height:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:${sep.margin}px 0;" height="${sep.thickness}">&nbsp;</td></tr>` : "";
   let innerStructure = "";
+  let layoutIMinWidth = 0;
   switch (layout.preset) {
     case "layout-b":
       innerStructure = `
@@ -2830,7 +2831,16 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       const hasCol1Banner = getColFor("banner") === 1 && state.visibility.banner && Boolean(bannerHtml);
       const col1Width = Math.max(p.logoColumnWidth || 140, hasCol1Banner ? state.banner.width || 175 : 0);
       const effectiveCol1Align = hasCol1Banner && state.banner.align ? state.banner.align : logoAlign;
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const col1TotalW = col1Content ? col1Width + p.innerSpacing : 0;
+      const col3TotalW = col3Content ? rightColWidth + p.innerSpacing : 0;
+      const effectiveInfoColWidth = hasRightBanner || hasRightLogo ? Math.min(p.infoColumnWidth || 320, 260) : Math.min(
+        p.infoColumnWidth || 320,
+        Math.max(220, (p.totalWidth || 540) - col1TotalW - col3TotalW - padLeftH - padRightH)
+      );
       const colCount = (col1Content ? 1 : 0) + (verticalSeparatorTd ? 1 : 0) + (col2Content ? 1 : 0) + (col3Content ? 1 : 0);
+      layoutIMinWidth = (col1Content ? col1Width + p.innerSpacing : 0) + (col2Content ? effectiveInfoColWidth + (col3Content ? p.innerSpacing : 0) : 0) + (col3Content ? rightColWidth : 0) + padLeftH + padRightH;
       innerStructure = `
         <tr>
           ${col1Content ? `
@@ -2842,13 +2852,13 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           ${col1Content && verticalSeparatorTd ? verticalSeparatorTd : ""}
           ${col2Content ? `
             <!-- Column 2 (Center) -->
-            <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+            <td width="${effectiveInfoColWidth}" style="width:${effectiveInfoColWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${col3Content ? p.innerSpacing : 0}px;">
               ${col2Content}
             </td>
           ` : ""}
           ${col3Content ? `
             <!-- Column 3 (Right) -->
-            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${effectiveRightAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${effectiveRightAlign}">
+            <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${effectiveRightAlign};" width="${rightColWidth}" align="${effectiveRightAlign}">
               <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${rightColWidth}" style="display:inline-table; width:${rightColWidth}px; min-width:${rightColWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${effectiveRightAlign}; margin:${effectiveRightAlign === "right" ? "0 0 0 auto" : effectiveRightAlign === "left" ? "0 auto 0 0" : "0 auto"};">
                 <tr>
                   <td align="${effectiveRightAlign}" style="text-align:${effectiveRightAlign};">
@@ -2910,7 +2920,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       break;
   }
   const isMobilePreset = layout.preset === "layout-c" || layout.preset === "layout-d" || layout.preset === "layout-g";
-  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : p.totalWidth;
+  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : Math.max(p.totalWidth, layoutIMinWidth);
   const padLeft = isMobilePreset ? Math.min(p.paddingLeft, 12) : p.paddingLeft;
   const padRight = isMobilePreset ? Math.min(p.paddingRight, 12) : p.paddingRight;
   const padTop = isMobilePreset ? Math.min(p.paddingTop, 10) : p.paddingTop;

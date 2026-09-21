@@ -1844,12 +1844,16 @@ function renderSignature() {
   };
 
   const makeLink = (href, text, color, bold) => {
-    return '<a href="' + esc(href) + '" style="color:' + color + '; text-decoration:none !important; text-underline-style:none; mso-text-underline:none;' + (bold ? ' font-weight:600;' : '') + '"><span style="color:' + color + '; text-decoration:none !important;">' + esc(text) + '</span></a>';
+    return '<a href="' + esc(href) + '" style="color:' + color + '; mso-color-alt:' + color + '; text-decoration:none; text-underline:none; mso-text-underline:none; text-underline-style:none;' + (bold ? ' font-weight:600;' : '') + '"><span style="color:' + color + '; mso-color-alt:' + color + '; text-decoration:none; text-underline:none; mso-text-underline:none; text-underline-style:none;">' + esc(text) + '</span></a>';
   };
 
-  if (v.phone && p.phone) addRow('phone', doc.labels.phone || 'T\xE9l.', makeLink('tel:' + tel(p.phone), p.phone, c.phone || c.text || '#333333', false));
-  if (v.standardPhone && p.standardPhone) addRow('phone', doc.labels.standardPhone || 'Standard', makeLink('tel:' + tel(p.standardPhone), p.standardPhone, c.phone || c.text || '#333333', false));
-  if (v.mobile && p.mobile) addRow('mobile', doc.labels.mobile || 'Mob.', makeLink('tel:' + tel(p.mobile), p.mobile, c.mobile || c.text || '#333333', false));
+  const makePlainText = (text, color, bold) => {
+    return '<span style="color:' + color + '; mso-color-alt:' + color + '; text-decoration:none; text-underline:none; mso-text-underline:none; text-underline-style:none;' + (bold ? ' font-weight:600;' : '') + '">' + esc(text) + '</span>';
+  };
+
+  if (v.phone && p.phone) addRow('phone', doc.labels.phone || 'T\xE9l.', makePlainText(p.phone, c.phone || c.text || '#333333', false));
+  if (v.standardPhone && p.standardPhone) addRow('phone', doc.labels.standardPhone || 'Standard', makePlainText(p.standardPhone, c.phone || c.text || '#333333', false));
+  if (v.mobile && p.mobile) addRow('mobile', doc.labels.mobile || 'Mob.', makePlainText(p.mobile, c.mobile || c.text || '#333333', false));
   if (v.email && p.email) addRow('email', doc.labels.email || 'E-mail', makeLink('mailto:' + p.email, p.email, c.email || c.primary || '#0C3866', true));
   if (v.website && p.website) {
     const dispWeb = p.website.replace(/^https?:\\/\\//i, '');
@@ -1857,8 +1861,11 @@ function renderSignature() {
   }
   if (v.address && (p.addressLine1 || p.city)) {
     const fullAddr = [p.addressLine1, p.addressLine2, [p.postalCode, p.city].filter(Boolean).join(' ')].filter(Boolean).join(' - ');
-    const maps = 'https://maps.google.com/?q=' + encodeURIComponent(fullAddr + (p.country ? ', ' + p.country : ''));
-    addRow('address', doc.labels.address || 'Adr.', makeLink(maps, fullAddr, c.address || c.text || '#333333', false));
+    if (p.mapsUrl) {
+      addRow('address', doc.labels.address || 'Adr.', makeLink(p.mapsUrl, fullAddr, c.address || c.text || '#333333', false));
+    } else {
+      addRow('address', doc.labels.address || 'Adr.', makePlainText(fullAddr, c.address || c.text || '#333333', false));
+    }
   }
 
   const coordsHtml = coordRows ? '<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; padding-top:4px;">' + coordRows + '</table>' : '';
@@ -1875,7 +1882,7 @@ function renderSignature() {
   // Logos HTML
   const logoWidth = dim.logoColumnWidth || 140;
   const logoHtml = doc.logoSrc ? '<img src="' + esc(doc.logoSrc) + '" width="' + logoWidth + '" alt="RAGT Semences" border="0" style="display:block; width:' + logoWidth + 'px; max-width:' + logoWidth + 'px; height:auto; border:0; margin:0 auto;" />' : '';
-  const secondaryLogoHtml = doc.secondaryLogoSrc ? '<div style="padding-top:8px; text-align:center;"><img src="' + esc(doc.secondaryLogoSrc) + '" width="95" alt="Certification" border="0" style="display:block; width:95px; height:auto; border:0; margin:0 auto;" /></div>' : '';
+  const secondaryLogoHtml = doc.secondaryLogoSrc ? '<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="width:100%; border-collapse:collapse;"><tr><td align="center" style="padding-top:8px; text-align:center;"><img src="' + esc(doc.secondaryLogoSrc) + '" width="95" alt="Certification" border="0" style="display:block; width:95px; height:auto; border:0; margin:0 auto;" /></td></tr></table>' : '';
 
   const slogan = doc.slogan || {};
   const sloganHtml = v.slogan && slogan.enabled && slogan.text
@@ -1919,7 +1926,8 @@ function renderSignature() {
   const topBannerHtml = banner.position === 'top' ? bannerHtml : '';
   const bottomBannerHtml = banner.position === 'bottom' ? bannerHtml : '';
   if (doc.renderMode === 'flattened-card') return topBannerHtml;
-  return topBannerHtml + '<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="' + dim.totalWidth + '" bgcolor="#FFFFFF" style="width:' + dim.totalWidth + 'px; max-width:' + dim.totalWidth + 'px; background-color:#FFFFFF; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tbody><tr><td bgcolor="#FFFFFF" style="padding:' + (dim.paddingTop || 12) + 'px ' + (dim.paddingRight || 16) + 'px ' + (dim.paddingBottom || 12) + 'px ' + (dim.paddingLeft || 16) + 'px;"><table border="0" cellpadding="0" cellspacing="0" role="presentation" style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tbody>' + innerStructure + '</tbody></table></td></tr></tbody></table>' + bottomBannerHtml;
+  const cardBg = (doc.colors && doc.colors.background) || '#FFFFFF';
+  return topBannerHtml + '<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="' + dim.totalWidth + '" bgcolor="' + cardBg + '" style="width:' + dim.totalWidth + 'px; max-width:' + dim.totalWidth + 'px; background-color:' + cardBg + '; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;"><tbody><tr><td bgcolor="' + cardBg + '" style="padding:' + (dim.paddingTop || 12) + 'px ' + (dim.paddingRight || 16) + 'px ' + (dim.paddingBottom || 12) + 'px ' + (dim.paddingLeft || 16) + 'px;"><table border="0" cellpadding="0" cellspacing="0" role="presentation" bgcolor="' + cardBg + '" style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; background-color:' + cardBg + ';"><tbody>' + innerStructure + '</tbody></table></td></tr></tbody></table>' + bottomBannerHtml;
 }
 
 // Refresh UI and Live Preview
@@ -2208,10 +2216,14 @@ function getContactIconDataUrl(type, color, style = "minimal", bgColor = "#FDC42
   return `data:image/svg+xml;utf8,${svg.replace(/#/g, "%23")}`;
 }
 function buildIdentityHtml(state) {
-  const { personal, visibility, design } = state;
+  const { personal, visibility, design, layout } = state;
   const tName = design.typography.name;
   const tJob = design.typography.jobTitle;
   const tComp = design.typography.company;
+  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const cardBgColor = (design.background.type === "color" || design.background.type === "image") && design.background.color ? design.background.color : isRagtCard ? "#FDC420" : "transparent";
+  const cardBgStyle = cardBgColor && cardBgColor !== "transparent" ? `background-color:${cardBgColor};` : "";
+  const cardBgAttr = cardBgColor && cardBgColor !== "transparent" ? ` bgcolor="${cardBgColor}"` : "";
   const rows = [];
   const nameParts = [];
   if (visibility.civility && personal.civility) nameParts.push(escapeHtml(personal.civility));
@@ -2222,7 +2234,7 @@ function buildIdentityHtml(state) {
   if (nameParts.length > 0) {
     rows.push(`
       <tr>
-        <td style="font-family:${tName.fontFamily}; font-size:${tName.fontSize}px; font-weight:${tName.fontWeight}; color:${design.colors.firstName}; line-height:${tName.lineHeight}; letter-spacing:${tName.letterSpacing}px; padding-bottom:3px;">
+        <td style="font-family:${tName.fontFamily}; font-size:${tName.fontSize}px; font-weight:${tName.fontWeight}; color:${design.colors.firstName}; line-height:${tName.lineHeight}; letter-spacing:${tName.letterSpacing}px; padding-bottom:3px; ${cardBgStyle}"${cardBgAttr}>
           ${nameParts.join(" ")}
         </td>
       </tr>
@@ -2235,7 +2247,7 @@ function buildIdentityHtml(state) {
   if (jobParts.length > 0) {
     rows.push(`
       <tr>
-        <td style="font-family:${tJob.fontFamily}; font-size:${tJob.fontSize}px; font-style:${tJob.fontStyle}; color:${design.colors.jobTitle}; line-height:${tJob.lineHeight}; padding-bottom:3px;">
+        <td style="font-family:${tJob.fontFamily}; font-size:${tJob.fontSize}px; font-style:${tJob.fontStyle}; color:${design.colors.jobTitle}; line-height:${tJob.lineHeight}; padding-bottom:3px; ${cardBgStyle}"${cardBgAttr}>
           ${jobParts.join(" &bull; ")}
         </td>
       </tr>
@@ -2247,45 +2259,47 @@ function buildIdentityHtml(state) {
   if (compParts.length > 0) {
     rows.push(`
       <tr>
-        <td style="font-family:${tComp.fontFamily}; font-size:${tComp.fontSize}px; font-weight:${tComp.fontWeight}; color:${design.colors.company}; line-height:${tComp.lineHeight}; padding-bottom:4px;">
+        <td style="font-family:${tComp.fontFamily}; font-size:${tComp.fontSize}px; font-weight:${tComp.fontWeight}; color:${design.colors.company}; line-height:${tComp.lineHeight}; padding-bottom:4px; ${cardBgStyle}"${cardBgAttr}>
           ${compParts.join(" - ")}
         </td>
       </tr>
     `);
   }
-  return rows.length ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">${rows.join("")}</table>` : "";
+  return rows.length ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ${cardBgStyle}"${cardBgAttr}>${rows.join("")}</table>` : "";
 }
 function buildCoordinatesHtml(state, iconCache) {
-  const { personal, labels, visibility, design, iconSettings } = state;
+  const { personal, labels, visibility, design, iconSettings, layout } = state;
   const t = design.typography.coordinates;
   const rows = [];
+  const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const cardBgColor = (design.background.type === "color" || design.background.type === "image") && design.background.color ? design.background.color : isRagtCard ? "#FDC420" : "transparent";
+  const cardBgStyle = cardBgColor && cardBgColor !== "transparent" ? `background-color:${cardBgColor};` : "";
+  const cardBgAttr = cardBgColor && cardBgColor !== "transparent" ? ` bgcolor="${cardBgColor}"` : "";
   const shouldUnderline = t.textDecoration === "underline";
-  const textDecor = shouldUnderline ? "underline" : "none";
-  const msoUnderline = shouldUnderline ? "single" : "none";
   const makeLink = (href, text, color, isBold = false, targetBlank = false) => {
     const targetAttr = targetBlank ? ' target="_blank" rel="noopener noreferrer"' : "";
     const weightStyle = isBold ? " font-weight:600;" : "";
     if (!shouldUnderline) {
       if (href.startsWith("tel:")) {
-        return `<span style="color:${color}; font-family:${t.fontFamily}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span>`;
+        return `<span style="color:${color}; mso-color-alt:${color}; font-family:${t.fontFamily}; text-decoration:none; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span>`;
       }
-      return `<a href="${href}"${targetAttr} style="color:${color}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}"><font color="${color}" style="text-decoration:none;"><span style="color:${color}; text-decoration:none !important; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span></font></a>`;
+      return `<a href="${href}"${targetAttr} style="color:${color}; mso-color-alt:${color}; text-decoration:none; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}"><font color="${color}"><span style="color:${color}; mso-color-alt:${color}; text-decoration:none; text-underline:none; -webkit-text-decoration:none; mso-text-underline:none; text-underline-style:none; border:none; outline:none; border-bottom:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}">${escapeHtml(text)}</span></font></a>`;
     }
-    const linkStyle = `color:${color}; text-decoration:underline !important; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
-    const spanStyle = `color:${color}; text-decoration:underline !important; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
+    const linkStyle = `color:${color}; mso-color-alt:${color}; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
+    const spanStyle = `color:${color}; mso-color-alt:${color}; text-decoration:underline; -webkit-text-decoration:underline; mso-text-underline:single; text-underline-style:single; border:none; outline:none; display:inline; word-break:break-word; overflow-wrap:anywhere;${weightStyle}`;
     return `<a href="${href}"${targetAttr} style="${linkStyle}"><span style="${spanStyle}">${escapeHtml(text)}</span></a>`;
   };
   const addCoordRow = (iconType, label, valueHtml) => {
     const iconUrl = iconCache[`contact_${iconType}`] || getContactIconDataUrl(iconType, design.colors.icons || iconSettings.color, iconSettings.style, design.background.color || "#FDC420");
     rows.push(`
       <tr>
-        <td style="vertical-align:middle; padding:1px 0;">
-          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt;">
+        <td style="vertical-align:middle; padding:1px 0; ${cardBgStyle}"${cardBgAttr}>
+          <table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ${cardBgStyle}"${cardBgAttr}>
             <tr>
-              <td style="vertical-align:middle; width:${iconSettings.size + 4}px; padding-right:${iconSettings.spacing}px;">
+              <td style="vertical-align:middle; width:${iconSettings.size + 4}px; padding-right:${iconSettings.spacing}px; ${cardBgStyle}"${cardBgAttr}>
                 <img src="${iconUrl}" width="${iconSettings.size}" height="${iconSettings.size}" alt="${iconType}" border="0" style="display:block; width:${iconSettings.size}px; height:${iconSettings.size}px;" />
               </td>
-              <td style="font-family:${t.fontFamily}; font-size:${t.fontSize}px; line-height:${t.lineHeight}; color:${design.colors.text}; vertical-align:middle; word-break:break-word; overflow-wrap:anywhere;">
+              <td style="font-family:${t.fontFamily}; font-size:${t.fontSize}px; line-height:${t.lineHeight}; color:${design.colors.text}; vertical-align:middle; word-break:break-word; overflow-wrap:anywhere; ${cardBgStyle}"${cardBgAttr}>
                 ${label ? `<strong style="color:${design.colors.muted}; font-weight:600;">${escapeHtml(label)}:</strong> ` : ""}${valueHtml}
               </td>
             </tr>
@@ -2333,10 +2347,13 @@ function buildCoordinatesHtml(state, iconCache) {
       personal.addressLine2,
       [personal.postalCode, personal.city].filter(Boolean).join(" ")
     ].filter(Boolean).join(" - ");
-    const mapsLink = personal.mapsUrl || `https://maps.google.com/?q=${encodeURIComponent(fullAddr + (personal.country ? ", " + personal.country : ""))}`;
-    addCoordRow("address", labels.address, makeLink(mapsLink, fullAddr, design.colors.address, false, true));
+    if (personal.mapsUrl) {
+      addCoordRow("address", labels.address, makeLink(personal.mapsUrl, fullAddr, design.colors.address, false, true));
+    } else {
+      addCoordRow("address", labels.address, `<span style="color:${design.colors.address}; font-family:${t.fontFamily}; word-break:break-word; overflow-wrap:anywhere;">${escapeHtml(fullAddr)}</span>`);
+    }
   }
-  return rows.length ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; padding-top:4px;">${rows.join("")}</table>` : "";
+  return rows.length ? `<table border="0" cellpadding="0" cellspacing="0" role="presentation" style="border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; padding-top:4px; ${cardBgStyle}"${cardBgAttr}>${rows.join("")}</table>` : "";
 }
 function buildSocialsHtml(state, iconCache, layoutMode = "horizontal") {
   const { social, visibility, design } = state;
@@ -2399,7 +2416,7 @@ function buildSloganHtml(state) {
   `;
 }
 function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
-  const { logos, visibility, layout } = state;
+  const { logos, visibility, layout, design } = state;
   const logo = isSecondary ? logos.secondary : logos.primary;
   const isVisible = isSecondary ? visibility.secondaryLogo : visibility.logo;
   if (!isVisible || !logo.url) return "";
@@ -2407,16 +2424,29 @@ function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
   const effectiveUrl = iconCache[cacheKey] || logo.url;
   const dropzoneId = isSecondary ? "logo-secondary" : "logo-primary";
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const cardBgColor = (design.background.type === "color" || design.background.type === "image") && design.background.color ? design.background.color : isRagtCard ? "#FDC420" : "transparent";
+  const cardBgStyle = cardBgColor && cardBgColor !== "transparent" ? `background-color:${cardBgColor};` : "";
+  const cardBgAttr = cardBgColor && cardBgColor !== "transparent" ? ` bgcolor="${cardBgColor}"` : "";
   const align = logo.align || (isRagtCard || layout.preset === "layout-d" ? "center" : layout.alignH || "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
+  const effectiveWidth = logo.width || 95;
+  const effectiveHeight = (() => {
+    if (logo.url && (logo.url.includes("logo_ragt.png") || logo.url.includes("logo_ragt"))) {
+      return Math.round(effectiveWidth * (1005 / 957));
+    }
+    if (logo.keepRatio && logo.width && logo.height) {
+      return logo.height;
+    }
+    return logo.height || 100;
+  })();
   const imgTag = `
-    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:auto; max-width:${logo.width}px; ${marginStyle} outline:none; text-decoration:none; border:0;" />
+    <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${effectiveWidth}" height="${effectiveHeight}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${effectiveWidth}px; height:${effectiveHeight}px; max-width:${effectiveWidth}px; ${marginStyle} outline:none; text-decoration:none; border:0;" />
   `;
-  const innerContent = logo.linkUrl ? `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none !important; -webkit-text-decoration:none; mso-text-underline:none; text-underline:none; text-underline-style:none; border:0; outline:none; font-size:0; line-height:0; color:transparent; ${marginStyle}">${imgTag}</a>` : imgTag;
+  const innerContent = logo.linkUrl ? `<a href="${sanitizeUrl(logo.linkUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; text-decoration:none; mso-text-underline:none; text-underline:none; text-underline-style:none; border:0; outline:none; color:transparent; ${marginStyle}">${imgTag}</a>` : imgTag;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${logo.width}" align="${align}" style="display:inline-table; width:${logo.width}px; min-width:${logo.width}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${effectiveWidth}" align="${align}" style="display:inline-table; width:${effectiveWidth}px; min-width:${effectiveWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle} ${cardBgStyle}"${cardBgAttr}>
       <tr>
-        <td align="${align}" style="text-align:${align}; padding:0; line-height:normal; font-size:0; mso-line-height-rule:exactly;">
+        <td align="${align}" style="text-align:${align}; padding:0; line-height:normal; ${cardBgStyle}"${cardBgAttr}>
           ${innerContent}
         </td>
       </tr>
@@ -2424,24 +2454,27 @@ function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
   `;
 }
 function buildQrHtml(state, qrDataUrl) {
-  const { qr, visibility, layout } = state;
+  const { qr, visibility, layout, design } = state;
   if (!visibility.qr || !qrDataUrl) return "";
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
+  const cardBgColor = (design.background.type === "color" || design.background.type === "image") && design.background.color ? design.background.color : isRagtCard ? "#FDC420" : "transparent";
+  const cardBgStyle = cardBgColor && cardBgColor !== "transparent" ? `background-color:${cardBgColor};` : "";
+  const cardBgAttr = cardBgColor && cardBgColor !== "transparent" ? ` bgcolor="${cardBgColor}"` : "";
   const align = qr.align || (qr.position === "left" && !isRagtCard ? layout.alignH || "center" : "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const isLabelActive = qr.showLabel !== false && Boolean(qr.labelText && qr.labelText.trim());
   const labelColor = qr.labelColor || "#A0AEC0";
   const labelHtml = isLabelActive ? `
       <tr>
-        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:${labelColor}; text-align:center; padding-top:2px; white-space:nowrap;" align="center">
+        <td style="font-family:${state.design.typography.baseFont}; font-size:9px; color:${labelColor}; text-align:center; padding-top:2px; white-space:nowrap; ${cardBgStyle}" align="center"${cardBgAttr}>
           ${escapeHtml(qr.labelText?.trim() || "Scan contact")}
         </td>
       </tr>` : "";
   const qrBoxWidth = qr.size + 6;
   return `
-    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" align="${align}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle}">
+    <table border="0" cellpadding="0" cellspacing="0" role="presentation" width="${qrBoxWidth}" align="${align}" style="display:inline-table; width:${qrBoxWidth}px; min-width:${qrBoxWidth}px; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; text-align:${align}; ${marginStyle} ${cardBgStyle}"${cardBgAttr}>
       <tr>
-        <td width="${qr.size + 4}" style="width:${qr.size + 4}px; min-width:${qr.size + 4}px; padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
+        <td width="${qr.size + 4}" bgcolor="${qr.bgColor || "#FFFFFF"}" style="width:${qr.size + 4}px; min-width:${qr.size + 4}px; padding:2px; background-color:${qr.bgColor || "#FFFFFF"}; border:1px solid #E2E8F0; border-radius:4px; text-align:center;" align="center">
           <img src="${qrDataUrl}" width="${qr.size}" height="${qr.size}" alt="QR Code vCard" border="0" style="display:block; width:${qr.size}px; min-width:${qr.size}px; max-width:${qr.size}px; height:${qr.size}px; min-height:${qr.size}px; max-height:${qr.size}px; aspect-ratio:1/1; margin:0 auto;" />
         </td>
       </tr>${labelHtml}
@@ -2507,12 +2540,12 @@ function renderStackedBlocks(blocks, align = "left", bgColor = "transparent", ga
   const bgAttr = bgColor && bgColor !== "transparent" ? ` bgcolor="${bgColor}"` : "";
   const rows = filtered.map((b, idx) => `
     <tr>
-      <td align="${align}" style="text-align:${align}; ${idx > 0 ? `padding-top:${gap}px;` : ""} ${bgStyle}"${bgAttr}>
+      <td align="${align}" style="text-align:${align}; ${idx > 0 ? `padding-top:${gap}px;` : ""} ${bgStyle} mso-table-lspace:0pt; mso-table-rspace:0pt;"${bgAttr}>
         ${b}
       </td>
     </tr>
   `).join("");
-  return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="width:100%; border-collapse:collapse; mso-table-lspace:0pt; mso-table-rspace:0pt; ${bgStyle}"${bgAttr}><tbody>${rows}</tbody></table>`;
+  return `<table border="0" cellpadding="0" cellspacing="0" role="presentation" width="100%" style="width:100%; border-collapse:collapse; border-spacing:0; mso-table-lspace:0pt; mso-table-rspace:0pt; ${bgStyle}"${bgAttr}><tbody>${rows}</tbody></table>`;
 }
 function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const { layout, design } = state;
@@ -2638,7 +2671,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
     }
     return "";
   })();
-  const tableBgColorAttr = (design.background.type === "color" || design.background.type === "image") && design.background.color ? `bgcolor="${design.background.color}"` : "";
+  const tableBgColorAttr = (design.background.type === "color" || design.background.type === "image") && design.background.color ? ` bgcolor="${design.background.color}"` : "";
   const verticalSeparatorTd = sep.type === "vertical" ? `<td style="width:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:0;" width="${sep.thickness}">&nbsp;</td>` : "";
   const horizontalSeparatorTr = sep.type === "horizontal" ? `<tr><td colspan="3" style="height:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:${sep.margin}px 0;" height="${sep.thickness}">&nbsp;</td></tr>` : "";
   let innerStructure = "";
@@ -3228,14 +3261,17 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   </o:OfficeDocumentSettings>
 </xml>
 <style type="text/css">
+  table { border-collapse: collapse; border-spacing: 0; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
+  table, td, tr { mso-table-lspace: 0pt; mso-table-rspace: 0pt; border-collapse: collapse; }
   a, a:link, a:visited {
+    color: ${design.colors.email || design.colors.primary || "#0C3866"} !important;
     text-decoration: none !important;
     text-underline: none !important;
     mso-text-underline: none !important;
     text-underline-style: none !important;
   }
   span.MsoHyperlink, span.MsoHyperlinkFollowed {
-    color: inherit !important;
+    color: ${design.colors.email || design.colors.primary || "#0C3866"} !important;
     text-decoration: none !important;
     text-underline: none !important;
     mso-text-underline: none !important;
@@ -3247,6 +3283,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
 <style type="text/css">
   /* Force email clients and Outlook not to underline links */
   a, a:link, a:visited, a:hover, a:active {
+    color: ${design.colors.email || design.colors.primary || "#0C3866"} !important;
     text-decoration: none !important;
     text-underline: none !important;
     text-underline-style: none !important;
@@ -3254,7 +3291,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   }
   span.MsoHyperlink, span.MsoHyperlinkFollowed {
     mso-style-priority: 99 !important;
-    color: inherit !important;
+    color: ${design.colors.email || design.colors.primary || "#0C3866"} !important;
     text-decoration: none !important;
     text-underline: none !important;
     text-underline-style: none !important;
@@ -3314,7 +3351,7 @@ function fileToDataUrl(url) {
   if (!url || typeof url !== "string" || url.startsWith("data:")) return url || "";
   try {
     const cleanUrl = url.split("?")[0];
-    const filePath = import_path.default.resolve(__dirname, "../public", cleanUrl.replace(/^\//, ""));
+    const filePath = import_path.default.resolve(process.cwd(), "public", cleanUrl.replace(/^\//, ""));
     if (import_fs.default.existsSync(filePath)) {
       const ext = import_path.default.extname(filePath).slice(1).toLowerCase();
       const mime = ext === "svg" ? "image/svg+xml" : ext === "jpg" || ext === "jpeg" ? "image/jpeg" : "image/png";
@@ -3346,9 +3383,9 @@ var embeddedState = {
 };
 var initialEmailHtml = inlineHtmlImages(generateEmailHTML(embeddedState));
 var html = generateStandaloneSignatureAppHtml(embeddedState, initialEmailHtml);
-var outPath = import_path.default.resolve(__dirname, "../public/signature.html");
+var outPath = import_path.default.resolve(process.cwd(), "public/signature.html");
 import_fs.default.writeFileSync(outPath, html, "utf-8");
-var distPath = import_path.default.resolve(__dirname, "../dist/signature.html");
+var distPath = import_path.default.resolve(process.cwd(), "dist/signature.html");
 if (import_fs.default.existsSync(import_path.default.dirname(distPath))) {
   import_fs.default.writeFileSync(distPath, html, "utf-8");
 }

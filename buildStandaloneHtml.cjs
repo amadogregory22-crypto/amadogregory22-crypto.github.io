@@ -420,8 +420,8 @@ var DEFAULT_SIGNATURE_STATE = {
     align: "center",
     buttonText: "En savoir plus",
     campaignName: "SPACE 2026 - Hall 4 Stand B22",
-    startDate: "2026-09-15",
-    endDate: "2026-09-18"
+    startDate: "",
+    endDate: ""
   },
   campaign: {
     enabled: false,
@@ -2729,7 +2729,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column Center: Photo on top, then Name & Title, then Coordinates -->
-          <td style="vertical-align:middle; text-align:left; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+          <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:middle; text-align:left; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
             ${buildOrderedInfoHtml({ includeSocial: false })}
           </td>
           <!-- Socials Column Right: 4 white circular discs stacked vertically (and QR code if position is right) -->

@@ -2500,7 +2500,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const qrHtml = buildQrHtml(state, qrDataUrl);
   const bannerHtml = buildBannerHtml(state, iconCache);
   const campaignHtml = buildCampaignHtml(state, iconCache);
-  const isCardLayout = layout.preset === "layout-i";
+  const isCardLayout = layout.preset === "layout-i" || layout.preset === "layout-h";
   const topBannerHtml = !isCardLayout && state.banner.position === "top" ? bannerHtml : "";
   const bottomBannerHtml = !isCardLayout && !campaignHtml && state.banner.position === "bottom" ? bannerHtml : "";
   const rightBannerHtml = !isCardLayout && state.banner.position === "right" ? bannerHtml : "";
@@ -2613,6 +2613,8 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   const horizontalSeparatorTr = sep.type === "horizontal" ? `<tr><td colspan="3" style="height:${sep.thickness}px; background-color:${sep.color}; font-size:1px; line-height:1px; padding:0; margin:${sep.margin}px 0;" height="${sep.thickness}">&nbsp;</td></tr>` : "";
   let innerStructure = "";
   let layoutIMinWidth = 0;
+  let layoutHMinWidth = 0;
+  let layoutAMinWidth = 0;
   switch (layout.preset) {
     case "layout-b":
       innerStructure = `
@@ -2879,11 +2881,70 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       `;
       break;
     }
-    case "layout-h":
-    // Layout with prominent banner
+    case "layout-h": {
+      const colVAlign = layout.alignV || "middle";
+      const colCount = 2 + (verticalSeparatorTd ? 1 : 0) + (state.qr.position === "right" && qrHtml ? 1 : 0);
+      const hBanner = bannerHtml || campaignHtml;
+      const isTopBanner = state.banner.position === "top";
+      const bAlign = state.banner.align || "center";
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const col1W = state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0;
+      const sepW = verticalSeparatorTd ? (sep.thickness || 2) + p.innerSpacing : 0;
+      const infoW = p.infoColumnWidth || 320;
+      const qrW = state.qr.position === "right" && qrHtml ? (p.qrSize || 75) + 20 : 0;
+      const topColsW = col1W + (col1W ? p.innerSpacing : 0) + sepW + infoW + (qrW ? qrW + p.innerSpacing : 0) + padLeftH + padRightH;
+      const bannerW = state.visibility.banner && bannerHtml ? (state.banner.width || 0) + padLeftH + padRightH : 0;
+      layoutHMinWidth = Math.max(topColsW, bannerW);
+      innerStructure = `
+        ${isTopBanner && hBanner ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-bottom:12px; text-align:${bAlign};">
+              ${hBanner}
+            </td>
+          </tr>
+        ` : ""}
+        <tr>
+          <!-- Logo Column -->
+          <td style="width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${layout.alignH || "left"}">
+            ${logoHtml}
+            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${layout.alignH || "left"};" align="${layout.alignH || "left"}">${qrHtml}</div>` : ""}
+          </td>
+          ${verticalSeparatorTd}
+          <!-- Info Column -->
+          <td style="vertical-align:${colVAlign}; padding-left:${p.innerSpacing}px;">
+            ${buildOrderedInfoHtml({ includeCenterBanner: false })}
+          </td>
+          <!-- Right QR if configured -->
+          ${state.qr.position === "right" && qrHtml ? `
+            <td style="vertical-align:${colVAlign}; text-align:right; padding-left:${p.innerSpacing}px;">
+              ${qrHtml}
+            </td>
+          ` : ""}
+        </tr>
+        ${!isTopBanner && hBanner ? `
+          <tr>
+            <td colspan="${colCount}" align="${bAlign}" style="padding-top:12px; text-align:${bAlign};">
+              ${hBanner}
+            </td>
+          </tr>
+        ` : ""}
+      `;
+      break;
+    }
     case "layout-a":
     // Default Layout A: Logo Left, Info Right
-    default:
+    default: {
+      const padLeftH = p.paddingLeft !== void 0 ? p.paddingLeft : 16;
+      const padRightH = p.paddingRight !== void 0 ? p.paddingRight : 16;
+      const col1W = state.visibility.logo && logoHtml ? p.logoColumnWidth || 140 : 0;
+      const sepW = verticalSeparatorTd ? (sep.thickness || 2) + p.innerSpacing : 0;
+      const infoW = p.infoColumnWidth || 320;
+      const qrW = state.qr.position === "right" && qrHtml ? (p.qrSize || 75) + 20 : 0;
+      const leftW = leftBannerHtml ? (state.banner.width || 175) + p.innerSpacing : 0;
+      const rightW = rightBannerHtml ? (state.banner.width || 175) + p.innerSpacing : 0;
+      layoutAMinWidth = leftW + col1W + (col1W ? p.innerSpacing : 0) + sepW + infoW + (qrW ? qrW + p.innerSpacing : 0) + rightW + padLeftH + padRightH;
       innerStructure = `
         <tr>
           <!-- Left Banner Column if left position -->
@@ -2918,9 +2979,10 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
         </tr>
       `;
       break;
+    }
   }
   const isMobilePreset = layout.preset === "layout-c" || layout.preset === "layout-d" || layout.preset === "layout-g";
-  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : Math.max(p.totalWidth, layoutIMinWidth);
+  const effectiveTotalWidth = isMobilePreset ? Math.min(p.totalWidth, 340) : Math.max(p.totalWidth, layoutIMinWidth, layoutHMinWidth, layoutAMinWidth);
   const padLeft = isMobilePreset ? Math.min(p.paddingLeft, 12) : p.paddingLeft;
   const padRight = isMobilePreset ? Math.min(p.paddingRight, 12) : p.paddingRight;
   const padTop = isMobilePreset ? Math.min(p.paddingTop, 10) : p.paddingTop;
@@ -3023,7 +3085,7 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
   </v:rect>
   <![endif]-->` : ""}
   `}
-  ${campaignHtml || bottomBannerHtml}
+  ${layout.preset === "layout-h" ? "" : campaignHtml || bottomBannerHtml}
 </div>
 <!-- End RAGT Signature -->`;
 }

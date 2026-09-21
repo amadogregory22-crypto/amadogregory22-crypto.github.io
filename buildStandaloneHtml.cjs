@@ -2389,7 +2389,7 @@ function buildLogoHtml(state, isSecondary = false, iconCache = {}) {
   const effectiveUrl = iconCache[cacheKey] || logo.url;
   const dropzoneId = isSecondary ? "logo-secondary" : "logo-primary";
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
-  const align = isRagtCard || layout.preset === "layout-d" ? "center" : logo.align || layout.alignH || "center";
+  const align = logo.align || (isRagtCard || layout.preset === "layout-d" ? "center" : layout.alignH || "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const imgTag = `
     <img data-ragt-dropzone="${dropzoneId}" src="${effectiveUrl}" width="${logo.width}" height="${logo.height}" alt="${escapeHtml(logo.alt || "RAGT")}" border="0" style="display:block; width:${logo.width}px; height:${logo.height}px; max-width:${logo.width}px; ${marginStyle} outline:none; text-decoration:none;" />
@@ -2409,7 +2409,7 @@ function buildQrHtml(state, qrDataUrl) {
   const { qr, visibility, layout } = state;
   if (!visibility.qr || !qrDataUrl) return "";
   const isRagtCard = layout.preset === "layout-i" || state.presetName?.includes("Carte RAGT");
-  const align = qr.position === "left" && !isRagtCard ? layout.alignH || "center" : "center";
+  const align = qr.align || (qr.position === "left" && !isRagtCard ? layout.alignH || "center" : "center");
   const marginStyle = align === "center" ? "margin:0 auto;" : align === "right" ? "margin-left:auto; margin-right:0;" : "margin:0 auto 0 0;";
   const qrBoxWidth = qr.size + 6;
   return `
@@ -2530,7 +2530,19 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
       banner: includeCenterBanner ? centerBannerHtml : ""
     };
     const legacyOrder = ["banner", "identity", "coordinates", "social", "slogan", "qr"];
-    const order = usesDefaultBlockOrder ? legacyOrder : orderedBlockKeys;
+    const getEffectiveOrder = () => {
+      if (!usesDefaultBlockOrder) {
+        return orderedBlockKeys;
+      }
+      if (state.banner.position === "center") {
+        return ["identity", "banner", "coordinates", "social", "slogan", "qr"];
+      }
+      if (state.banner.position === "bottom") {
+        return ["identity", "coordinates", "banner", "social", "slogan", "qr"];
+      }
+      return legacyOrder;
+    };
+    const order = getEffectiveOrder();
     const bannerAlign = state.banner.align || (state.banner.position === "left" ? "left" : state.banner.position === "right" ? "right" : "center");
     const rows = order.filter((key) => key !== "logo").map((key) => {
       if (!blocks[key]) return "";
@@ -2719,21 +2731,24 @@ function generateEmailHTML(state, qrDataUrl = "", iconCache = {}) {
           ${rightSocialsHtml ? `<tr><td style="text-align:center; vertical-align:middle; width:46px;" width="46" align="center">${rightSocialsHtml}</td></tr>` : ""}
         </table>
       `;
+      const colVAlign = layout.alignV || "middle";
+      const logoAlign = state.logos.primary?.align || "center";
+      const rightColAlign = state.social?.align || "center";
       innerStructure = `
         <tr>
           <!-- Logo Column Left -->
-          <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:middle; text-align:center; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="center">
+          <td style="width:${p.logoColumnWidth}px; min-width:${p.logoColumnWidth}px; vertical-align:${colVAlign}; text-align:${logoAlign}; padding-right:${p.innerSpacing}px;" width="${p.logoColumnWidth}" align="${logoAlign}">
             ${logoHtml}
-            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:center;" align="center">${secondaryLogoHtml}</div>` : ""}
-            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:center;" align="center">${qrHtml}</div>` : ""}
+            ${secondaryLogoHtml ? `<div style="padding-top:8px; text-align:${logoAlign};" align="${logoAlign}">${secondaryLogoHtml}</div>` : ""}
+            ${state.qr.position === "left" && qrHtml ? `<div style="padding-top:10px; text-align:${logoAlign};" align="${logoAlign}">${qrHtml}</div>` : ""}
           </td>
           ${verticalSeparatorTd}
           <!-- Info Column Center: Photo on top, then Name & Title, then Coordinates -->
-          <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:middle; text-align:left; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
+          <td ${p.infoColumnWidth ? `width="${p.infoColumnWidth}"` : ""} style="${p.infoColumnWidth ? `width:${p.infoColumnWidth}px; ` : ""}vertical-align:${colVAlign}; text-align:${layout.alignH || "left"}; padding-left:${p.innerSpacing}px; padding-right:${p.innerSpacing}px;">
             ${buildOrderedInfoHtml({ includeSocial: false })}
           </td>
           <!-- Socials Column Right: 4 white circular discs stacked vertically (and QR code if position is right) -->
-          <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:middle; text-align:center; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="center">
+          <td style="width:${rightColWidth}px; min-width:${rightColWidth}px; vertical-align:${colVAlign}; text-align:${rightColAlign}; padding-left:${p.innerSpacing}px;" width="${rightColWidth}" align="${rightColAlign}">
              ${rightColumnHtml}
           </td>
         </tr>

@@ -39,7 +39,7 @@ var RAGT_MAIN_LOGO_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
   <rect x="136" y="70" width="168" height="2.5" fill="#F7BD00" />
 </svg>
 `)}`;
-var RAGT_2N_LOGO_SVG = `data:image/svg+xml;utf8,${encodeURIComponent(`
+var RAGT_2N_LOGO_SVG2 = `data:image/svg+xml;utf8,${encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 90" width="300" height="90">
   <text x="10" y="58" font-family="Arial, Helvetica, sans-serif" font-weight="900" font-size="48" fill="#0C3866">RAGT</text>
   <text x="155" y="44" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="28" fill="#F7BD00">2n</text>
@@ -854,10 +854,143 @@ var SIGNATURE_PRESETS = [
     })
   },
   {
+    id: "carte-ragt-2n",
+    name: "Carte RAGT 2n Recherche",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT 2n : soci\xE9t\xE9 de recherche de RAGT Semences, fond jaune RAGT (#FDC420), logo RAGT 2n Recherche \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    apply: (base) => ({
+      ...base,
+      presetName: "Carte RAGT 2n Recherche",
+      personal: {
+        ...base.personal,
+        company: "RAGT 2n",
+        website: "https://www.ragt-semences.fr"
+      },
+      layout: {
+        ...base.layout,
+        preset: "layout-i",
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 540,
+          logoColumnWidth: 125,
+          infoColumnWidth: 320,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: "none" },
+        alignV: "middle"
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: "#0C3866",
+          secondary: "#1E4143",
+          text: "#0C3866",
+          firstName: "#0C3866",
+          lastName: "#0C3866",
+          jobTitle: "#1E4143",
+          phone: "#0C3866",
+          mobile: "#0C3866",
+          email: "#0C3866",
+          address: "#0C3866",
+          website: "#0C3866",
+          icons: "#ffffff",
+          background: "#FDC420"
+        },
+        background: {
+          type: "color",
+          color: "#FDC420",
+          imageUrl: "",
+          pattern: "none",
+          opacity: 1,
+          size: "auto"
+        },
+        border: { ...base.design.border, type: "none", radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 16, fontWeight: "bold", color: "#0C3866", letterSpacing: 0.5 },
+          jobTitle: { ...base.design.typography.jobTitle, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: "normal", color: "#1E4143" },
+          coordinates: { ...base.design.typography.coordinates, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 11, color: "#0C3866" }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          url: RAGT_2N_LOGO_SVG,
+          alt: "Logo RAGT 2n Recherche & Innovation",
+          width: 95,
+          height: 100,
+          visible: true
+        },
+        secondary: { ...base.logos.secondary, visible: false }
+      },
+      iconSettings: { style: "circle", size: 16, color: "#ffffff", spacing: 8 },
+      labels: { phone: "", mobile: "", fax: "", standardPhone: "", directPhone: "", email: "", address: "", website: "" },
+      banner: {
+        ...base.banner,
+        enabled: true,
+        imageUrl: "/assets/bannieres/photo_carte_ragt.png",
+        altText: "Photo RAGT 2n",
+        position: "center",
+        align: "center",
+        width: 175,
+        height: 84,
+        marginTop: 0,
+        marginBottom: 8
+      },
+      slogan: {
+        ...base.slogan,
+        enabled: true,
+        text: "\xAB Recherche & Innovation vari\xE9tale \xBB",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: 10,
+        color: "#0C3866",
+        italic: true,
+        alignment: "center"
+      },
+      social: {
+        ...base.social,
+        style: "icons-only",
+        iconSize: 20,
+        spacing: 8,
+        align: "right",
+        items: [
+          { id: "website", name: "Site Web RAGT Semences", url: "https://www.ragt-semences.fr", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "youtube", name: "YouTube", url: "https://www.youtube.com/user/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "facebook", name: "Facebook", url: "https://www.facebook.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "instagram", name: "Instagram", url: "https://www.instagram.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "x", name: "X (Twitter)", url: "https://twitter.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
+        ]
+      },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        banner: true,
+        socials: true,
+        slogan: true,
+        company: false,
+        qr: false,
+        phone: true,
+        mobile: !!base.personal.mobile,
+        email: true,
+        address: true,
+        website: false
+      }
+    })
+  },
+  {
     id: "carte-ragt-plateau",
     name: "Carte RAGT Plateau Central",
     category: "Soci\xE9t\xE9 RAGT",
-    description: "Format officiel RAGT Plateau Central : fond jaune RAGT (#FDC420), logo Plateau Central \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    description: "Format officiel RAGT Plateau Central : fond jaune RAGT (#FDC420), logo Plateau Central \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite, slogan \xAB Nourrir l\u2019avenir, cultiver l\u2019authenticit\xE9 \xBB.",
     apply: (base) => ({
       ...base,
       presetName: "Carte RAGT Plateau Central",
@@ -959,13 +1092,23 @@ var SIGNATURE_PRESETS = [
           { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
         ]
       },
+      slogan: {
+        ...base.slogan,
+        enabled: true,
+        text: "\xAB Nourrir l\u2019avenir, cultiver l\u2019authenticit\xE9 \xBB",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: 10,
+        color: "#0C3866",
+        italic: true,
+        alignment: "center"
+      },
       visibility: {
         ...base.visibility,
         logo: true,
         secondaryLogo: false,
         banner: true,
         socials: true,
-        slogan: false,
+        slogan: true,
         company: false,
         qr: false,
         phone: true,

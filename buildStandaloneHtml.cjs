@@ -466,7 +466,7 @@ var SIGNATURE_PRESETS = [
     id: "carte-ragt-officielle",
     name: "Carte RAGT Semences",
     category: "Soci\xE9t\xE9 RAGT",
-    description: "Format officiel RAGT Semences : fond jaune RAGT (#FDC420), logo Semences \xE0 gauche, photo agronomique au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    description: "Format officiel RAGT Semences fid\xE8le : fond jaune RAGT (#FDC420), logo Semences & QR Code \xE0 gauche, photo des agronomes & coordonn\xE9es au centre, 6 r\xE9seaux sociaux \xE0 droite, et bandeau officiel des 4 esp\xE8ces (Colza, C\xE9r\xE9ales, Tournesol, Prot\xE9agineux) \xAB Cultivons ensemble un monde plus durable \xBB en bas.",
     apply: (base) => ({
       ...base,
       presetName: "Carte RAGT Semences",
@@ -490,7 +490,16 @@ var SIGNATURE_PRESETS = [
           innerSpacing: 14
         },
         separator: { ...base.layout.separator, type: "none" },
-        alignV: "middle"
+        alignV: "middle",
+        columnAssignments: {
+          logo: 1,
+          qr: 1,
+          banner: 2,
+          identity: 2,
+          coordinates: 2,
+          social: 3,
+          slogan: 2
+        }
       },
       design: {
         ...base.design,
@@ -507,8 +516,11 @@ var SIGNATURE_PRESETS = [
           email: "#0C3866",
           address: "#0C3866",
           website: "#0C3866",
-          icons: "#ffffff",
-          background: "#FDC420"
+          icons: "#0C3866",
+          background: "#FDC420",
+          slogan: "#0C3866",
+          qrFg: "#0C3866",
+          qrBg: "#FFFFFF"
         },
         background: {
           type: "color",
@@ -521,7 +533,7 @@ var SIGNATURE_PRESETS = [
         border: {
           ...base.design.border,
           type: "none",
-          radius: 10
+          radius: 12
         },
         typography: {
           ...base.design.typography,
@@ -564,10 +576,23 @@ var SIGNATURE_PRESETS = [
           visible: false
         }
       },
+      qr: {
+        ...base.qr,
+        type: "vcard",
+        position: "left",
+        size: 75,
+        fgColor: "#0C3866",
+        bgColor: "#FFFFFF",
+        errorCorrectionLevel: "M",
+        visible: true,
+        showLabel: true,
+        labelText: "Scan contact",
+        labelColor: "#0C3866"
+      },
       iconSettings: {
         style: "circle",
         size: 16,
-        color: "#ffffff",
+        color: "#0C3866",
         spacing: 8
       },
       labels: {
@@ -592,9 +617,36 @@ var SIGNATURE_PRESETS = [
         marginTop: 0,
         marginBottom: 8
       },
+      campaign: {
+        ...base.campaign,
+        enabled: true,
+        title: "Campagne 4 Esp\xE8ces",
+        campaignName: "Cultivons ensemble un monde plus durable",
+        imageUrl: "/assets/bannieres/banniere_ragt_semences_especes.png",
+        linkUrl: "https://www.ragt-semences.fr",
+        altText: "Cultivons ensemble un monde plus durable - RAGT Semences",
+        width: 540,
+        height: 167,
+        maintainRatio: true
+      },
+      slogan: {
+        ...base.slogan,
+        enabled: true,
+        text: "\xAB Des semences pour demain \xBB",
+        fontFamily: "Arial, Helvetica, sans-serif",
+        fontSize: 11,
+        fontWeight: "bold",
+        fontStyle: "italic",
+        color: "#0C3866",
+        align: "left",
+        marginTop: 8,
+        marginBottom: 4,
+        position: "above-footer"
+      },
       social: {
         ...base.social,
         style: "icons-only",
+        iconStyle: "circle",
         iconSize: 20,
         spacing: 8,
         align: "right",
@@ -605,7 +657,7 @@ var SIGNATURE_PRESETS = [
             url: "https://www.ragt-semences.fr",
             active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "youtube",
@@ -613,7 +665,7 @@ var SIGNATURE_PRESETS = [
             url: "https://www.youtube.com/user/ragt",
             active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "facebook",
@@ -621,7 +673,7 @@ var SIGNATURE_PRESETS = [
             url: "https://www.facebook.com/ragt",
             active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "instagram",
@@ -629,23 +681,23 @@ var SIGNATURE_PRESETS = [
             url: "https://www.instagram.com/ragt",
             active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "linkedin",
             name: "LinkedIn",
             url: "https://www.linkedin.com/company/ragt",
-            active: false,
+            active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "x",
             name: "X (Twitter)",
             url: "https://twitter.com/ragt",
-            active: false,
+            active: true,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           },
           {
             id: "tiktok",
@@ -653,7 +705,7 @@ var SIGNATURE_PRESETS = [
             url: "https://www.tiktok.com/@ragt",
             active: false,
             iconStyle: "circle",
-            color: "#ffffff"
+            color: "#0C3866"
           }
         ]
       },
@@ -662,15 +714,19 @@ var SIGNATURE_PRESETS = [
         logo: true,
         secondaryLogo: false,
         banner: true,
+        campaign: true,
         socials: true,
-        slogan: false,
+        slogan: true,
         company: false,
-        qr: false,
+        qr: true,
         phone: true,
         mobile: !!base.personal.mobile,
         email: true,
         address: true,
-        website: false
+        website: false,
+        firstName: base.visibility.firstName ?? true,
+        lastName: base.visibility.lastName ?? true,
+        jobTitle: base.visibility.jobTitle ?? true
       }
     })
   },

@@ -464,12 +464,17 @@ var DEFAULT_SIGNATURE_STATE = {
 var SIGNATURE_PRESETS = [
   {
     id: "carte-ragt-officielle",
-    name: "Carte RAGT",
-    category: "Institutionnel",
-    description: "Format officiel fid\xE8le \xE0 la carte : fond jaune RAGT (#FDC420), logo \xE0 gauche, photo agronomique au centre avec votre signature, 4 r\xE9seaux sociaux en pastilles blanches \xE0 droite.",
+    name: "Carte RAGT Semences",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT Semences : fond jaune RAGT (#FDC420), logo Semences \xE0 gauche, photo agronomique au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
     apply: (base) => ({
       ...base,
-      presetName: "Carte RAGT",
+      presetName: "Carte RAGT Semences",
+      personal: {
+        ...base.personal,
+        company: "RAGT Semences",
+        website: "https://www.ragt-semences.fr"
+      },
       layout: {
         ...base.layout,
         preset: "layout-i",
@@ -549,6 +554,7 @@ var SIGNATURE_PRESETS = [
         primary: {
           ...base.logos.primary,
           url: "/assets/logos/logo_ragt.png",
+          alt: "Logo RAGT Semences",
           width: 95,
           height: 100,
           visible: true
@@ -578,7 +584,7 @@ var SIGNATURE_PRESETS = [
         ...base.banner,
         enabled: true,
         imageUrl: "/assets/bannieres/photo_carte_ragt.png",
-        altText: "Photo agronomie RAGT",
+        altText: "Photo agronomie RAGT Semences",
         position: "center",
         align: "center",
         width: 175,
@@ -595,7 +601,7 @@ var SIGNATURE_PRESETS = [
         items: [
           {
             id: "website",
-            name: "Site Web RAGT",
+            name: "Site Web RAGT Semences",
             url: "https://www.ragt-semences.fr",
             active: true,
             iconStyle: "circle",
@@ -649,6 +655,498 @@ var SIGNATURE_PRESETS = [
             iconStyle: "circle",
             color: "#ffffff"
           }
+        ]
+      },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        banner: true,
+        socials: true,
+        slogan: false,
+        company: false,
+        qr: false,
+        phone: true,
+        mobile: !!base.personal.mobile,
+        email: true,
+        address: true,
+        website: false
+      }
+    })
+  },
+  {
+    id: "carte-ragt-sa",
+    name: "Carte RAGT SA",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT SA : fond jaune RAGT (#FDC420), logo RAGT SA \xE0 gauche, photo institutionnelle au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    apply: (base) => ({
+      ...base,
+      presetName: "Carte RAGT SA",
+      personal: {
+        ...base.personal,
+        company: "RAGT SA",
+        website: "https://www.ragt.fr"
+      },
+      layout: {
+        ...base.layout,
+        preset: "layout-i",
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 540,
+          logoColumnWidth: 125,
+          infoColumnWidth: 320,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: "none" },
+        alignV: "middle"
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: "#0C3866",
+          secondary: "#1E4143",
+          text: "#0C3866",
+          firstName: "#0C3866",
+          lastName: "#0C3866",
+          jobTitle: "#1E4143",
+          phone: "#0C3866",
+          mobile: "#0C3866",
+          email: "#0C3866",
+          address: "#0C3866",
+          website: "#0C3866",
+          icons: "#ffffff",
+          background: "#FDC420"
+        },
+        background: {
+          type: "color",
+          color: "#FDC420",
+          imageUrl: "",
+          pattern: "none",
+          opacity: 1,
+          size: "auto"
+        },
+        border: { ...base.design.border, type: "none", radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 16, fontWeight: "bold", color: "#0C3866", letterSpacing: 0.5 },
+          jobTitle: { ...base.design.typography.jobTitle, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: "normal", color: "#1E4143" },
+          coordinates: { ...base.design.typography.coordinates, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 11, color: "#0C3866" }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          url: "/assets/logos/logo_ragt_sa.png",
+          alt: "Logo RAGT SA",
+          width: 95,
+          height: 100,
+          visible: true
+        },
+        secondary: { ...base.logos.secondary, visible: false }
+      },
+      iconSettings: { style: "circle", size: 16, color: "#ffffff", spacing: 8 },
+      labels: { phone: "", mobile: "", fax: "", standardPhone: "", directPhone: "", email: "", address: "", website: "" },
+      banner: {
+        ...base.banner,
+        enabled: true,
+        imageUrl: "/assets/bannieres/photo_carte_ragt.png",
+        altText: "Photo RAGT SA",
+        position: "center",
+        align: "center",
+        width: 175,
+        height: 84,
+        marginTop: 0,
+        marginBottom: 8
+      },
+      social: {
+        ...base.social,
+        style: "icons-only",
+        iconSize: 20,
+        spacing: 8,
+        align: "right",
+        items: [
+          { id: "website", name: "Site Web RAGT", url: "https://www.ragt.fr", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "youtube", name: "YouTube", url: "https://www.youtube.com/user/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "facebook", name: "Facebook", url: "https://www.facebook.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "instagram", name: "Instagram", url: "https://www.instagram.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "x", name: "X (Twitter)", url: "https://twitter.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
+        ]
+      },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        banner: true,
+        socials: true,
+        slogan: false,
+        company: false,
+        qr: false,
+        phone: true,
+        mobile: !!base.personal.mobile,
+        email: true,
+        address: true,
+        website: false
+      }
+    })
+  },
+  {
+    id: "carte-ragt-plateau",
+    name: "Carte RAGT Plateau Central",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT Plateau Central : fond jaune RAGT (#FDC420), logo Plateau Central \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    apply: (base) => ({
+      ...base,
+      presetName: "Carte RAGT Plateau Central",
+      personal: {
+        ...base.personal,
+        company: "RAGT Plateau Central",
+        website: "https://www.ragt-plateaucentral.fr"
+      },
+      layout: {
+        ...base.layout,
+        preset: "layout-i",
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 540,
+          logoColumnWidth: 125,
+          infoColumnWidth: 320,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: "none" },
+        alignV: "middle"
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: "#0C3866",
+          secondary: "#1E4143",
+          text: "#0C3866",
+          firstName: "#0C3866",
+          lastName: "#0C3866",
+          jobTitle: "#1E4143",
+          phone: "#0C3866",
+          mobile: "#0C3866",
+          email: "#0C3866",
+          address: "#0C3866",
+          website: "#0C3866",
+          icons: "#ffffff",
+          background: "#FDC420"
+        },
+        background: {
+          type: "color",
+          color: "#FDC420",
+          imageUrl: "",
+          pattern: "none",
+          opacity: 1,
+          size: "auto"
+        },
+        border: { ...base.design.border, type: "none", radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 16, fontWeight: "bold", color: "#0C3866", letterSpacing: 0.5 },
+          jobTitle: { ...base.design.typography.jobTitle, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: "normal", color: "#1E4143" },
+          coordinates: { ...base.design.typography.coordinates, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 11, color: "#0C3866" }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          url: "/assets/logos/logo_ragt_plateau_central.png",
+          alt: "Logo RAGT Plateau Central",
+          width: 95,
+          height: 100,
+          visible: true
+        },
+        secondary: { ...base.logos.secondary, visible: false }
+      },
+      iconSettings: { style: "circle", size: 16, color: "#ffffff", spacing: 8 },
+      labels: { phone: "", mobile: "", fax: "", standardPhone: "", directPhone: "", email: "", address: "", website: "" },
+      banner: {
+        ...base.banner,
+        enabled: true,
+        imageUrl: "/assets/bannieres/photo_carte_ragt.png",
+        altText: "Photo RAGT Plateau Central",
+        position: "center",
+        align: "center",
+        width: 175,
+        height: 84,
+        marginTop: 0,
+        marginBottom: 8
+      },
+      social: {
+        ...base.social,
+        style: "icons-only",
+        iconSize: 20,
+        spacing: 8,
+        align: "right",
+        items: [
+          { id: "website", name: "Site Web RAGT Plateau Central", url: "https://www.ragt-plateaucentral.fr", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "facebook", name: "Facebook", url: "https://www.facebook.com/ragtplateaucentral", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "youtube", name: "YouTube", url: "https://www.youtube.com/user/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "instagram", name: "Instagram", url: "https://www.instagram.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "x", name: "X (Twitter)", url: "https://twitter.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
+        ]
+      },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        banner: true,
+        socials: true,
+        slogan: false,
+        company: false,
+        qr: false,
+        phone: true,
+        mobile: !!base.personal.mobile,
+        email: true,
+        address: true,
+        website: false
+      }
+    })
+  },
+  {
+    id: "carte-ragt-energie",
+    name: "Carte RAGT \xC9nergie",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT \xC9nergie : fond jaune RAGT (#FDC420), logo RAGT \xC9nergie \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    apply: (base) => ({
+      ...base,
+      presetName: "Carte RAGT \xC9nergie",
+      personal: {
+        ...base.personal,
+        company: "RAGT \xC9nergie",
+        website: "https://www.ragt-energie.fr"
+      },
+      layout: {
+        ...base.layout,
+        preset: "layout-i",
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 540,
+          logoColumnWidth: 125,
+          infoColumnWidth: 320,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: "none" },
+        alignV: "middle"
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: "#0C3866",
+          secondary: "#1E4143",
+          text: "#0C3866",
+          firstName: "#0C3866",
+          lastName: "#0C3866",
+          jobTitle: "#1E4143",
+          phone: "#0C3866",
+          mobile: "#0C3866",
+          email: "#0C3866",
+          address: "#0C3866",
+          website: "#0C3866",
+          icons: "#ffffff",
+          background: "#FDC420"
+        },
+        background: {
+          type: "color",
+          color: "#FDC420",
+          imageUrl: "",
+          pattern: "none",
+          opacity: 1,
+          size: "auto"
+        },
+        border: { ...base.design.border, type: "none", radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 16, fontWeight: "bold", color: "#0C3866", letterSpacing: 0.5 },
+          jobTitle: { ...base.design.typography.jobTitle, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: "normal", color: "#1E4143" },
+          coordinates: { ...base.design.typography.coordinates, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 11, color: "#0C3866" }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          url: "/assets/logos/logo_ragt_energie.png",
+          alt: "Logo RAGT \xC9nergie",
+          width: 95,
+          height: 100,
+          visible: true
+        },
+        secondary: { ...base.logos.secondary, visible: false }
+      },
+      iconSettings: { style: "circle", size: 16, color: "#ffffff", spacing: 8 },
+      labels: { phone: "", mobile: "", fax: "", standardPhone: "", directPhone: "", email: "", address: "", website: "" },
+      banner: {
+        ...base.banner,
+        enabled: true,
+        imageUrl: "/assets/bannieres/photo_carte_ragt.png",
+        altText: "Photo RAGT \xC9nergie",
+        position: "center",
+        align: "center",
+        width: 175,
+        height: 84,
+        marginTop: 0,
+        marginBottom: 8
+      },
+      social: {
+        ...base.social,
+        style: "icons-only",
+        iconSize: 20,
+        spacing: 8,
+        align: "right",
+        items: [
+          { id: "website", name: "Site Web RAGT \xC9nergie", url: "https://www.ragt-energie.fr", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "youtube", name: "YouTube", url: "https://www.youtube.com/user/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "facebook", name: "Facebook", url: "https://www.facebook.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "instagram", name: "Instagram", url: "https://www.instagram.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "x", name: "X (Twitter)", url: "https://twitter.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
+        ]
+      },
+      visibility: {
+        ...base.visibility,
+        logo: true,
+        secondaryLogo: false,
+        banner: true,
+        socials: true,
+        slogan: false,
+        company: false,
+        qr: false,
+        phone: true,
+        mobile: !!base.personal.mobile,
+        email: true,
+        address: true,
+        website: false
+      }
+    })
+  },
+  {
+    id: "carte-ragt-filiales",
+    name: "Carte RAGT Filiales",
+    category: "Soci\xE9t\xE9 RAGT",
+    description: "Format officiel RAGT Filiales : fond jaune RAGT (#FDC420), logo RAGT Filiales \xE0 gauche, photo au centre avec votre signature, r\xE9seaux sociaux \xE0 droite.",
+    apply: (base) => ({
+      ...base,
+      presetName: "Carte RAGT Filiales",
+      personal: {
+        ...base.personal,
+        company: "RAGT Filiales",
+        website: "https://www.ragt.fr"
+      },
+      layout: {
+        ...base.layout,
+        preset: "layout-i",
+        dimensions: {
+          ...base.layout.dimensions,
+          totalWidth: 540,
+          logoColumnWidth: 125,
+          infoColumnWidth: 320,
+          paddingTop: 14,
+          paddingBottom: 14,
+          paddingLeft: 16,
+          paddingRight: 16,
+          innerSpacing: 14
+        },
+        separator: { ...base.layout.separator, type: "none" },
+        alignV: "middle"
+      },
+      design: {
+        ...base.design,
+        colors: {
+          ...base.design.colors,
+          primary: "#0C3866",
+          secondary: "#1E4143",
+          text: "#0C3866",
+          firstName: "#0C3866",
+          lastName: "#0C3866",
+          jobTitle: "#1E4143",
+          phone: "#0C3866",
+          mobile: "#0C3866",
+          email: "#0C3866",
+          address: "#0C3866",
+          website: "#0C3866",
+          icons: "#ffffff",
+          background: "#FDC420"
+        },
+        background: {
+          type: "color",
+          color: "#FDC420",
+          imageUrl: "",
+          pattern: "none",
+          opacity: 1,
+          size: "auto"
+        },
+        border: { ...base.design.border, type: "none", radius: 10 },
+        typography: {
+          ...base.design.typography,
+          name: { ...base.design.typography.name, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 16, fontWeight: "bold", color: "#0C3866", letterSpacing: 0.5 },
+          jobTitle: { ...base.design.typography.jobTitle, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 12, fontStyle: "italic", fontWeight: "normal", color: "#1E4143" },
+          coordinates: { ...base.design.typography.coordinates, fontFamily: "Arial, Helvetica, sans-serif", fontSize: 11, color: "#0C3866" }
+        }
+      },
+      logos: {
+        ...base.logos,
+        primary: {
+          ...base.logos.primary,
+          url: "/assets/logos/logo_ragt_filiales.png",
+          alt: "Logo RAGT Filiales",
+          width: 95,
+          height: 100,
+          visible: true
+        },
+        secondary: { ...base.logos.secondary, visible: false }
+      },
+      iconSettings: { style: "circle", size: 16, color: "#ffffff", spacing: 8 },
+      labels: { phone: "", mobile: "", fax: "", standardPhone: "", directPhone: "", email: "", address: "", website: "" },
+      banner: {
+        ...base.banner,
+        enabled: true,
+        imageUrl: "/assets/bannieres/photo_carte_ragt.png",
+        altText: "Photo RAGT Filiales",
+        position: "center",
+        align: "center",
+        width: 175,
+        height: 84,
+        marginTop: 0,
+        marginBottom: 8
+      },
+      social: {
+        ...base.social,
+        style: "icons-only",
+        iconSize: 20,
+        spacing: 8,
+        align: "right",
+        items: [
+          { id: "website", name: "Site Web RAGT", url: "https://www.ragt.fr", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "linkedin", name: "LinkedIn", url: "https://www.linkedin.com/company/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "youtube", name: "YouTube", url: "https://www.youtube.com/user/ragt", active: true, iconStyle: "circle", color: "#ffffff" },
+          { id: "facebook", name: "Facebook", url: "https://www.facebook.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "instagram", name: "Instagram", url: "https://www.instagram.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "x", name: "X (Twitter)", url: "https://twitter.com/ragt", active: false, iconStyle: "circle", color: "#ffffff" },
+          { id: "tiktok", name: "TikTok", url: "https://www.tiktok.com/@ragt", active: false, iconStyle: "circle", color: "#ffffff" }
         ]
       },
       visibility: {
